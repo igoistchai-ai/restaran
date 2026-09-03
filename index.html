@@ -6,309 +6,667 @@
 <meta charset="UTF-8">
 
 <meta
-name="viewport"
-content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+ name="viewport"
+ content="width=device-width,initial-scale=1,viewport-fit=cover"
 >
 
-<title>Delivery</title>
-
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<title>RESTARAN</title>
 
 <link
-rel="stylesheet"
-href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+ rel="preconnect"
+ href="https://fonts.googleapis.com"
 >
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link
+ href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+ rel="stylesheet"
+>
+
+<link
+ rel="stylesheet"
+ href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+>
 
 <style>
 
+:root{
+
+ --bg:#07090d;
+ --surface:#10141b;
+ --surface2:#151a22;
+
+ --text:#f7f8fa;
+ --muted:#858e9e;
+
+ --border:rgba(255,255,255,.08);
+
+ --green:#63e69a;
+ --red:#ff6d7e;
+
+ --radius:24px;
+
+}
+
 *{
-box-sizing:border-box;
--webkit-tap-highlight-color:transparent;
+ box-sizing:border-box;
 }
 
 body{
-margin:0;
-background:#07080d;
-color:#fff;
-font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+
+ margin:0;
+
+ min-height:100vh;
+
+ color:var(--text);
+
+ background:
+
+ radial-gradient(
+  circle at 50% -10%,
+  #303847 0,
+  #11151d 35%,
+  #07090d 75%
+ );
+
+ font-family:
+ Inter,
+ system-ui,
+ sans-serif;
+
 }
 
-button,input,select{
-font:inherit;
+button,
+input,
+select{
+
+ font:inherit;
+
 }
 
 button{
-border:0;
-cursor:pointer;
+
+ cursor:pointer;
+
 }
 
 .hidden{
-display:none!important;
+ display:none!important;
 }
 
-#loader{
-position:fixed;
-inset:0;
-z-index:9999;
-display:flex;
-align-items:center;
-justify-content:center;
-background:#07080d;
+/* =========================
+   AUTH
+========================= */
+
+.auth{
+
+ min-height:100vh;
+
+ display:flex;
+
+ justify-content:center;
+ align-items:center;
+
+ padding:20px;
+
+}
+
+.auth-box{
+
+ width:100%;
+ max-width:430px;
+
+ padding:28px;
+
+ border-radius:32px;
+
+ background:
+ rgba(16,20,27,.82);
+
+ border:1px solid var(--border);
+
+ backdrop-filter:blur(30px);
+
+ box-shadow:
+ 0 30px 100px rgba(0,0,0,.55);
+
+ animation:
+ appear .5s ease;
+
 }
 
 .logo{
-width:80px;
-height:80px;
-border-radius:27px;
-display:grid;
-place-items:center;
-font-size:38px;
-background:linear-gradient(135deg,#7657ff,#458cff);
+
+ font-size:24px;
+
+ font-weight:800;
+
+ letter-spacing:-1.5px;
+
 }
 
-.loaderText{
-margin-top:15px;
-color:#999;
-}
+.logo span{
 
-#login{
-min-height:100vh;
-padding:20px;
-display:flex;
-align-items:center;
-justify-content:center;
-}
+ opacity:.35;
 
-.login{
-width:100%;
-max-width:430px;
-}
-
-.photo{
-height:240px;
-border-radius:30px;
-background:
-linear-gradient(transparent,rgba(0,0,0,.9)),
-url("https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1000&q=85")
-center/cover;
-margin-bottom:22px;
-}
-
-.title{
-font-size:32px;
-font-weight:900;
-}
-
-.muted{
-color:#969aa8;
-}
-
-.input{
-width:100%;
-padding:16px;
-border-radius:17px;
-border:1px solid rgba(255,255,255,.1);
-background:rgba(255,255,255,.06);
-color:#fff;
-outline:none;
-margin:7px 0;
-}
-
-.primary{
-width:100%;
-padding:16px;
-border-radius:17px;
-color:white;
-font-weight:800;
-background:linear-gradient(135deg,#7657ff,#458cff);
-margin-top:8px;
-}
-
-#app{
-max-width:650px;
-margin:auto;
-padding-bottom:100px;
-}
-
-.header{
-padding:22px 18px 8px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
-
-.headerTitle{
-font-size:27px;
-font-weight:900;
-}
-
-.avatar{
-width:46px;
-height:46px;
-border-radius:16px;
-display:grid;
-place-items:center;
-background:rgba(255,255,255,.07);
-}
-
-.content{
-padding:10px 16px;
-}
-
-.card{
-padding:18px;
-border-radius:24px;
-border:1px solid rgba(255,255,255,.09);
-background:rgba(255,255,255,.055);
-margin-bottom:13px;
 }
 
 .hero{
-min-height:190px;
-display:flex;
-flex-direction:column;
-justify-content:flex-end;
-background:
-linear-gradient(transparent,rgba(0,0,0,.9)),
-url("https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1000&q=85")
-center/cover;
+
+ height:210px;
+
+ margin:24px 0;
+
+ border-radius:24px;
+
+ background:
+
+ linear-gradient(
+  to bottom,
+  transparent,
+  rgba(0,0,0,.9)
+ ),
+
+ url(
+ "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=1000&q=85"
+ );
+
+ background-size:cover;
+
+ background-position:center;
+
 }
 
-.hero h1{
-margin:0 0 5px;
-font-size:29px;
+.eyebrow{
+
+ color:var(--muted);
+
+ font-size:11px;
+
+ letter-spacing:2px;
+
+ text-transform:uppercase;
+
 }
 
-.status{
-display:inline-block;
-padding:7px 10px;
-border-radius:30px;
-background:rgba(53,212,154,.12);
-color:#35d49a;
-font-size:12px;
-font-weight:800;
+h1{
+
+ font-size:34px;
+
+ line-height:1.05;
+
+ letter-spacing:-1.8px;
+
+ margin:8px 0 12px;
+
 }
 
-.orderTitle{
-font-size:21px;
-font-weight:900;
-margin:12px 0;
+h2{
+
+ letter-spacing:-.7px;
+
+}
+
+.description{
+
+ color:var(--muted);
+
+ font-size:14px;
+
+ line-height:1.6;
+
+}
+
+.field{
+
+ margin:18px 0;
+
+}
+
+.field label{
+
+ display:block;
+
+ color:var(--muted);
+
+ font-size:12px;
+
+ margin-bottom:8px;
+
+}
+
+.input{
+
+ width:100%;
+
+ padding:15px 16px;
+
+ color:white;
+
+ background:#0b0f15;
+
+ border:1px solid var(--border);
+
+ border-radius:16px;
+
+ outline:none;
+
+ transition:.2s;
+
+}
+
+.input:focus{
+
+ border-color:
+ rgba(255,255,255,.3);
+
+ box-shadow:
+ 0 0 0 4px
+  rgba(255,255,255,.04);
+
+}
+
+.btn{
+
+ border:0;
+
+ border-radius:16px;
+
+ padding:14px 17px;
+
+ font-weight:700;
+
+ transition:.2s;
+
+}
+
+.btn:hover{
+
+ transform:translateY(-1px);
+
+}
+
+.btn-main{
+
+ width:100%;
+
+ color:#07090d;
+
+ background:#fff;
+
+}
+
+.btn-dark{
+
+ color:white;
+
+ background:#1a202a;
+
+ border:1px solid var(--border);
+
+}
+
+.btn-green{
+
+ color:#07120b;
+
+ background:var(--green);
+
+}
+
+.btn-red{
+
+ color:#ff9aa5;
+
+ background:
+ rgba(255,100,120,.12);
+
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.topbar{
+
+ position:sticky;
+
+ top:0;
+
+ z-index:20;
+
+ border-bottom:
+ 1px solid var(--border);
+
+ background:
+ rgba(7,9,13,.75);
+
+ backdrop-filter:
+ blur(22px);
+
+}
+
+.topbar-inner{
+
+ max-width:1200px;
+
+ margin:auto;
+
+ padding:15px 20px;
+
+ display:flex;
+
+ align-items:center;
+
+ justify-content:space-between;
+
+}
+
+/* =========================
+   LAYOUT
+========================= */
+
+.container{
+
+ max-width:1200px;
+
+ margin:auto;
+
+ padding:
+ 28px
+ 20px
+ 100px;
+
+}
+
+.grid{
+
+ display:grid;
+
+ grid-template-columns:
+ repeat(12,1fr);
+
+ gap:16px;
+
+}
+
+.col-12{
+ grid-column:span 12;
+}
+
+.col-8{
+ grid-column:span 8;
+}
+
+.col-6{
+ grid-column:span 6;
+}
+
+.col-4{
+ grid-column:span 4;
+}
+
+.card{
+
+ background:
+ rgba(16,20,27,.82);
+
+ border:
+ 1px solid var(--border);
+
+ border-radius:
+ var(--radius);
+
+ padding:20px;
+
+ box-shadow:
+ 0 15px 50px
+ rgba(0,0,0,.16);
+
+}
+
+.stat-number{
+
+ font-size:32px;
+
+ font-weight:800;
+
+ letter-spacing:-1.5px;
+
+ margin-top:7px;
+
+}
+
+.muted{
+ color:var(--muted);
 }
 
 .row{
-display:flex;
-justify-content:space-between;
-gap:15px;
-padding:12px 0;
-border-bottom:1px solid rgba(255,255,255,.08);
+
+ display:flex;
+
+ align-items:center;
+
+ justify-content:space-between;
+
+ gap:15px;
+
 }
 
-.mapButton{
-width:100%;
-padding:15px;
-border-radius:16px;
-background:rgba(118,87,255,.18);
-color:#fff;
-font-weight:800;
-margin-top:12px;
+.status{
+
+ display:inline-flex;
+
+ padding:7px 10px;
+
+ border-radius:999px;
+
+ background:#0b0f15;
+
+ border:1px solid var(--border);
+
+ font-size:11px;
+
+ font-weight:700;
+
 }
 
-#map{
-height:420px;
-width:100%;
-border-radius:20px;
+.status.green{
+
+ color:var(--green);
+
 }
 
-.nav{
-position:fixed;
-z-index:1000;
-bottom:12px;
-left:50%;
-transform:translateX(-50%);
-width:calc(100% - 24px);
-max-width:620px;
-display:flex;
-padding:8px;
-border-radius:23px;
-background:rgba(15,16,23,.9);
-backdrop-filter:blur(25px);
-border:1px solid rgba(255,255,255,.1);
+.status.red{
+
+ color:#ff8b99;
+
 }
 
-.nav button{
-flex:1;
-padding:10px 4px;
-border-radius:16px;
-background:transparent;
-color:#8f93a0;
-font-size:11px;
+.actions{
+
+ display:flex;
+
+ flex-wrap:wrap;
+
+ gap:8px;
+
+ margin-top:15px;
+
 }
 
-.nav button.active{
-color:white;
-background:rgba(118,87,255,.2);
+.actions .btn{
+
+ padding:10px 13px;
+
+ font-size:12px;
+
 }
 
-.stats{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:10px;
+/* =========================
+   MAP
+========================= */
+
+.map{
+
+ height:470px;
+
+ border-radius:20px;
+
+ overflow:hidden;
+
+ margin-top:15px;
+
 }
 
-.stat{
-padding:17px;
-border-radius:20px;
-background:rgba(255,255,255,.06);
-border:1px solid rgba(255,255,255,.08);
+/* =========================
+   TABLE
+========================= */
+
+.table-wrap{
+
+ overflow:auto;
+
 }
 
-.statNumber{
-font-size:27px;
-font-weight:900;
+table{
+
+ width:100%;
+
+ border-collapse:collapse;
+
+ font-size:13px;
+
 }
 
-.statLabel{
-color:#969aa8;
-font-size:12px;
-margin-top:5px;
+th,
+td{
+
+ padding:14px 10px;
+
+ text-align:left;
+
+ border-bottom:
+ 1px solid var(--border);
+
+ white-space:nowrap;
+
 }
 
-.action{
-width:100%;
-padding:16px;
-border-radius:17px;
-background:rgba(255,255,255,.06);
-color:white;
-text-align:left;
-margin:5px 0;
-border:1px solid rgba(255,255,255,.08);
+th{
+
+ color:var(--muted);
+
+ font-weight:500;
+
 }
 
-.danger{
-background:rgba(255,90,100,.12);
-color:#ff6c76;
+/* =========================
+   MODAL
+========================= */
+
+.modal{
+
+ position:fixed;
+
+ inset:0;
+
+ z-index:100;
+
+ display:flex;
+
+ align-items:center;
+
+ justify-content:center;
+
+ padding:20px;
+
+ background:
+ rgba(0,0,0,.72);
+
+ backdrop-filter:
+ blur(10px);
+
 }
 
-#toast{
-position:fixed;
-z-index:99999;
-bottom:90px;
-left:50%;
-transform:translate(-50%,20px);
-opacity:0;
-padding:13px 18px;
-border-radius:15px;
-background:#191a22;
-border:1px solid rgba(255,255,255,.1);
-transition:.25s;
-pointer-events:none;
+.modal-box{
+
+ width:100%;
+
+ max-width:500px;
+
+ padding:23px;
+
+ border-radius:26px;
+
+ background:#11161e;
+
+ border:1px solid var(--border);
+
+ animation:
+ appear .25s ease;
+
 }
 
-#toast.show{
-opacity:1;
-transform:translate(-50%,0);
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:760px){
+
+ .col-8,
+ .col-6,
+ .col-4{
+
+  grid-column:span 12;
+
+ }
+
+ h1{
+
+  font-size:30px;
+
+ }
+
+ .hero{
+
+  height:180px;
+
+ }
+
+ .row{
+
+  align-items:flex-start;
+
+  flex-direction:column;
+
+ }
+
+}
+
+/* =========================
+   ANIMATION
+========================= */
+
+@keyframes appear{
+
+ from{
+
+  opacity:0;
+
+  transform:
+   translateY(12px)
+   scale(.985);
+
+ }
+
+ to{
+
+  opacity:1;
+
+  transform:none;
+
+ }
+
 }
 
 </style>
@@ -317,1920 +675,2675 @@ transform:translate(-50%,0);
 
 <body>
 
+<div id="toast" class="hidden"></div>
 
-<div id="loader">
 
-<div>
+<!-- =========================
+     LOGIN
+========================= -->
+
+<section
+ id="loginPage"
+ class="auth"
+>
+
+<div class="auth-box">
 
 <div class="logo">
-🍔
+ RESTARAN<span>.</span>
 </div>
 
-<div class="loaderText">
-Загрузка...
+<div class="hero"></div>
+
+<div class="eyebrow">
+ premium food delivery
 </div>
 
-</div>
+<h1>
+ Добро пожаловать.
+</h1>
+
+<div class="description">
+
+ Введите номер телефона и
+ персональный PIN для входа.
 
 </div>
 
+<div class="field">
 
-<div id="login" class="hidden">
-
-<div class="login">
-
-<div class="photo"></div>
-
-<div class="title">
-Добро пожаловать 👋
-</div>
-
-<p class="muted">
-Введите номер телефона,
-который добавил администратор.
-</p>
+<label>
+ Номер телефона
+</label>
 
 <input
-id="phone"
-class="input"
-placeholder="+374..."
-type="tel"
+ id="loginPhone"
+ class="input"
+ placeholder="+374 00 00 00"
+ inputmode="tel"
 >
 
-<button
-class="primary"
-onclick="login()"
+</div>
+
+<div class="field">
+
+<label>
+ PIN
+</label>
+
+<input
+ id="loginPin"
+ class="input"
+ placeholder="••••"
+ type="password"
+ inputmode="numeric"
 >
-Продолжить
+
+</div>
+
+<button
+ class="btn btn-main"
+ onclick="login()"
+>
+
+Войти
+
 </button>
 
 </div>
 
-</div>
+</section>
 
 
-<div id="app" class="hidden">
+<!-- =========================
+     APP
+========================= -->
 
-<header class="header">
-
-<div>
-
-<div
-id="hello"
-class="headerTitle"
+<section
+ id="app"
+ class="hidden"
 >
-Привет 👋
+
+<header class="topbar">
+
+<div class="topbar-inner">
+
+<div class="logo">
+ RESTARAN<span>.</span>
 </div>
 
-<div class="muted">
-Delivery
-</div>
+<button
+ class="btn btn-dark"
+ onclick="logout()"
+>
 
-</div>
+Выйти
 
-<div class="avatar">
-🍔
+</button>
+
 </div>
 
 </header>
 
+
+<!-- CUSTOMER -->
+
 <main
-id="content"
-class="content"
-></main>
+ id="customerApp"
+ class="container hidden"
+>
 
-<nav class="nav">
+<div style="margin-bottom:25px">
+
+<div class="eyebrow">
+ my account
+</div>
+
+<h1 id="customerName">
+ Добро пожаловать
+</h1>
+
+</div>
+
+<div class="grid">
+
+<div
+ class="card col-12"
+ id="customerOrders"
+>
+</div>
+
+<div
+ id="customerMapBox"
+ class="card col-12 hidden"
+>
+
+<div class="eyebrow">
+ live delivery
+</div>
+
+<h2>
+ Курьер в пути
+</h2>
+
+<div class="description">
+ Позиция обновляется автоматически.
+</div>
+
+<div
+ id="customerMap"
+ class="map"
+></div>
+
+</div>
+
+</div>
+
+</main>
+
+
+<!-- COURIER -->
+
+<main
+ id="courierApp"
+ class="container hidden"
+>
+
+<div
+ class="row"
+ style="margin-bottom:25px"
+>
+
+<div>
+
+<div class="eyebrow">
+ courier workspace
+</div>
+
+<h1 id="courierName">
+ Курьер
+</h1>
+
+</div>
 
 <button
-id="navHome"
-onclick="home(this)"
-class="active"
+ id="onlineButton"
+ class="btn btn-green"
+ onclick="toggleOnline()"
 >
-🏠<br>
-Главная
+
+● Онлайн
+
 </button>
+
+</div>
+
+<div class="grid">
+
+<div
+ id="courierOrders"
+ class="card col-12"
+>
+</div>
+
+</div>
+
+</main>
+
+</section>
+
+
+<!-- =========================
+     ADMIN
+========================= -->
+
+<section
+ id="adminPage"
+ class="hidden"
+>
+
+<header class="topbar">
+
+<div class="topbar-inner">
+
+<div class="logo">
+
+RESTARAN<span>.</span>
+
+<small
+ class="muted"
+>
+ ADMIN
+</small>
+
+</div>
 
 <button
-onclick="ordersPage(this)"
+ class="btn btn-dark"
+ onclick="logout()"
 >
-📦<br>
-Заказы
+
+Выйти
+
 </button>
 
-<button
-onclick="mapPage(this)"
->
-📍<br>
-Карта
-</button>
+</div>
 
-<button
-id="adminNav"
-class="hidden"
-onclick="adminPage(this)"
->
-👑<br>
-Админ
-</button>
+</header>
 
-</nav>
+
+<main class="container">
+
+<div style="margin-bottom:25px">
+
+<div class="eyebrow">
+ control center
+</div>
+
+<h1>
+ Dashboard
+</h1>
 
 </div>
 
 
-<div id="toast"></div>
+<div
+ id="stats"
+ class="grid"
+ style="margin-bottom:25px"
+>
+</div>
+
+
+<div
+ id="adminTabs"
+ style="
+ display:flex;
+ gap:8px;
+ overflow:auto;
+ margin-bottom:18px;
+ "
+>
+
+<button
+ class="btn btn-dark"
+ onclick="adminTab('orders')"
+>
+ Заказы
+</button>
+
+<button
+ class="btn btn-dark"
+ onclick="adminTab('customers')"
+>
+ Клиенты
+</button>
+
+<button
+ class="btn btn-dark"
+ onclick="adminTab('couriers')"
+>
+ Курьеры
+</button>
+
+<button
+ class="btn btn-dark"
+ onclick="adminTab('map')"
+>
+ Карта
+</button>
+
+</div>
+
+
+<div id="adminContent">
+</div>
+
+</main>
+
+</section>
+
+
+<!-- =========================
+     MODAL
+========================= -->
+
+<div
+ id="modal"
+ class="modal hidden"
+>
+
+<div
+ id="modalBox"
+ class="modal-box"
+>
+</div>
+
+</div>
+
+
+<script
+ src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+></script>
 
 
 <script>
 
-const tg =
-window.Telegram.WebApp;
+const $ = id =>
+ document.getElementById(id);
 
-tg.ready();
-tg.expand();
+
+let token =
+ localStorage.getItem(
+  "restaran_token"
+ );
+
+let role =
+ localStorage.getItem(
+  "restaran_role"
+ );
 
 let me = null;
+
 let socket = null;
-let map = null;
-let markers = {};
-let currentPage = "";
+
+let customerMap = null;
+
+let customerMarker = null;
 
 
-/* =====================================================
-API
-===================================================== */
+/* =========================
+   API
+========================= */
 
 async function api(
-url,
-options={}
+ url,
+ options={}
 ){
 
-options.headers = {
-...(options.headers || {}),
-"X-Telegram-Init-Data":tg.initData
-};
+ const response =
+  await fetch(
+   url,
+   {
+    ...options,
 
-const response =
-await fetch(url,options);
+    headers:{
+     "Content-Type":
+      "application/json",
 
-const data =
-await response.json();
+     "Authorization":
+      "Bearer " + token,
 
-if(!response.ok)
-throw new Error(
-data.error || "Ошибка"
-);
+     ...(options.headers || {})
+    }
+   }
+  );
 
-return data;
+ const data =
+  await response
+   .json()
+   .catch(
+    () => ({})
+   );
+
+ if(!response.ok){
+
+  throw new Error(
+   data.detail ||
+   "Ошибка сервера"
+  );
+
+ }
+
+ return data;
+
 }
 
 
-/* =====================================================
-TOAST
-===================================================== */
+/* =========================
+   TOAST
+========================= */
 
 function toast(text){
 
-const el =
-document.getElementById("toast");
+ let el =
+  $("toast");
 
-el.textContent=text;
+ el.textContent =
+  text;
 
-el.classList.add("show");
+ el.style.position =
+  "fixed";
 
-setTimeout(
-()=>el.classList.remove("show"),
-2500
-);
-}
+ el.style.top =
+  "20px";
 
+ el.style.left =
+  "50%";
 
-/* =====================================================
-INIT
-===================================================== */
+ el.style.transform =
+  "translateX(-50%)";
 
-async function init(){
+ el.style.zIndex =
+  "1000";
 
-try{
+ el.style.padding =
+  "12px 17px";
 
-me =
-await api("/api/me");
+ el.style.borderRadius =
+  "14px";
 
-document
-.getElementById("loader")
-.classList.add("hidden");
+ el.style.background =
+  "#fff";
 
-if(
-me.role==="customer" &&
-!me.customer
-){
+ el.style.color =
+  "#080a0d";
 
-document
-.getElementById("login")
-.classList.remove("hidden");
+ el.style.fontWeight =
+  "700";
 
-return;
-}
+ el.style.fontSize =
+  "13px";
 
-openApp();
+ el.classList.remove(
+  "hidden"
+ );
 
-}catch(e){
-
-document
-.getElementById("loader")
-.classList.add("hidden");
-
-toast(
-"Открой приложение через Telegram"
-);
-
-}
+ setTimeout(
+  () =>
+   el.classList.add(
+    "hidden"
+   ),
+  2300
+ );
 
 }
 
 
-/* =====================================================
-OPEN APP
-===================================================== */
-
-function openApp(){
-
-document
-.getElementById("login")
-.classList.add("hidden");
-
-document
-.getElementById("app")
-.classList.remove("hidden");
-
-document
-.getElementById("hello")
-.textContent =
-`Привет, ${me.name || "друг"} 👋`;
-
-if(me.role==="admin"){
-
-document
-.getElementById("adminNav")
-.classList.remove("hidden");
-
-adminPage();
-
-}else if(
-me.role==="courier"
-){
-
-courierPage();
-
-}else{
-
-home();
-
-}
-
-connectSocket();
-
-}
-
-
-/* =====================================================
-LOGIN
-===================================================== */
+/* =========================
+   LOGIN
+========================= */
 
 async function login(){
 
-const phone =
-document
-.getElementById("phone")
-.value
-.trim();
+ try{
 
-if(!phone){
+  const data =
+   await fetch(
+    "/api/login",
+    {
+     method:"POST",
 
-toast(
-"Введите номер телефона"
-);
+     headers:{
+      "Content-Type":
+       "application/json"
+     },
 
-return;
-}
+     body:JSON.stringify({
 
-try{
+      phone:
+       $("loginPhone").value,
 
-await api(
-"/api/login",
-{
-method:"POST",
-headers:{
-"Content-Type":
-"application/json"
-},
-body:JSON.stringify({
-phone
-})
-}
-);
+      pin:
+       $("loginPin").value
 
-me =
-await api("/api/me");
+     })
+    }
+   ).then(
+    r => r.json()
+   );
 
-openApp();
+  if(!data.token){
 
-toast(
-"Вход выполнен"
-);
+   throw new Error(
+    data.detail ||
+    "Ошибка входа"
+   );
 
-}catch(e){
+  }
 
-toast(e.message);
+  localStorage.setItem(
+   "restaran_token",
+   data.token
+  );
 
-}
+  localStorage.setItem(
+   "restaran_role",
+   data.role
+  );
 
-}
+  location.reload();
 
+ }
+ catch(error){
 
-/* =====================================================
-HOME
-===================================================== */
+  toast(
+   error.message
+  );
 
-async function home(button){
-
-if(button)
-setActive(button);
-
-currentPage="home";
-
-if(me.role==="courier"){
-
-courierPage(button);
-return;
-
-}
-
-if(me.role==="admin"){
-
-adminPage(button);
-return;
-
-}
-
-content.innerHTML=`
-
-<div class="card hero">
-
-<h1>
-Доставка еды 🍔
-</h1>
-
-<p>
-Быстро и удобно прямо к тебе.
-</p>
-
-</div>
-
-<div id="ordersBox">
-Загрузка...
-</div>
-
-`;
-
-loadCustomerOrders();
+ }
 
 }
 
 
-/* =====================================================
-CUSTOMER ORDERS
-===================================================== */
+/* =========================
+   LOGOUT
+========================= */
 
-async function loadCustomerOrders(){
+function logout(){
 
-try{
+ localStorage.clear();
 
-const data =
-await api("/api/orders");
-
-const box =
-document.getElementById(
-"ordersBox"
-);
-
-if(!data.orders.length){
-
-box.innerHTML=`
-
-<div class="card">
-
-<h2>
-Нет активных заказов
-</h2>
-
-<p class="muted">
-Когда администратор создаст заказ,
-он появится здесь.
-</p>
-
-</div>
-
-`;
-
-return;
+ location.href =
+  "/";
 
 }
 
-box.innerHTML =
-data.orders.map(
-o=>customerOrderHTML(o)
-).join("");
 
-}catch(e){
+/* =========================
+   BOOT
+========================= */
 
-toast(e.message);
+async function boot(){
+
+ if(
+  location.pathname ===
+  "/admin"
+ ){
+
+  await bootAdmin();
+
+  return;
+
+ }
+
+ if(!token){
+
+  return;
+
+ }
+
+ try{
+
+  me =
+   await api(
+    "/api/me"
+   );
+
+  $("loginPage")
+   .classList.add(
+    "hidden"
+   );
+
+  $("app")
+   .classList.remove(
+    "hidden"
+   );
+
+  if(
+   me.role ===
+   "customer"
+  ){
+
+   $("customerApp")
+    .classList.remove(
+     "hidden"
+    );
+
+   await loadCustomer();
+
+  }
+
+  if(
+   me.role ===
+   "courier"
+  ){
+
+   $("courierApp")
+    .classList.remove(
+     "hidden"
+    );
+
+   await loadCourier();
+
+  }
+
+  connectSocket();
+
+ }
+ catch{
+
+  localStorage.clear();
+
+ }
 
 }
+
+
+/* =========================
+   CUSTOMER
+========================= */
+
+async function loadCustomer(){
+
+ $("customerName")
+  .textContent =
+  me.user.name;
+
+ await renderCustomerOrders();
+
+}
+
+
+async function renderCustomerOrders(){
+
+ const data =
+  await api(
+   "/api/customer/orders"
+  );
+
+ if(
+  !data.orders.length
+ ){
+
+  $("customerOrders")
+   .innerHTML = `
+
+    <div class="eyebrow">
+     my orders
+    </div>
+
+    <h2>
+     Пока нет заказов
+    </h2>
+
+    <div class="description">
+     Новый заказ появится здесь
+     после создания администратором.
+    </div>
+
+  `;
+
+  return;
+
+ }
+
+
+ $("customerOrders")
+  .innerHTML = `
+
+   <div class="eyebrow">
+    my orders
+   </div>
+
+   <h2>
+    Ваши заказы
+   </h2>
+
+   ${data.orders.map(
+    order => customerOrderHTML(order)
+   ).join("")}
+
+  `;
 
 }
 
 
 function customerOrderHTML(o){
 
-let statusText={
-new:"Новый заказ",
-assigned:"Курьер назначен",
-accepted:"Курьер принял заказ",
-delivering:"Курьер в пути",
-delivered:"Доставлено",
-closed:"Закрыт"
-}[o.status] || o.status;
+ const courierButton =
+  o.courier_lat &&
+  o.courier_lng
 
-return `
+  ?
 
-<div class="card">
+  `
+  <button
+   class="btn btn-dark"
+   onclick="
+    showCustomerMap(
+     ${o.courier_lat},
+     ${o.courier_lng}
+    )
+   "
+  >
 
-<span class="status">
-${escapeHtml(statusText)}
-</span>
+   📍 Курьер на карте
 
-<div class="orderTitle">
-Заказ #${o.id}
-</div>
+  </button>
+  `
 
-<div class="row">
-<span class="muted">
-📍 Адрес
-</span>
-<b>
-${escapeHtml(o.address || "—")}
-</b>
-</div>
+  :
 
-<div class="row">
-<span class="muted">
-🚴 Курьер
-</span>
-<b>
-${escapeHtml(
-o.courier_name ||
-"Не назначен"
-)}
-</b>
-</div>
+  "";
 
-${
-o.courier_lat &&
-o.courier_lon
-?
-`
-<button
-class="mapButton"
-onclick="mapPage()"
->
-📍 Посмотреть геопозицию курьера
-</button>
-`
-:""
+
+ const confirmButton =
+  o.status ===
+  "delivered"
+
+  ?
+
+  `
+  <button
+   class="btn btn-green"
+   onclick="
+    confirmOrder(
+     ${o.id}
+    )
+   "
+  >
+
+   ✓ Я получил заказ
+
+  </button>
+  `
+
+  :
+
+  "";
+
+
+ return `
+
+ <div
+  class="card"
+  style="
+   background:#0c1016;
+   margin-top:10px;
+  "
+ >
+
+  <div class="row">
+
+   <div>
+
+    <div
+     style="
+      font-size:18px;
+      font-weight:700;
+     "
+    >
+     Заказ #${o.id}
+    </div>
+
+    <div
+     class="muted"
+     style="margin-top:6px"
+    >
+     📍 ${escapeHTML(o.address)}
+    </div>
+
+    ${
+     o.courier_name
+
+     ?
+
+     `
+     <div
+      class="muted"
+      style="margin-top:6px"
+     >
+      🛵 ${escapeHTML(
+       o.courier_name
+      )}
+     </div>
+     `
+
+     :
+
+     ""
+    }
+
+   </div>
+
+
+   <div
+    style="
+     text-align:right
+    "
+   >
+
+    <span class="status">
+     ${o.status}
+    </span>
+
+    <div
+     style="
+      font-weight:800;
+      margin-top:8px
+     "
+    >
+     ${Number(o.total).toFixed(2)}
+    </div>
+
+   </div>
+
+  </div>
+
+
+  <div class="actions">
+
+   ${courierButton}
+
+   ${confirmButton}
+
+  </div>
+
+ </div>
+
+ `;
+
 }
 
-${
-o.status==="delivered"
-?
-`
-<button
-class="primary"
-onclick="confirmOrder(${o.id})"
->
-✅ Подтвердить получение
-</button>
-`
-:""
-}
-
-</div>
-
-`;
-
-}
-
-
-/* =====================================================
-CUSTOMER CONFIRM
-===================================================== */
 
 async function confirmOrder(id){
 
-try{
+ try{
 
-await api(
-`/api/orders/${id}/confirm`,
-{
-method:"POST"
-}
-);
+  await api(
+   "/api/customer/orders/" +
+   id +
+   "/confirm",
+   {
+    method:"POST"
+   }
+  );
 
-toast(
-"Заказ подтверждён ❤️"
-);
+  toast(
+   "Заказ подтверждён"
+  );
 
-loadCustomerOrders();
+  await renderCustomerOrders();
 
-}catch(e){
+ }
+ catch(error){
 
-toast(e.message);
+  toast(
+   error.message
+  );
 
-}
-
-}
-
-
-/* =====================================================
-COURIER
-===================================================== */
-
-async function courierPage(button){
-
-setActive(button);
-
-currentPage="courier";
-
-content.innerHTML=`
-
-<div class="card hero">
-
-<h1>
-Панель курьера 🚴
-</h1>
-
-<p>
-Управляй своими доставками.
-</p>
-
-</div>
-
-<div class="card">
-
-<div class="row">
-
-<span>
-Статус
-</span>
-
-<b id="onlineText">
-${
-me.courier?.online
-?"🟢 Онлайн"
-:"⚫ Оффлайн"
-}
-</b>
-
-</div>
-
-<button
-class="primary"
-onclick="toggleOnline()"
->
-Изменить статус
-</button>
-
-</div>
-
-<div id="courierOrders">
-Загрузка...
-</div>
-
-<div class="card">
-
-<h3>
-📍 Геопозиция
-</h3>
-
-<p class="muted">
-Отправляй Live Location этому боту.
-Координаты будут обновляться автоматически.
-</p>
-
-</div>
-
-`;
-
-loadCourierOrders();
+ }
 
 }
 
 
-/* =====================================================
-COURIER ONLINE
-===================================================== */
+/* =========================
+   CUSTOMER MAP
+========================= */
+
+function showCustomerMap(
+ lat,
+ lng
+){
+
+ $("customerMapBox")
+  .classList.remove(
+   "hidden"
+  );
+
+
+ if(!customerMap){
+
+  customerMap =
+   L.map(
+    "customerMap"
+   ).setView(
+    [lat,lng],
+    15
+   );
+
+  L.tileLayer(
+   "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+   {
+    maxZoom:19
+   }
+  ).addTo(
+   customerMap
+  );
+
+  customerMarker =
+   L.marker(
+    [lat,lng]
+   ).addTo(
+    customerMap
+   );
+
+ }
+ else{
+
+  customerMarker
+   .setLatLng(
+    [lat,lng]
+   );
+
+  customerMap
+   .setView(
+    [lat,lng]
+   );
+
+ }
+
+ setTimeout(
+  () =>
+   customerMap.invalidateSize(),
+  150
+ );
+
+}
+
+
+/* =========================
+   COURIER
+========================= */
+
+async function loadCourier(){
+
+ $("courierName")
+  .textContent =
+  me.user.name;
+
+ setOnlineButton(
+  me.user.online
+ );
+
+ await renderCourierOrders();
+
+}
+
+
+function setOnlineButton(
+ online
+){
+
+ const btn =
+  $("onlineButton");
+
+ if(online){
+
+  btn.textContent =
+   "● Онлайн";
+
+  btn.className =
+   "btn btn-green";
+
+ }
+ else{
+
+  btn.textContent =
+   "○ Оффлайн";
+
+  btn.className =
+   "btn btn-dark";
+
+ }
+
+}
+
 
 async function toggleOnline(){
 
-try{
+ const online =
+  !me.user.online;
 
-const online =
-!Boolean(
-me.courier.online
-);
+ try{
 
-await api(
-"/api/courier/online",
-{
-method:"POST",
-headers:{
-"Content-Type":
-"application/json"
-},
-body:JSON.stringify({
-online
-})
-}
-);
+  await api(
+   "/api/courier/online",
+   {
+    method:"POST",
 
-me.courier.online=online;
+    body:
+     JSON.stringify({
+      online
+     })
+   }
+  );
 
-document
-.getElementById("onlineText")
-.textContent=
-online
-?"🟢 Онлайн"
-:"⚫ Оффлайн";
+  me.user.online =
+   online;
 
-}catch(e){
+  setOnlineButton(
+   online
+  );
 
-toast(e.message);
+ }
+ catch(error){
 
-}
+  toast(
+   error.message
+  );
+
+ }
 
 }
 
 
-/* =====================================================
-COURIER ORDERS
-===================================================== */
+async function renderCourierOrders(){
 
-async function loadCourierOrders(){
+ const data =
+  await api(
+   "/api/courier/orders"
+  );
 
-try{
 
-const data =
-await api(
-"/api/courier/orders"
-);
+ if(
+  !data.orders.length
+ ){
 
-const box =
-document.getElementById(
-"courierOrders"
-);
+  $("courierOrders")
+   .innerHTML = `
 
-if(!box)
-return;
+    <div class="eyebrow">
+     deliveries
+    </div>
 
-if(!data.orders.length){
+    <h2>
+     Нет заказов
+    </h2>
 
-box.innerHTML=`
+    <div class="description">
+     Назначенные заказы появятся автоматически.
+    </div>
 
-<div class="card">
+  `;
 
-<h3>
-📦 Нет заказов
-</h3>
+  return;
 
-<p class="muted">
-Новые заказы появятся здесь.
-</p>
+ }
 
-</div>
 
-`;
+ $("courierOrders")
+  .innerHTML = `
 
-return;
+   <div class="eyebrow">
+    deliveries
+   </div>
 
-}
+   <h2>
+    Ваши заказы
+   </h2>
 
-box.innerHTML =
-data.orders.map(
-courierOrderHTML
-).join("");
+   ${data.orders.map(
+    courierOrderHTML
+   ).join("")}
 
-}catch(e){
-
-toast(e.message);
-
-}
+  `;
 
 }
 
 
 function courierOrderHTML(o){
 
-let status={
-new:"Новый",
-assigned:"Назначен",
-accepted:"Принят",
-delivering:"В доставке",
-delivered:"Доставлено"
-}[o.status] || o.status;
+ let action = "";
 
-let buttons="";
+ if(
+  o.status ===
+  "assigned"
+ ){
 
-if(
-o.status==="assigned"
+  action = `
+
+   <button
+    class="btn btn-main"
+    onclick="
+     courierAction(
+      ${o.id},
+      'accept'
+     )
+    "
+   >
+    Принять заказ
+   </button>
+
+  `;
+
+ }
+
+ if(
+  o.status ===
+  "accepted"
+ ){
+
+  action = `
+
+   <button
+    class="btn btn-main"
+    onclick="
+     courierAction(
+      ${o.id},
+      'start'
+     )
+    "
+   >
+    Начать доставку
+   </button>
+
+  `;
+
+ }
+
+ if(
+  o.status ===
+  "delivering"
+ ){
+
+  action = `
+
+   <button
+    class="btn btn-green"
+    onclick="
+     courierAction(
+      ${o.id},
+      'complete'
+     )
+    "
+   >
+    ✓ Доставлено
+   </button>
+
+  `;
+
+ }
+
+
+ return `
+
+ <div
+  class="card"
+  style="
+   background:#0c1016;
+   margin-top:10px
+  "
+ >
+
+  <div class="row">
+
+   <div>
+
+    <div
+     style="
+      font-weight:700;
+      font-size:18px
+     "
+    >
+     #${o.id}
+     ·
+     ${escapeHTML(
+      o.customer_name
+     )}
+    </div>
+
+    <div
+     class="muted"
+     style="margin-top:6px"
+    >
+     📍 ${escapeHTML(o.address)}
+    </div>
+
+    <div
+     class="muted"
+     style="margin-top:6px"
+    >
+     ☎ ${escapeHTML(
+      o.customer_phone
+     )}
+    </div>
+
+   </div>
+
+   <span class="status">
+    ${o.status}
+   </span>
+
+  </div>
+
+  <div class="actions">
+
+   ${action}
+
+  </div>
+
+ </div>
+
+ `;
+
+}
+
+
+async function courierAction(
+ id,
+ action
 ){
 
-buttons+=`
+ try{
 
-<button
-class="primary"
-onclick="acceptOrder(${o.id})"
->
-✅ Принять заказ
-</button>
+  await api(
+   `/api/courier/orders/${id}/${action}`,
+   {
+    method:"POST"
+   }
+  );
 
-`;
+  toast(
+   "Статус обновлён"
+  );
+
+  await renderCourierOrders();
+
+ }
+ catch(error){
+
+  toast(
+   error.message
+  );
+
+ }
 
 }
 
-if(
-o.status==="accepted"
+
+/* =========================
+   ADMIN LOGIN
+========================= */
+
+async function bootAdmin(){
+
+ if(
+  role ===
+  "admin" &&
+  token
+ ){
+
+  try{
+
+   await api(
+    "/api/me"
+   );
+
+   showAdmin();
+
+   return;
+
+  }
+  catch{
+
+   localStorage.clear();
+
+  }
+
+ }
+
+ $("loginPage")
+  .classList.remove(
+   "hidden"
+  );
+
+ $("loginPage")
+  .innerHTML = `
+
+ <div class="auth-box">
+
+  <div class="logo">
+   RESTARAN<span>.</span>
+   <small class="muted">
+    ADMIN
+   </small>
+  </div>
+
+  <div class="hero"></div>
+
+  <div class="eyebrow">
+   private control center
+  </div>
+
+  <h1>
+   Админ-панель
+  </h1>
+
+  <div class="description">
+   Управление клиентами,
+   курьерами и заказами.
+  </div>
+
+  <div class="field">
+
+   <label>
+    Пароль
+   </label>
+
+   <input
+    id="adminPassword"
+    class="input"
+    type="password"
+    placeholder="••••••••"
+   >
+
+  </div>
+
+  <button
+   class="btn btn-main"
+   onclick="adminLogin()"
+  >
+
+   Войти
+
+  </button>
+
+ </div>
+
+ `;
+
+}
+
+
+async function adminLogin(){
+
+ try{
+
+  const data =
+   await fetch(
+    "/api/admin/login",
+    {
+     method:"POST",
+
+     headers:{
+      "Content-Type":
+       "application/json"
+     },
+
+     body:
+      JSON.stringify({
+       password:
+        $("adminPassword")
+         .value
+      })
+    }
+   )
+   .then(
+    r => r.json()
+   );
+
+  if(!data.token){
+
+   throw new Error(
+    data.detail ||
+    "Ошибка"
+   );
+
+  }
+
+  localStorage.setItem(
+   "restaran_token",
+   data.token
+  );
+
+  localStorage.setItem(
+   "restaran_role",
+   "admin"
+  );
+
+  token =
+   data.token;
+
+  role =
+   "admin";
+
+  showAdmin();
+
+ }
+ catch(error){
+
+  toast(
+   error.message
+  );
+
+ }
+
+}
+
+
+function showAdmin(){
+
+ $("loginPage")
+  .classList.add(
+   "hidden"
+  );
+
+ $("adminPage")
+  .classList.remove(
+   "hidden"
+  );
+
+ renderStats();
+
+ adminTab(
+  "orders"
+ );
+
+}
+
+
+/* =========================
+   ADMIN STATS
+========================= */
+
+async function renderStats(){
+
+ const s =
+  await api(
+   "/api/admin/stats"
+  );
+
+ $("stats")
+  .innerHTML = [
+
+   ["Клиенты",s.customers],
+
+   ["Курьеры",s.couriers],
+
+   ["Онлайн",s.online_couriers],
+
+   ["Ожидают проверки",
+    s.pending_couriers],
+
+   ["Активные заказы",
+    s.active_orders],
+
+   ["Закрытые",
+    s.closed_orders]
+
+  ].map(
+   x => `
+
+    <div class="card col-4">
+
+     <div class="muted">
+      ${x[0]}
+     </div>
+
+     <div class="stat-number">
+      ${x[1]}
+     </div>
+
+    </div>
+
+   `
+  ).join("");
+
+}
+
+
+/* =========================
+   ADMIN TABS
+========================= */
+
+async function adminTab(
+ tab
 ){
 
-buttons+=`
+ if(tab === "orders"){
 
-<button
-class="primary"
-onclick="startDelivery(${o.id})"
->
-🚚 Начать доставку
-</button>
+  const data =
+   await api(
+    "/api/admin/orders"
+   );
 
-`;
+  $("adminContent")
+   .innerHTML = `
+
+    <div class="card">
+
+     <div
+      class="row"
+      style="margin-bottom:15px"
+     >
+
+      <h2>
+       Заказы
+      </h2>
+
+      <button
+       class="btn btn-main"
+       style="width:auto"
+       onclick="newOrder()"
+      >
+       + Создать
+      </button>
+
+     </div>
+
+     <div class="table-wrap">
+
+      <table>
+
+       <thead>
+
+        <tr>
+
+         <th>
+          ID
+         </th>
+
+         <th>
+          Клиент
+         </th>
+
+         <th>
+          Курьер
+         </th>
+
+         <th>
+          Адрес
+         </th>
+
+         <th>
+          Сумма
+         </th>
+
+         <th>
+          Статус
+         </th>
+
+        </tr>
+
+       </thead>
+
+       <tbody>
+
+        ${data.orders.map(
+         o => `
+
+          <tr>
+
+           <td>
+            #${o.id}
+           </td>
+
+           <td>
+            ${escapeHTML(
+             o.customer_name
+            )}
+           </td>
+
+           <td>
+            ${
+             o.courier_name
+             ?
+             escapeHTML(
+              o.courier_name
+             )
+             :
+             "—"
+            }
+           </td>
+
+           <td>
+            ${escapeHTML(
+             o.address
+            )}
+           </td>
+
+           <td>
+            ${Number(
+             o.total
+            ).toFixed(2)}
+           </td>
+
+           <td>
+            <span class="status">
+             ${o.status}
+            </span>
+           </td>
+
+          </tr>
+
+         `
+        ).join("")}
+
+       </tbody>
+
+      </table>
+
+     </div>
+
+    </div>
+
+   `;
+
+ }
+
+
+ if(tab === "customers"){
+
+  const data =
+   await api(
+    "/api/admin/customers"
+   );
+
+  $("adminContent")
+   .innerHTML = `
+
+   <div class="card">
+
+    <div class="row">
+
+     <h2>
+      Клиенты
+     </h2>
+
+     <button
+      class="btn btn-main"
+      style="width:auto"
+      onclick="newCustomer()"
+     >
+      + Добавить
+     </button>
+
+    </div>
+
+    <div class="table-wrap">
+
+     <table>
+
+      <thead>
+
+       <tr>
+
+        <th>
+         Имя
+        </th>
+
+        <th>
+         Телефон
+        </th>
+
+        <th>
+         Дата
+        </th>
+
+       </tr>
+
+      </thead>
+
+      <tbody>
+
+       ${data.customers.map(
+        c => `
+
+        <tr>
+
+         <td>
+          ${escapeHTML(c.name)}
+         </td>
+
+         <td>
+          ${escapeHTML(c.phone)}
+         </td>
+
+         <td>
+          ${new Date(
+           c.created_at
+          ).toLocaleString()}
+         </td>
+
+        </tr>
+
+       `
+       ).join("")}
+
+      </tbody>
+
+     </table>
+
+    </div>
+
+   </div>
+
+  `;
+
+ }
+
+
+ if(tab === "couriers"){
+
+  const data =
+   await api(
+    "/api/admin/couriers"
+   );
+
+  $("adminContent")
+   .innerHTML = `
+
+   <div class="card">
+
+    <div class="row">
+
+     <h2>
+      Курьеры
+     </h2>
+
+     <button
+      class="btn btn-main"
+      style="width:auto"
+      onclick="newCourier()"
+     >
+      + Добавить
+     </button>
+
+    </div>
+
+    <div class="table-wrap">
+
+     <table>
+
+      <thead>
+
+       <tr>
+
+        <th>
+         Имя
+        </th>
+
+        <th>
+         Телефон
+        </th>
+
+        <th>
+         Онлайн
+        </th>
+
+        <th>
+         Проверка
+        </th>
+
+       </tr>
+
+      </thead>
+
+      <tbody>
+
+       ${data.couriers.map(
+        c => `
+
+        <tr>
+
+         <td>
+          ${escapeHTML(c.name)}
+         </td>
+
+         <td>
+          ${escapeHTML(c.phone)}
+         </td>
+
+         <td>
+          ${
+           c.online
+           ?
+           "🟢 Онлайн"
+           :
+           "⚪ Оффлайн"
+          }
+         </td>
+
+         <td>
+
+          ${
+           c.verified
+
+           ?
+
+           "✅ Подтверждён"
+
+           :
+
+           `
+           <button
+            class="btn btn-green"
+            style="
+             padding:8px 11px;
+             font-size:11px
+            "
+            onclick="
+             approveCourier(
+              ${c.id}
+             )
+            "
+           >
+            Проверить
+           </button>
+           `
+          }
+
+         </td>
+
+        </tr>
+
+       `
+       ).join("")}
+
+      </tbody>
+
+     </table>
+
+    </div>
+
+   </div>
+
+  `;
+
+ }
+
+
+ if(tab === "map"){
+
+  const data =
+   await api(
+    "/api/admin/couriers"
+   );
+
+  $("adminContent")
+   .innerHTML = `
+
+   <div class="card">
+
+    <div class="eyebrow">
+     live map
+    </div>
+
+    <h2>
+     Курьеры
+    </h2>
+
+    <div
+     id="adminMap"
+     class="map"
+    ></div>
+
+   </div>
+
+  `;
+
+  setTimeout(
+   () =>
+    renderAdminMap(
+     data.couriers
+    ),
+   50
+  );
+
+ }
 
 }
 
-if(
-o.status==="delivering"
+
+/* =========================
+   ADMIN MAP
+========================= */
+
+function renderAdminMap(
+ couriers
 ){
 
-buttons+=`
+ const map =
+  L.map(
+   "adminMap"
+  ).setView(
+   [40.1772,44.5035],
+   12
+  );
 
-<button
-class="primary"
-onclick="completeDelivery(${o.id})"
->
-✅ Доставлено
-</button>
+ L.tileLayer(
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  {
+   maxZoom:19
+  }
+ ).addTo(
+  map
+ );
 
-`;
+ couriers
+  .filter(
+   c => c.lat && c.lng
+  )
+  .forEach(
+   c => {
 
-}
+    L.marker([
+     c.lat,
+     c.lng
+    ])
+    .addTo(map)
+    .bindPopup(
+     `
+      <b>
+       ${escapeHTML(c.name)}
+      </b>
+      <br>
+      ${
+       c.online
+       ?
+       "🟢 Онлайн"
+       :
+       "⚪ Оффлайн"
+      }
+     `
+    );
 
-return `
-
-<div class="card">
-
-<span class="status">
-${escapeHtml(status)}
-</span>
-
-<div class="orderTitle">
-Заказ #${o.id}
-</div>
-
-<div class="row">
-
-<span class="muted">
-👤 Клиент
-</span>
-
-<b>
-${escapeHtml(
-o.customer_name || "—"
-)}
-</b>
-
-</div>
-
-<div class="row">
-
-<span class="muted">
-📞 Телефон
-</span>
-
-<b>
-${escapeHtml(
-o.customer_phone || "—"
-)}
-</b>
-
-</div>
-
-<div class="row">
-
-<span class="muted">
-📍 Адрес
-</span>
-
-<b>
-${escapeHtml(
-o.address || "—"
-)}
-</b>
-
-</div>
-
-${buttons}
-
-</div>
-
-`;
+   }
+  );
 
 }
 
 
-/* =====================================================
-COURIER ACTIONS
-===================================================== */
+/* =========================
+   ADMIN MODALS
+========================= */
 
-async function acceptOrder(id){
-
-try{
-
-await api(
-`/api/courier/orders/${id}/accept`,
-{
-method:"POST"
-}
-);
-
-toast(
-"Заказ принят"
-);
-
-loadCourierOrders();
-
-}catch(e){
-
-toast(e.message);
-
-}
-
-}
-
-
-async function startDelivery(id){
-
-try{
-
-await api(
-`/api/courier/orders/${id}/start`,
-{
-method:"POST"
-}
-);
-
-toast(
-"Доставка начата"
-);
-
-loadCourierOrders();
-
-}catch(e){
-
-toast(e.message);
-
-}
-
-}
-
-
-async function completeDelivery(id){
-
-try{
-
-await api(
-`/api/courier/orders/${id}/complete`,
-{
-method:"POST"
-}
-);
-
-toast(
-"Заказ отмечен доставленным"
-);
-
-loadCourierOrders();
-
-}catch(e){
-
-toast(e.message);
-
-}
-
-}
-
-
-/* =====================================================
-MAP
-===================================================== */
-
-async function mapPage(button){
-
-setActive(button);
-
-currentPage="map";
-
-content.innerHTML=`
-
-<div class="card">
-
-<h3>
-📍 Геопозиция
-</h3>
-
-<div id="map"></div>
-
-</div>
-
-`;
-
-map =
-L.map("map")
-.setView(
-[40.1792,44.4991],
-13
-);
-
-L.tileLayer(
-"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-{
-attribution:"© OpenStreetMap"
-}
-).addTo(map);
-
-try{
-
-if(me.role==="admin"){
-
-const data =
-await api(
-"/api/admin/couriers"
-);
-
-data.couriers.forEach(
-c=>{
-if(
-c.lat &&
-c.lon
+function openModal(
+ html
 ){
 
-updateMarker(
-c.id,
-c.name,
-c.lat,
-c.lon
-);
+ $("modalBox")
+  .innerHTML =
+  html;
 
-}
-}
-);
-
-}else{
-
-const data =
-await api("/api/orders");
-
-const order =
-data.orders.find(
-o=>
-o.courier_lat &&
-o.courier_lon
-);
-
-if(order){
-
-updateMarker(
-order.courier_id,
-order.courier_name,
-order.courier_lat,
-order.courier_lon
-);
-
-map.setView(
-[
-order.courier_lat,
-order.courier_lon
-],
-16
-);
-
-}
-
-}
-
-}catch(e){
-
-toast(e.message);
-
-}
+ $("modal")
+  .classList.remove(
+   "hidden"
+  );
 
 }
 
 
-function updateMarker(
-id,
-name,
-lat,
-lon
-){
+function closeModal(){
 
-if(!map)
-return;
-
-if(markers[id]){
-
-markers[id].setLatLng([
-lat,
-lon
-]);
-
-}else{
-
-markers[id]=
-L.marker([
-lat,
-lon
-])
-.addTo(map)
-.bindPopup(
-"🚴 "+
-escapeHtml(
-name || "Курьер"
-)
-);
-
-}
+ $("modal")
+  .classList.add(
+   "hidden"
+  );
 
 }
 
 
-/* =====================================================
-ADMIN
-===================================================== */
+function newCustomer(){
 
-async function adminPage(button){
+ openModal(`
 
-setActive(button);
+  <h2>
+   Новый клиент
+  </h2>
 
-currentPage="admin";
+  <div class="field">
 
-content.innerHTML=`
+   <label>
+    Имя
+   </label>
 
-<div class="card hero">
+   <input
+    id="newCustomerName"
+    class="input"
+   >
 
-<h1>
-Админ-панель 👑
-</h1>
+  </div>
 
-<p>
-Управление Delivery.
-</p>
+  <div class="field">
 
-</div>
+   <label>
+    Телефон
+   </label>
 
-<div
-id="stats"
-class="stats"
->
+   <input
+    id="newCustomerPhone"
+    class="input"
+   >
 
-<div class="stat">
-<div class="statNumber">—</div>
-<div class="statLabel">Клиенты</div>
-</div>
+  </div>
 
-<div class="stat">
-<div class="statNumber">—</div>
-<div class="statLabel">Курьеры</div>
-</div>
+  <div class="field">
 
-<div class="stat">
-<div class="statNumber">—</div>
-<div class="statLabel">Ожидают</div>
-</div>
+   <label>
+    PIN
+   </label>
 
-<div class="stat">
-<div class="statNumber">—</div>
-<div class="statLabel">Заказы</div>
-</div>
+   <input
+    id="newCustomerPin"
+    class="input"
+    inputmode="numeric"
+   >
 
-</div>
+  </div>
 
-<div class="card">
+  <div class="actions">
 
-<button
-class="action"
-onclick="adminCustomers()"
->
-👥 Клиенты
-</button>
+   <button
+    class="btn btn-main"
+    onclick="createCustomer()"
+   >
+    Создать
+   </button>
 
-<button
-class="action"
-onclick="adminCouriers()"
->
-🚴 Курьеры
-</button>
+   <button
+    class="btn btn-dark"
+    onclick="closeModal()"
+   >
+    Отмена
+   </button>
 
-<button
-class="action"
-onclick="createOrderPage()"
->
-➕ Создать заказ
-</button>
+  </div>
 
-<button
-class="action"
-onclick="adminOrders()"
->
-📦 Все заказы
-</button>
-
-<button
-class="action"
-onclick="mapPage()"
->
-🗺️ Карта курьеров
-</button>
-
-</div>
-
-`;
-
-try{
-
-const s =
-await api(
-"/api/admin/stats"
-);
-
-const nums =
-document.querySelectorAll(
-".statNumber"
-);
-
-nums[0].textContent=s.customers;
-nums[1].textContent=s.couriers;
-nums[2].textContent=s.pending_couriers;
-nums[3].textContent=s.active_orders;
-
-}catch(e){
-
-toast(e.message);
-
-}
-
-}
-
-
-/* =====================================================
-ADMIN CUSTOMERS
-===================================================== */
-
-async function adminCustomers(){
-
-const data =
-await api(
-"/api/admin/customers"
-);
-
-content.innerHTML=`
-
-<div class="card">
-
-<h2>
-👥 Клиенты
-</h2>
-
-<p class="muted">
-Добавь клиента заранее.
-После этого он сможет войти
-по своему номеру через Telegram.
-</p>
-
-<input
-id="customerName"
-class="input"
-placeholder="Имя клиента"
->
-
-<input
-id="customerPhone"
-class="input"
-placeholder="+374..."
->
-
-<button
-class="primary"
-onclick="createCustomer()"
->
-➕ Добавить клиента
-</button>
-
-</div>
-
-${
-data.customers.map(
-c=>`
-
-<div class="card">
-
-<div class="orderTitle">
-${escapeHtml(
-c.name || "Без имени"
-)}
-</div>
-
-<div class="muted">
-${escapeHtml(c.phone)}
-</div>
-
-<div class="muted">
-${
-c.telegram_id
-?"🟢 Telegram привязан"
-:"⚪ Не вошёл"
-}
-</div>
-
-</div>
-
-`
-).join("")
-}
-
-`;
+ `);
 
 }
 
 
 async function createCustomer(){
 
-const name =
-document
-.getElementById(
-"customerName"
-)
-.value.trim();
+ try{
 
-const phone =
-document
-.getElementById(
-"customerPhone"
-)
-.value.trim();
+  await api(
+   "/api/admin/customers",
+   {
+    method:"POST",
 
-try{
+    body:
+     JSON.stringify({
 
-await api(
-"/api/admin/customers",
-{
-method:"POST",
-headers:{
-"Content-Type":
-"application/json"
-},
-body:JSON.stringify({
-name,
-phone
-})
-}
-);
+      name:
+       $("newCustomerName")
+        .value,
 
-toast(
-"Клиент добавлен"
-);
+      phone:
+       $("newCustomerPhone")
+        .value,
 
-adminCustomers();
+      pin:
+       $("newCustomerPin")
+        .value
 
-}catch(e){
+     })
+   }
+  );
 
-toast(e.message);
+  closeModal();
 
-}
+  toast(
+   "Клиент добавлен"
+  );
 
-}
+  adminTab(
+   "customers"
+  );
 
+  renderStats();
 
-/* =====================================================
-ADMIN COURIERS
-===================================================== */
+ }
+ catch(error){
 
-async function adminCouriers(){
+  toast(
+   error.message
+  );
 
-const data =
-await api(
-"/api/admin/couriers"
-);
-
-content.innerHTML=`
-
-<div class="card">
-
-<h2>
-🚴 Курьеры
-</h2>
-
-<p class="muted">
-Здесь появляются заявки курьеров.
-</p>
-
-</div>
-
-${
-data.couriers.map(
-c=>`
-
-<div class="card">
-
-<div class="orderTitle">
-${escapeHtml(
-c.name || "Без имени"
-)}
-</div>
-
-<div class="row">
-
-<span class="muted">
-Телефон
-</span>
-
-<b>
-${escapeHtml(
-c.phone || "—"
-)}
-</b>
-
-</div>
-
-<div class="row">
-
-<span class="muted">
-Фото
-</span>
-
-<b>
-${c.photo_file_id
-?"📸 Получено"
-:"⚪ Нет"
-}
-</b>
-
-</div>
-
-<div class="row">
-
-<span class="muted">
-Статус
-</span>
-
-<b>
-${
-c.approved
-?"✅ Подтверждён"
-:"⏳ Ожидает"
-}
-</b>
-
-</div>
-
-${
-!c.approved
-?
-`
-<button
-class="primary"
-onclick="approveCourier(${c.telegram_id})"
->
-✅ Подтвердить курьера
-</button>
-`
-:""
-}
-
-</div>
-
-`
-).join("")
-}
-
-`;
+ }
 
 }
 
 
-async function approveCourier(id){
+function newCourier(){
 
-try{
+ openModal(`
 
-await api(
-`/api/admin/couriers/${id}/approve`,
-{
-method:"POST"
-}
-);
+  <h2>
+   Новый курьер
+  </h2>
 
-toast(
-"Курьер подтверждён"
-);
+  <div class="field">
 
-adminCouriers();
+   <label>
+    Имя
+   </label>
 
-}catch(e){
+   <input
+    id="newCourierName"
+    class="input"
+   >
 
-toast(e.message);
+  </div>
 
-}
+  <div class="field">
 
-}
+   <label>
+    Телефон
+   </label>
 
+   <input
+    id="newCourierPhone"
+    class="input"
+   >
 
-/* =====================================================
-CREATE ORDER
-===================================================== */
+  </div>
 
-async function createOrderPage(){
+  <div class="field">
 
-const customers =
-await api(
-"/api/admin/customers"
-);
+   <label>
+    PIN
+   </label>
 
-const couriers =
-await api(
-"/api/admin/couriers"
-);
+   <input
+    id="newCourierPin"
+    class="input"
+    inputmode="numeric"
+   >
 
-content.innerHTML=`
+  </div>
 
-<div class="card">
+  <div class="actions">
 
-<h2>
-📦 Новый заказ
-</h2>
+   <button
+    class="btn btn-main"
+    onclick="createCourier()"
+   >
+    Создать
+   </button>
 
-<select
-id="orderCustomer"
-class="input"
->
+   <button
+    class="btn btn-dark"
+    onclick="closeModal()"
+   >
+    Отмена
+   </button>
 
-<option value="">
-Выберите клиента
-</option>
+  </div>
 
-${
-customers.customers.map(
-c=>
-`
-<option value="${c.id}">
-${escapeHtml(
-c.name || c.phone
-)}
-</option>
-`
-).join("")
+ `);
+
 }
 
-</select>
 
-<select
-id="orderCourier"
-class="input"
->
+async function createCourier(){
 
-<option value="">
-Без курьера
-</option>
+ try{
 
-${
-couriers.couriers
-.filter(c=>c.approved)
-.map(
-c=>
-`
-<option value="${c.id}">
-${escapeHtml(
-c.name || c.phone
-)}
-</option>
-`
-).join("")
+  await api(
+   "/api/admin/couriers",
+   {
+    method:"POST",
+
+    body:
+     JSON.stringify({
+
+      name:
+       $("newCourierName")
+        .value,
+
+      phone:
+       $("newCourierPhone")
+        .value,
+
+      pin:
+       $("newCourierPin")
+        .value
+
+     })
+   }
+  );
+
+  closeModal();
+
+  toast(
+   "Курьер добавлен"
+  );
+
+  adminTab(
+   "couriers"
+  );
+
+  renderStats();
+
+ }
+ catch(error){
+
+  toast(
+   error.message
+  );
+
+ }
+
 }
 
-</select>
 
-<input
-id="orderAddress"
-class="input"
-placeholder="Адрес доставки"
->
+async function approveCourier(
+ id
+){
 
-<input
-id="orderComment"
-class="input"
-placeholder="Комментарий"
->
+ try{
 
-<button
-class="primary"
-onclick="createOrder()"
->
-📦 Создать заказ
-</button>
+  await api(
+   `/api/admin/couriers/${id}/approve`,
+   {
+    method:"POST"
+   }
+  );
 
-</div>
+  toast(
+   "Курьер подтверждён"
+  );
 
-`;
+  adminTab(
+   "couriers"
+  );
+
+  renderStats();
+
+ }
+ catch(error){
+
+  toast(
+   error.message
+  );
+
+ }
+
+}
+
+
+/* =========================
+   NEW ORDER
+========================= */
+
+async function newOrder(){
+
+ const [
+  customers,
+  couriers
+ ] = await Promise.all([
+
+  api(
+   "/api/admin/customers"
+  ),
+
+  api(
+   "/api/admin/couriers"
+  )
+
+ ]);
+
+
+ openModal(`
+
+  <h2>
+   Новый заказ
+  </h2>
+
+  <div class="field">
+
+   <label>
+    Клиент
+   </label>
+
+   <select
+    id="orderCustomer"
+    class="input"
+   >
+
+    ${
+     customers.customers.map(
+      c => `
+
+       <option
+        value="${c.id}"
+       >
+        ${escapeHTML(c.name)}
+        ·
+        ${escapeHTML(c.phone)}
+       </option>
+
+      `
+     ).join("")
+    }
+
+   </select>
+
+  </div>
+
+
+  <div class="field">
+
+   <label>
+    Курьер
+   </label>
+
+   <select
+    id="orderCourier"
+    class="input"
+   >
+
+    <option value="">
+     Не назначать
+    </option>
+
+    ${
+     couriers.couriers
+      .filter(
+       c => c.verified
+      )
+      .map(
+       c => `
+
+        <option
+         value="${c.id}"
+        >
+         ${escapeHTML(c.name)}
+         ·
+         ${
+          c.online
+          ?
+          "онлайн"
+          :
+          "оффлайн"
+         }
+        </option>
+
+       `
+      ).join("")
+    }
+
+   </select>
+
+  </div>
+
+
+  <div class="field">
+
+   <label>
+    Адрес доставки
+   </label>
+
+   <input
+    id="orderAddress"
+    class="input"
+   >
+
+  </div>
+
+
+  <div class="field">
+
+   <label>
+    Комментарий
+   </label>
+
+   <input
+    id="orderComment"
+    class="input"
+   >
+
+  </div>
+
+
+  <div class="field">
+
+   <label>
+    Сумма
+   </label>
+
+   <input
+    id="orderTotal"
+    class="input"
+    type="number"
+    step="0.01"
+   >
+
+  </div>
+
+
+  <div class="actions">
+
+   <button
+    class="btn btn-main"
+    onclick="createOrder()"
+   >
+    Создать заказ
+   </button>
+
+   <button
+    class="btn btn-dark"
+    onclick="closeModal()"
+   >
+    Отмена
+   </button>
+
+  </div>
+
+ `);
 
 }
 
 
 async function createOrder(){
 
-const customer =
-document
-.getElementById(
-"orderCustomer"
-)
-.value;
+ try{
 
-const courier =
-document
-.getElementById(
-"orderCourier"
-)
-.value;
+  await api(
+   "/api/admin/orders",
+   {
+    method:"POST",
 
-const address =
-document
-.getElementById(
-"orderAddress"
-)
-.value;
+    body:
+     JSON.stringify({
 
-const comment =
-document
-.getElementById(
-"orderComment"
-)
-.value;
+      customer_id:
+       Number(
+        $("orderCustomer")
+         .value
+       ),
 
-if(!customer){
+      courier_id:
+       $("orderCourier")
+        .value
+        ?
+        Number(
+         $("orderCourier")
+          .value
+        )
+        :
+        null,
 
-toast(
-"Выберите клиента"
-);
+      address:
+       $("orderAddress")
+        .value,
 
-return;
+      comment:
+       $("orderComment")
+        .value,
 
-}
+      total:
+       Number(
+        $("orderTotal")
+         .value
+       ) || 0
 
-try{
+     })
+   }
+  );
 
-await api(
-"/api/admin/orders",
-{
-method:"POST",
-headers:{
-"Content-Type":
-"application/json"
-},
-body:JSON.stringify({
-customer_id:
-Number(customer),
+  closeModal();
 
-courier_id:
-courier
-?Number(courier)
-:null,
+  toast(
+   "Заказ создан"
+  );
 
-address,
-comment
-})
-}
-);
+  adminTab(
+   "orders"
+  );
 
-toast(
-"Заказ создан"
-);
+  renderStats();
 
-adminOrders();
+ }
+ catch(error){
 
-}catch(e){
+  toast(
+   error.message
+  );
 
-toast(e.message);
-
-}
+ }
 
 }
 
 
-/* =====================================================
-ADMIN ORDERS
-===================================================== */
-
-async function adminOrders(){
-
-const data =
-await api(
-"/api/admin/orders"
-);
-
-content.innerHTML=`
-
-<div class="card">
-
-<h2>
-📦 Заказы
-</h2>
-
-</div>
-
-${
-data.orders.map(
-o=>`
-
-<div class="card">
-
-<span class="status">
-${escapeHtml(o.status)}
-</span>
-
-<div class="orderTitle">
-Заказ #${o.id}
-</div>
-
-<div class="row">
-
-<span class="muted">
-Клиент
-</span>
-
-<b>
-${escapeHtml(
-o.customer_name
-)}
-</b>
-
-</div>
-
-<div class="row">
-
-<span class="muted">
-Курьер
-</span>
-
-<b>
-${escapeHtml(
-o.courier_name ||
-"Не назначен"
-)}
-</b>
-
-</div>
-
-<div class="row">
-
-<span class="muted">
-Адрес
-</span>
-
-<b>
-${escapeHtml(
-o.address || "—"
-)}
-</b>
-
-</div>
-
-<div class="row">
-
-<span class="muted">
-Подтверждение курьера
-</span>
-
-<b>
-${
-o.courier_confirmed
-?"✅"
-:"⏳"
-}
-</b>
-
-</div>
-
-<div class="row">
-
-<span class="muted">
-Получение клиентом
-</span>
-
-<b>
-${
-o.customer_confirmed
-?"✅"
-:"⏳"
-}
-</b>
-
-</div>
-
-</div>
-
-`
-).join("")
-}
-
-`;
-
-}
-
-
-/* =====================================================
-NAV
-===================================================== */
-
-function ordersPage(button){
-
-setActive(button);
-
-if(me.role==="admin"){
-
-adminOrders();
-
-}else if(
-me.role==="courier"
-){
-
-courierPage(button);
-
-}else{
-
-home(button);
-
-}
-
-}
-
-
-function setActive(button){
-
-document
-.querySelectorAll(".nav button")
-.forEach(
-b=>b.classList.remove("active")
-);
-
-if(button)
-button.classList.add("active");
-
-}
-
-
-/* =====================================================
-WEBSOCKET
-===================================================== */
+/* =========================
+   WEBSOCKET
+========================= */
 
 function connectSocket(){
 
-const protocol =
-location.protocol==="https:"
-?"wss:"
-:"ws:";
+ try{
 
-socket =
-new WebSocket(
-`${protocol}//${location.host}/ws`
-);
+  socket =
+   new WebSocket(
+    (
+     location.protocol ===
+     "https:"
+     ?
+     "wss://"
+     :
+     "ws://"
+    )
+    +
+    location.host
+    +
+    "/ws"
+   );
 
-socket.onmessage =
-event=>{
 
-const data =
-JSON.parse(event.data);
+  socket.onopen =
+   () =>
+    socket.send(
+     "connected"
+    );
 
-if(
-data.type==="courier_location"
+
+  socket.onmessage =
+   async event => {
+
+    const data =
+     JSON.parse(
+      event.data
+     );
+
+
+    if(
+     data.type ===
+     "courier_location"
+    ){
+
+     if(
+      role ===
+      "customer"
+     ){
+
+      await renderCustomerOrders();
+
+      if(
+       data.lat &&
+       data.lng
+      ){
+
+       showCustomerMap(
+        data.lat,
+        data.lng
+       );
+
+      }
+
+     }
+
+    }
+
+
+    if(
+     data.type ===
+     "order_updated" ||
+     data.type ===
+     "new_order"
+    ){
+
+     if(
+      role ===
+      "customer"
+     ){
+
+      await renderCustomerOrders();
+
+     }
+
+     if(
+      role ===
+      "courier"
+     ){
+
+      await renderCourierOrders();
+
+     }
+
+     if(
+      role ===
+      "admin"
+     ){
+
+      await renderStats();
+
+      await adminTab(
+       "orders"
+      );
+
+     }
+
+    }
+
+   };
+
+ }
+ catch{
+
+ }
+
+}
+
+
+/* =========================
+   SECURITY
+========================= */
+
+function escapeHTML(
+ text
 ){
 
-if(currentPage==="map"){
-
-updateMarker(
-data.courier_id,
-"",
-data.lat,
-data.lon
-);
-
-}
-
-if(me.role==="customer"){
-
-loadCustomerOrders();
-
-}
-
-}
-
-if(
-data.type==="new_order" ||
-data.type==="order_update"
-){
-
-if(
-me.role==="customer" &&
-currentPage==="home"
-){
-
-loadCustomerOrders();
-
-}
-
-if(
-me.role==="courier" &&
-currentPage==="courier"
-){
-
-loadCourierOrders();
-
-}
-
-if(
-me.role==="admin" &&
-currentPage==="admin"
-){
-
-adminPage();
-
-}
-
-}
-
-};
-
-socket.onclose=()=>{
-
-setTimeout(
-connectSocket,
-3000
-);
-
-};
+ return String(
+  text ?? ""
+ )
+ .replace(
+  /[&<>"']/g,
+  char =>
+   ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#039;"
+   })[char]
+ );
 
 }
 
 
-/* =====================================================
-ESCAPE
-===================================================== */
+/* =========================
+   START
+========================= */
 
-function escapeHtml(value){
-
-return String(
-value ?? ""
-)
-.replaceAll("&","&amp;")
-.replaceAll("<","&lt;")
-.replaceAll(">","&gt;")
-.replaceAll('"',"&quot;")
-.replaceAll("'","&#039;");
-
-}
-
-
-/* =====================================================
-START
-===================================================== */
-
-init();
+boot();
 
 </script>
 
 </body>
-
     </html>
