@@ -1,4 +1,3 @@
-# main.py
 import os
 import re
 import json
@@ -8,13 +7,24 @@ import hashlib
 import secrets
 import sqlite3
 import asyncio
-from urllib.parse import parse_qsl
 from contextlib import contextmanager
+from urllib.parse import parse_qsl
 
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Header,
+)
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from telegram import Update, KeyboardButton, ReplyKeyboardMarkup, WebAppInfo
+
+from telegram import (
+    Update,
+    KeyboardButton,
+    ReplyKeyboardMarkup,
+    WebAppInfo,
+)
+
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -22,129 +32,273 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
+
 import uvicorn
 
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "")
-WEB_APP_URL = os.getenv("RENDER_EXTERNAL_URL", "").rstrip("/")
-DB_PATH = os.getenv("DB_PATH", "restaran.db")
+# =========================================================
+# CONFIG
+# =========================================================
 
-ADMIN_IDS = {
+BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
+
+WEB_APP_URL = os.getenv(
+    "WEB_APP_URL",
+    "https://restaran-xtny.onrender.com"
+).strip()
+
+DATABASE = os.getenv(
+    "DATABASE_PATH",
+    "restaran.db"
+)
+
+DEFAULT_ADMIN_IDS = {
     8357023784,
     7003441441,
 }
 
-app = FastAPI(title="RESTARAN")
-bot_app = None
+
+def parse_admin_ids():
+
+    raw = os.getenv(
+        "ADMIN_IDS",
+        ""
+    ).strip()
+
+    if not raw:
+        return DEFAULT_ADMIN_IDS.copy()
+
+    result = set()
+
+    for item in raw.split(","):
+
+        item = item.strip()
+
+        if not item:
+            continue
+
+        try:
+            result.add(int(item))
+        except ValueError:
+            pass
+
+    return result or DEFAULT_ADMIN_IDS.copy()
 
 
-# ============================================================
+ADMIN_IDS = parse_admin_ids()
+
+
+# =========================================================
+# FASTAPI
+# =========================================================
+
+app = FastAPI(
+    title="RESTARAN",
+    version="2.0"
+)
+
+
+# =========================================================
 # DATABASE
-# ============================================================
+# =========================================================
 
 @contextmanager
 def db():
-    conn = sqlite3.connect(DB_PATH, timeout=30)
-    conn.row_factory = sqlite3.Row
+
+    connection = sqlite3.connect(
+        DATABASE,
+        timeout=30,
+        check_same_thread=False
+    )
+
+    connection.row_factory = sqlite3.Row
 
     try:
-        yield conn
-        conn.commit()
+        yield connection
+        connection.commit()
+
     except Exception:
-        conn.rollback()
+        connection.rollback()
         raise
+
     finally:
-        conn.close()
+        connection.close()
+
+
+def column_exists(
+    connection,
+    table,
+    column
+):
+
+    rows = connection.execute(
+        f"PRAGMA table_info({table})"
+    ).fetchall()
+
+    return any(
+        row["name"] == column
+        for row in rows
+    )
+
+
+def add_column_if_missing(
+    connection,
+    table,
+    column,
+    definition
+):
+
+    if not column_exists(
+        connection,
+        table,
+        column
+    ):
+
+        connection.execute(
+            f"""
+            ALTER TABLE {table}
+            ADD COLUMN {column} {definition}
+            """
+        )
 
 
 def init_db():
-    with db() as conn:
 
-        conn.execute("""
+    with db() as c:
+
+        c.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
-                phone TEXT UNIQUE,
+                phone TEXT NOT NULL,
                 pin_hash TEXT,
                 pin_plain TEXT,
-                role TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'customer',
                 telegram_id INTEGER,
-                active INTEGER DEFAULT 1,
-                created_at REAL NOT NULL
+                active INTEGER NOT NULL DEFAULT 1,
+                created_at INTEGER NOT NULL
             )
         """)
 
-        conn.execute("""
+        c.execute("""
             CREATE TABLE IF NOT EXISTS couriers (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
-                approved INTEGER DEFAULT 0,
-                online INTEGER DEFAULT 0,
+                approved INTEGER NOT NULL DEFAULT 0,
+                online INTEGER NOT NULL DEFAULT 0,
                 lat REAL,
                 lon REAL,
-                updated_at REAL,
-                active INTEGER DEFAULT 1
+                updated_at INTEGER,
+                active INTEGER NOT NULL DEFAULT 1
             )
         """)
 
-        conn.execute("""
+        c.execute("""
             CREATE TABLE IF NOT EXISTS orders (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 customer_id INTEGER NOT NULL,
                 courier_id INTEGER,
-                title TEXT NOT NULL,
-                address TEXT NOT NULL,
+                title TEXT,
+                address TEXT,
                 price REAL DEFAULT 0,
                 status TEXT DEFAULT 'new',
-                created_at REAL NOT NULL,
+                created_at INTEGER NOT NULL,
                 customer_confirmed INTEGER DEFAULT 0,
-                closed_at REAL
+                closed_at INTEGER
             )
         """)
 
-        conn.execute("""
+        c.execute("""
             CREATE TABLE IF NOT EXISTS sessions (
                 token TEXT PRIMARY KEY,
                 user_id INTEGER NOT NULL,
                 role TEXT NOT NULL,
-                created_at REAL NOT NULL
+                created_at INTEGER NOT NULL
             )
         """)
 
-        migrations = [
-            ("users", "pin_plain", "TEXT"),
-            ("users", "telegram_id", "INTEGER"),
-            ("users", "active", "INTEGER DEFAULT 1"),
-            ("couriers", "lat", "REAL"),
-            ("couriers", "lon", "REAL"),
-            ("couriers", "updated_at", "REAL"),
-            ("couriers", "active", "INTEGER DEFAULT 1"),
-            ("orders", "customer_confirmed", "INTEGER DEFAULT 0"),
-            ("orders", "closed_at", "REAL"),
-        ]
+        add_column_if_missing(
+            c,
+            "users",
+            "pin_plain",
+            "TEXT"
+        )
 
-        for table, column, definition in migrations:
-            columns = conn.execute(
-                f"PRAGMA table_info({table})"
-            ).fetchall()
+        add_column_if_missing(
+            c,
+            "users",
+            "telegram_id",
+            "INTEGER"
+        )
 
-            names = {row["name"] for row in columns}
+        add_column_if_missing(
+            c,
+            "users",
+            "active",
+            "INTEGER NOT NULL DEFAULT 1"
+        )
 
-            if column not in names:
-                conn.execute(
-                    f"ALTER TABLE {table} ADD COLUMN {column} {definition}"
-                )
+        add_column_if_missing(
+            c,
+            "orders",
+            "customer_confirmed",
+            "INTEGER DEFAULT 0"
+        )
+
+        add_column_if_missing(
+            c,
+            "orders",
+            "closed_at",
+            "INTEGER"
+        )
+
+        c.execute("""
+            CREATE INDEX IF NOT EXISTS
+            idx_users_phone
+            ON users(phone)
+        """)
+
+        c.execute("""
+            CREATE INDEX IF NOT EXISTS
+            idx_users_telegram
+            ON users(telegram_id)
+        """)
+
+        c.execute("""
+            CREATE INDEX IF NOT EXISTS
+            idx_orders_customer
+            ON orders(customer_id)
+        """)
+
+        c.execute("""
+            CREATE INDEX IF NOT EXISTS
+            idx_orders_status
+            ON orders(status)
+        """)
 
 
-# ============================================================
+init_db()
+
+
+# =========================================================
 # HELPERS
-# ============================================================
+# =========================================================
+
+def now():
+    return int(time.time())
+
 
 def norm_phone(phone):
-    return re.sub(r"\D", "", phone or "")
+
+    return re.sub(
+        r"\D",
+        "",
+        phone or ""
+    )
 
 
 def hash_pin(pin):
+
     salt = secrets.token_hex(16)
 
     digest = hashlib.sha256(
@@ -154,34 +308,156 @@ def hash_pin(pin):
     return salt + ":" + digest
 
 
-def check_pin(pin, stored):
-    try:
-        salt, digest = stored.split(":", 1)
+def check_pin(
+    pin,
+    stored
+):
 
-        actual = hashlib.sha256(
+    if not stored:
+        return False
+
+    try:
+
+        salt, digest = stored.split(
+            ":",
+            1
+        )
+
+        calculated = hashlib.sha256(
             (salt + pin).encode()
         ).hexdigest()
 
-        return hmac.compare_digest(actual, digest)
+        return hmac.compare_digest(
+            calculated,
+            digest
+        )
 
     except Exception:
+
         return False
 
 
-def new_token():
-    return secrets.token_urlsafe(48)
+def create_session(
+    user_id,
+    role
+):
+
+    token = secrets.token_urlsafe(48)
+
+    with db() as c:
+
+        c.execute(
+            """
+            INSERT INTO sessions(
+                token,
+                user_id,
+                role,
+                created_at
+            )
+            VALUES(?,?,?,?)
+            """,
+            (
+                token,
+                user_id,
+                role,
+                now()
+            )
+        )
+
+    return token
 
 
-def validate_init_data(init_data):
+def get_auth(
+    authorization: str | None
+):
+
+    if not authorization:
+        raise HTTPException(
+            401,
+            "Требуется авторизация"
+        )
+
+    if not authorization.startswith(
+        "Bearer "
+    ):
+        raise HTTPException(
+            401,
+            "Неверный токен"
+        )
+
+    token = authorization[
+        7:
+    ].strip()
+
+    if not token:
+        raise HTTPException(
+            401,
+            "Пустой токен"
+        )
+
+    with db() as c:
+
+        row = c.execute(
+            """
+            SELECT
+                s.*,
+                u.name,
+                u.phone,
+                u.active
+            FROM sessions s
+            JOIN users u
+                ON u.id=s.user_id
+            WHERE s.token=?
+            """,
+            (token,)
+        ).fetchone()
+
+    if not row:
+        raise HTTPException(
+            401,
+            "Сессия не найдена"
+        )
+
+    if not row["active"]:
+        raise HTTPException(
+            403,
+            "Аккаунт отключён"
+        )
+
+    return row
+
+
+def admin_only(
+    auth
+):
+
+    if auth["role"] != "admin":
+
+        raise HTTPException(
+            403,
+            "Доступ только для администратора"
+        )
+
+
+# =========================================================
+# TELEGRAM INIT DATA
+# =========================================================
+
+def validate_init_data(
+    init_data
+):
 
     if not BOT_TOKEN:
+
         raise ValueError(
             "BOT_TOKEN не задан на Render"
         )
 
     if not init_data:
+
         raise ValueError(
-            "Telegram initData отсутствует"
+            "Telegram initData отсутствует. "
+            "Откройте Web App через Telegram."
         )
 
     data = dict(
@@ -191,16 +467,21 @@ def validate_init_data(init_data):
         )
     )
 
-    received_hash = data.pop("hash", None)
+    received_hash = data.pop(
+        "hash",
+        None
+    )
 
     if not received_hash:
+
         raise ValueError(
             "Hash отсутствует"
         )
 
     check_string = "\n".join(
         f"{key}={value}"
-        for key, value in sorted(data.items())
+        for key, value
+        in sorted(data.items())
     )
 
     secret_key = hmac.new(
@@ -219,38 +500,54 @@ def validate_init_data(init_data):
         calculated_hash,
         received_hash
     ):
+
         raise ValueError(
             "Неверная подпись Telegram. "
             "Проверьте BOT_TOKEN на Render."
         )
 
     try:
+
         auth_date = int(
-            data.get("auth_date", "0")
+            data.get(
+                "auth_date",
+                "0"
+            )
         )
+
     except Exception:
+
         auth_date = 0
 
     if not auth_date:
+
         raise ValueError(
             "auth_date отсутствует"
         )
 
     if time.time() - auth_date > 86400:
+
         raise ValueError(
             "Telegram initData устарел"
         )
 
     try:
+
         user = json.loads(
-            data.get("user", "{}")
+            data.get(
+                "user",
+                "{}"
+            )
         )
+
     except Exception:
+
         raise ValueError(
-            "Невозможно прочитать Telegram user"
+            "Не удалось прочитать Telegram user"
         )
 
     if not user.get("id"):
+
         raise ValueError(
             "Telegram user отсутствует"
         )
@@ -258,463 +555,219 @@ def validate_init_data(init_data):
     return user
 
 
-def auth_user(authorization):
-
-    if not authorization:
-        raise HTTPException(
-            401,
-            "Нет авторизации"
-        )
-
-    token = authorization.replace(
-        "Bearer ",
-        ""
-    ).strip()
-
-    with db() as conn:
-
-        row = conn.execute("""
-            SELECT
-                sessions.*,
-                users.name,
-                users.phone,
-                users.active
-            FROM sessions
-            JOIN users
-                ON users.id = sessions.user_id
-            WHERE sessions.token = ?
-        """, (token,)).fetchone()
-
-    if not row:
-        raise HTTPException(
-            401,
-            "Сессия недействительна"
-        )
-
-    if not row["active"]:
-        raise HTTPException(
-            403,
-            "Аккаунт деактивирован"
-        )
-
-    return dict(row)
-
-
-def admin_only(user):
-
-    if user["role"] != "admin":
-        raise HTTPException(
-            403,
-            "Только администратор"
-        )
-
-
-# ============================================================
+# =========================================================
 # MODELS
-# ============================================================
+# =========================================================
 
-class LoginIn(BaseModel):
+class LoginRequest(BaseModel):
+
+    phone: str
+    pin: str
+
+
+class CustomerCreate(BaseModel):
+
+    name: str
     phone: str
     pin: str
 
 
 class AdminWebLogin(BaseModel):
+
     init_data: str
 
 
-class CustomerCreate(BaseModel):
-    name: str
-    phone: str
-    pin: str
-
-
-class CourierCreate(BaseModel):
-    name: str
-    phone: str
-    pin: str = ""
-
-
-class OrderCreate(BaseModel):
-    phone: str
-    title: str
-    address: str
-    price: float = 0
-
-
-class AssignIn(BaseModel):
-    courier_id: int
-
-
-class OnlineIn(BaseModel):
-    online: bool
-
-
-class LocationIn(BaseModel):
-    lat: float
-    lon: float
-
-
-# ============================================================
-# TELEGRAM
-# ============================================================
-
-async def start_command(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    if not WEB_APP_URL:
-
-        await update.message.reply_text(
-            "Web App URL ещё не настроен."
-        )
-
-        return
-
-    keyboard = [[
-        KeyboardButton(
-            "🍽 Открыть приложение",
-            web_app=WebAppInfo(
-                url=WEB_APP_URL
-            )
-        )
-    ]]
-
-    await update.message.reply_text(
-        "Добро пожаловать в RESTARAN.",
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard,
-            resize_keyboard=True
-        )
-    )
-
-
-async def random_command(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    keyboard = [[
-        KeyboardButton(
-            "📱 Поделиться контактом",
-            request_contact=True
-        )
-    ]]
-
-    await update.message.reply_text(
-        "Поделитесь контактом клиента, "
-        "чтобы получить его PIN.",
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard,
-            resize_keyboard=True
-        )
-    )
-
-
-async def contact_handler(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    if not update.message:
-        return
-
-    if not update.message.contact:
-        return
-
-    phone = norm_phone(
-        update.message.contact.phone_number
-    )
-
-    with db() as conn:
-
-        row = conn.execute("""
-            SELECT
-                name,
-                phone,
-                pin_plain
-            FROM users
-            WHERE role = 'customer'
-              AND phone = ?
-              AND active = 1
-        """, (phone,)).fetchone()
-
-    if not row:
-
-        await update.message.reply_text(
-            "Клиент с таким номером не найден."
-        )
-
-        return
-
-    await update.message.reply_text(
-        "Клиент: "
-        + str(row["name"])
-        + "\nТелефон: "
-        + str(row["phone"])
-        + "\nPIN: "
-        + str(row["pin_plain"] or "—")
-    )
-
-
-# ============================================================
-# STARTUP
-# ============================================================
-
-@app.on_event("startup")
-async def startup():
-
-    init_db()
-
-    asyncio.create_task(
-        cleanup_loop()
-    )
-
-    global bot_app
-
-    if not BOT_TOKEN:
-        return
-
-    bot_app = (
-        Application
-        .builder()
-        .token(BOT_TOKEN)
-        .build()
-    )
-
-    bot_app.add_handler(
-        CommandHandler(
-            "start",
-            start_command
-        )
-    )
-
-    bot_app.add_handler(
-        CommandHandler(
-            "random",
-            random_command
-        )
-    )
-
-    bot_app.add_handler(
-        MessageHandler(
-            filters.CONTACT,
-            contact_handler
-        )
-    )
-
-    await bot_app.initialize()
-    await bot_app.start()
-
-    if bot_app.updater:
-        await bot_app.updater.start_polling()
-
-
-@app.on_event("shutdown")
-async def shutdown():
-
-    global bot_app
-
-    if not bot_app:
-        return
-
-    try:
-
-        if bot_app.updater:
-            await bot_app.updater.stop()
-
-        await bot_app.stop()
-        await bot_app.shutdown()
-
-    except Exception:
-        pass
-
-
-async def cleanup_loop():
-
-    while True:
-
-        try:
-
-            with db() as conn:
-
-                conn.execute("""
-                    DELETE FROM orders
-                    WHERE status = 'closed'
-                      AND closed_at IS NOT NULL
-                      AND closed_at <= ?
-                """, (
-                    time.time() - 300,
-                ))
-
-        except Exception:
-            pass
-
-        await asyncio.sleep(30)
-
-
-# ============================================================
-# FRONT PAGE
-# ============================================================
+# =========================================================
+# STATIC
+# =========================================================
 
 @app.get("/")
 async def index():
+
     return FileResponse(
         "index.html"
     )
 
 
-# ============================================================
-# AUTH
-# ============================================================
+# =========================================================
+# NORMAL LOGIN
+# =========================================================
 
 @app.post("/api/login")
-async def login(data: LoginIn):
+async def login(
+    payload: LoginRequest
+):
 
     phone = norm_phone(
-        data.phone
+        payload.phone
     )
 
-    with db() as conn:
+    pin = payload.pin.strip()
 
-        user = conn.execute("""
+    if not phone:
+
+        raise HTTPException(
+            400,
+            "Введите номер телефона"
+        )
+
+    if not pin:
+
+        raise HTTPException(
+            400,
+            "Введите PIN"
+        )
+
+    with db() as c:
+
+        user = c.execute(
+            """
             SELECT *
             FROM users
-            WHERE phone = ?
-              AND active = 1
-              AND role IN ('customer','courier')
-        """, (phone,)).fetchone()
+            WHERE phone=?
+              AND active=1
+            LIMIT 1
+            """,
+            (phone,)
+        ).fetchone()
 
     if not user:
 
         raise HTTPException(
             401,
-            "Неверный номер или PIN"
-        )
-
-    if not user["pin_hash"]:
-
-        raise HTTPException(
-            401,
-            "PIN не установлен"
+            "Пользователь не найден"
         )
 
     if not check_pin(
-        data.pin,
+        pin,
         user["pin_hash"]
     ):
 
         raise HTTPException(
             401,
-            "Неверный номер или PIN"
+            "Неверный PIN"
         )
 
-    token = new_token()
-
-    with db() as conn:
-
-        conn.execute("""
-            INSERT INTO sessions(
-                token,
-                user_id,
-                role,
-                created_at
-            )
-            VALUES(?,?,?,?)
-        """, (
-            token,
-            user["id"],
-            user["role"],
-            time.time()
-        ))
+    token = create_session(
+        user["id"],
+        user["role"]
+    )
 
     return {
+        "ok": True,
         "token": token,
-        "role": user["role"]
+        "role": user["role"],
+        "user": {
+            "id": user["id"],
+            "name": user["name"],
+            "phone": user["phone"]
+        }
     }
 
 
+# =========================================================
+# ME
+# =========================================================
+
+@app.get("/api/me")
+async def me(
+    authorization: str = Header(None)
+):
+
+    auth = get_auth(
+        authorization
+    )
+
+    return {
+        "ok": True,
+        "role": auth["role"],
+        "user": {
+            "id": auth["user_id"],
+            "name": auth["name"],
+            "phone": auth["phone"]
+        }
+    }
+
+
+# =========================================================
+# ADMIN TELEGRAM LOGIN
+# =========================================================
+
 @app.post("/api/admin/web-login")
 async def admin_web_login(
-    data: AdminWebLogin
+    payload: AdminWebLogin
 ):
 
     try:
 
-        tg_user = validate_init_data(
-            data.init_data
+        telegram_user = validate_init_data(
+            payload.init_data
         )
 
     except Exception as error:
 
         raise HTTPException(
             403,
-            "Ошибка доступа: "
-            "не вышло проверить админа: "
-            + str(error)
+            f"Не удалось проверить администратора: {error}"
         )
 
-    try:
-        telegram_id = int(
-            tg_user["id"]
-        )
-    except Exception:
+    telegram_id = int(
+        telegram_user["id"]
+    )
 
-        raise HTTPException(
-            403,
-            "Неверный Telegram ID"
-        )
+    /*
+    IMPORTANT:
+    ONLY these IDs are admins.
+    */
 
     if telegram_id not in ADMIN_IDS:
 
         raise HTTPException(
             403,
-            "Нет прав администратора"
+            "Доступ запрещён"
         )
 
     name = (
-        tg_user.get(
-            "first_name",
-            "Admin"
-        )
+        telegram_user.get("first_name")
+        or telegram_user.get("username")
+        or "Administrator"
     )
 
-    username = tg_user.get(
-        "username"
-    )
+    with db() as c:
 
-    if username:
-        name += " @" + username
-
-    with db() as conn:
-
-        existing = conn.execute("""
-            SELECT id
+        admin = c.execute(
+            """
+            SELECT *
             FROM users
-            WHERE telegram_id = ?
-              AND role = 'admin'
-        """, (
-            telegram_id,
-        )).fetchone()
+            WHERE telegram_id=?
+              AND role='admin'
+            LIMIT 1
+            """,
+            (telegram_id,)
+        ).fetchone()
 
-        if existing:
+        if admin:
 
-            user_id = existing["id"]
-
-            conn.execute("""
+            c.execute(
+                """
                 UPDATE users
                 SET
-                    name = ?,
-                    active = 1
-                WHERE id = ?
-            """, (
-                name,
-                user_id
-            ))
+                    name=?,
+                    active=1
+                WHERE id=?
+                """,
+                (
+                    name,
+                    admin["id"]
+                )
+            )
+
+            admin_id = admin["id"]
 
         else:
 
-            conn.execute("""
+            c.execute(
+                """
                 INSERT INTO users(
                     name,
                     phone,
@@ -725,150 +778,123 @@ async def admin_web_login(
                     active,
                     created_at
                 )
-                VALUES(?,?,?,?,?,?,?,?)
-            """, (
-                name,
-                None,
-                None,
-                None,
-                "admin",
-                telegram_id,
-                1,
-                time.time()
-            ))
-
-            user_id = conn.execute(
-                "SELECT last_insert_rowid()"
-            ).fetchone()[0]
-
-    token = new_token()
-
-    with db() as conn:
-
-        conn.execute("""
-            INSERT INTO sessions(
-                token,
-                user_id,
-                role,
-                created_at
+                VALUES(
+                    ?,
+                    ?,
+                    NULL,
+                    NULL,
+                    'admin',
+                    ?,
+                    1,
+                    ?
+                )
+                """,
+                (
+                    name,
+                    f"telegram:{telegram_id}",
+                    telegram_id,
+                    now()
+                )
             )
-            VALUES(?,?,?,?)
-        """, (
-            token,
-            user_id,
-            "admin",
-            time.time()
-        ))
 
-    return {
-        "token": token,
-        "role": "admin"
-    }
+            admin_id = c.lastrowid
 
-
-@app.get("/api/me")
-async def me(
-    authorization: str = Header(None)
-):
-
-    user = auth_user(
-        authorization
+    token = create_session(
+        admin_id,
+        "admin"
     )
 
     return {
-        "id": user["user_id"],
-        "name": user["name"],
-        "phone": user["phone"],
-        "role": user["role"],
-        "active": user["active"]
+        "ok": True,
+        "token": token,
+        "role": "admin",
+        "user": {
+            "id": admin_id,
+            "name": name,
+            "telegram_id": telegram_id
+        }
     }
 
 
-# ============================================================
+# =========================================================
 # ADMIN STATS
-# ============================================================
+# =========================================================
 
 @app.get("/api/admin/stats")
 async def admin_stats(
     authorization: str = Header(None)
 ):
 
-    admin_only(
-        auth_user(authorization)
+    auth = get_auth(
+        authorization
     )
 
-    with db() as conn:
+    admin_only(auth)
 
-        customers = conn.execute("""
-            SELECT COUNT(*) AS count
+    with db() as c:
+
+        customers = c.execute(
+            """
+            SELECT COUNT(*)
             FROM users
             WHERE role='customer'
               AND active=1
-        """).fetchone()["count"]
+            """
+        ).fetchone()[0]
 
-        couriers = conn.execute("""
-            SELECT COUNT(*) AS count
-            FROM users
-            WHERE role='courier'
-              AND active=1
-        """).fetchone()["count"]
+        couriers = c.execute(
+            """
+            SELECT COUNT(*)
+            FROM couriers
+            WHERE active=1
+            """
+        ).fetchone()[0]
 
-        orders = conn.execute("""
-            SELECT COUNT(*) AS count
+        orders = c.execute(
+            """
+            SELECT COUNT(*)
             FROM orders
-            WHERE status != 'closed'
-        """).fetchone()["count"]
+            """
+        ).fetchone()[0]
 
-        delivered = conn.execute("""
-            SELECT COUNT(*) AS count
+        active_orders = c.execute(
+            """
+            SELECT COUNT(*)
             FROM orders
-            WHERE status='delivered'
-        """).fetchone()["count"]
-
-        closed = conn.execute("""
-            SELECT COUNT(*) AS count
-            FROM orders
-            WHERE status='closed'
-        """).fetchone()["count"]
-
-        revenue = conn.execute("""
-            SELECT COALESCE(
-                SUM(price),
-                0
-            ) AS total
-            FROM orders
-            WHERE status IN (
-                'delivered',
-                'closed'
+            WHERE status NOT IN(
+                'closed',
+                'cancelled'
             )
-        """).fetchone()["total"]
+            """
+        ).fetchone()[0]
 
     return {
         "customers": customers,
         "couriers": couriers,
-        "active_orders": orders,
-        "delivered": delivered,
-        "closed": closed,
-        "revenue": revenue
+        "orders": orders,
+        "active_orders": active_orders
     }
 
 
-# ============================================================
-# CUSTOMERS
-# ============================================================
+# =========================================================
+# ADMIN CUSTOMERS
+# =========================================================
 
 @app.get("/api/admin/customers")
 async def admin_customers(
     authorization: str = Header(None)
 ):
 
-    admin_only(
-        auth_user(authorization)
+    auth = get_auth(
+        authorization
     )
 
-    with db() as conn:
+    admin_only(auth)
 
-        rows = conn.execute("""
+    with db() as c:
+
+        rows = c.execute(
+            """
             SELECT
                 id,
                 name,
@@ -879,7 +905,8 @@ async def admin_customers(
             FROM users
             WHERE role='customer'
             ORDER BY id DESC
-        """).fetchall()
+            """
+        ).fetchall()
 
     return [
         dict(row)
@@ -888,28 +915,32 @@ async def admin_customers(
 
 
 @app.post("/api/admin/customers")
-async def admin_create_customer(
-    data: CustomerCreate,
+async def create_customer(
+    payload: CustomerCreate,
     authorization: str = Header(None)
 ):
 
-    admin_only(
-        auth_user(authorization)
+    auth = get_auth(
+        authorization
     )
 
-    name = data.name.strip()
+    admin_only(auth)
+
+    name = payload.name.strip()
     phone = norm_phone(
-        data.phone
+        payload.phone
     )
-    pin = data.pin.strip()
+    pin = payload.pin.strip()
 
     if not name:
+
         raise HTTPException(
             400,
-            "Введите имя клиента"
+            "Введите имя"
         )
 
     if not phone:
+
         raise HTTPException(
             400,
             "Введите номер телефона"
@@ -919,29 +950,35 @@ async def admin_create_customer(
         r"\d{4,8}",
         pin
     ):
+
         raise HTTPException(
             400,
-            "PIN должен содержать 4–8 цифр"
+            "PIN должен содержать 4-8 цифр"
         )
 
-    with db() as conn:
+    with db() as c:
 
-        exists = conn.execute("""
+        existing = c.execute(
+            """
             SELECT id
             FROM users
-            WHERE phone = ?
-        """, (
-            phone,
-        )).fetchone()
+            WHERE phone=?
+              AND role='customer'
+              AND active=1
+            LIMIT 1
+            """,
+            (phone,)
+        ).fetchone()
 
-        if exists:
+        if existing:
 
             raise HTTPException(
                 409,
-                "Номер уже зарегистрирован"
+                "Клиент с таким номером уже существует"
             )
 
-        conn.execute("""
+        c.execute(
+            """
             INSERT INTO users(
                 name,
                 phone,
@@ -951,52 +988,63 @@ async def admin_create_customer(
                 active,
                 created_at
             )
-            VALUES(?,?,?,?,?,?,?)
-        """, (
-            name,
-            phone,
-            hash_pin(pin),
-            pin,
-            "customer",
-            1,
-            time.time()
-        ))
+            VALUES(
+                ?,
+                ?,
+                ?,
+                ?,
+                'customer',
+                1,
+                ?
+            )
+            """,
+            (
+                name,
+                phone,
+                hash_pin(pin),
+                pin,
+                now()
+            )
+        )
 
-        user_id = conn.execute(
-            "SELECT last_insert_rowid()"
-        ).fetchone()[0]
+        customer_id = c.lastrowid
 
     return {
         "ok": True,
-        "id": user_id,
+        "id": customer_id,
         "name": name,
-        "phone": phone,
-        "pin": pin
+        "phone": phone
     }
 
 
-@app.delete(
-    "/api/admin/customers/{customer_id}"
-)
+# =========================================================
+# DELETE CUSTOMER
+# =========================================================
+
+@app.delete("/api/admin/customers/{customer_id}")
 async def delete_customer(
     customer_id: int,
     authorization: str = Header(None)
 ):
 
-    admin_only(
-        auth_user(authorization)
+    auth = get_auth(
+        authorization
     )
 
-    with db() as conn:
+    admin_only(auth)
 
-        customer = conn.execute("""
+    with db() as c:
+
+        customer = c.execute(
+            """
             SELECT id
             FROM users
             WHERE id=?
               AND role='customer'
-        """, (
-            customer_id,
-        )).fetchone()
+            LIMIT 1
+            """,
+            (customer_id,)
+        ).fetchone()
 
         if not customer:
 
@@ -1005,332 +1053,69 @@ async def delete_customer(
                 "Клиент не найден"
             )
 
-        conn.execute("""
+        /*
+        Soft delete.
+        История заказов сохраняется.
+        */
+
+        c.execute(
+            """
             UPDATE users
             SET active=0
             WHERE id=?
-        """, (
-            customer_id,
-        ))
-
-        conn.execute("""
-            DELETE FROM sessions
-            WHERE user_id=?
-        """, (
-            customer_id,
-        ))
-
-    return {
-        "ok": True
-    }
-
-
-# ============================================================
-# COURIERS
-# ============================================================
-
-@app.get("/api/admin/couriers")
-async def admin_couriers(
-    authorization: str = Header(None)
-):
-
-    admin_only(
-        auth_user(authorization)
-    )
-
-    with db() as conn:
-
-        rows = conn.execute("""
-            SELECT
-                c.id,
-                c.approved,
-                c.online,
-                c.lat,
-                c.lon,
-                c.updated_at,
-                c.active,
-                u.name,
-                u.phone,
-                u.pin_plain
-            FROM couriers c
-            JOIN users u
-                ON u.id=c.user_id
-            ORDER BY c.id DESC
-        """).fetchall()
-
-    return [
-        dict(row)
-        for row in rows
-    ]
-
-
-@app.post("/api/admin/couriers")
-async def admin_create_courier(
-    data: CourierCreate,
-    authorization: str = Header(None)
-):
-
-    admin_only(
-        auth_user(authorization)
-    )
-
-    name = data.name.strip()
-    phone = norm_phone(
-        data.phone
-    )
-
-    pin = data.pin.strip()
-
-    if not pin:
-        pin = str(
-            secrets.randbelow(900000)
-            + 100000
+            """,
+            (customer_id,)
         )
 
-    if not re.fullmatch(
-        r"\d{4,8}",
-        pin
-    ):
-        raise HTTPException(
-            400,
-            "PIN должен содержать 4–8 цифр"
-        )
-
-    with db() as conn:
-
-        exists = conn.execute("""
-            SELECT id
-            FROM users
-            WHERE phone=?
-        """, (
-            phone,
-        )).fetchone()
-
-        if exists:
-
-            raise HTTPException(
-                409,
-                "Номер уже зарегистрирован"
-            )
-
-        conn.execute("""
-            INSERT INTO users(
-                name,
-                phone,
-                pin_hash,
-                pin_plain,
-                role,
-                active,
-                created_at
-            )
-            VALUES(?,?,?,?,?,?,?)
-        """, (
-            name,
-            phone,
-            hash_pin(pin),
-            pin,
-            "courier",
-            1,
-            time.time()
-        ))
-
-        user_id = conn.execute(
-            "SELECT last_insert_rowid()"
-        ).fetchone()[0]
-
-        conn.execute("""
-            INSERT INTO couriers(
-                user_id,
-                approved,
-                online,
-                active
-            )
-            VALUES(?,?,?,?)
-        """, (
-            user_id,
-            0,
-            0,
-            1
-        ))
-
-        courier_id = conn.execute(
-            "SELECT last_insert_rowid()"
-        ).fetchone()[0]
-
-    return {
-        "ok": True,
-        "id": courier_id,
-        "name": name,
-        "phone": phone,
-        "pin": pin
-    }
-
-
-@app.post(
-    "/api/admin/couriers/{courier_id}/approve"
-)
-async def approve_courier(
-    courier_id: int,
-    authorization: str = Header(None)
-):
-
-    admin_only(
-        auth_user(authorization)
-    )
-
-    with db() as conn:
-
-        courier = conn.execute("""
-            SELECT user_id
-            FROM couriers
-            WHERE id=?
-        """, (
-            courier_id,
-        )).fetchone()
-
-        if not courier:
-
-            raise HTTPException(
-                404,
-                "Курьер не найден"
-            )
-
-        conn.execute("""
-            UPDATE couriers
-            SET
-                approved=1,
-                active=1
-            WHERE id=?
-        """, (
-            courier_id,
-        ))
-
-        conn.execute("""
-            UPDATE users
-            SET active=1
-            WHERE id=?
-        """, (
-            courier["user_id"],
-        ))
-
-    return {
-        "ok": True
-    }
-
-
-@app.post(
-    "/api/admin/couriers/{courier_id}/fire"
-)
-async def fire_courier(
-    courier_id: int,
-    authorization: str = Header(None)
-):
-
-    admin_only(
-        auth_user(authorization)
-    )
-
-    with db() as conn:
-
-        courier = conn.execute("""
-            SELECT user_id
-            FROM couriers
-            WHERE id=?
-        """, (
-            courier_id,
-        )).fetchone()
-
-        if not courier:
-
-            raise HTTPException(
-                404,
-                "Курьер не найден"
-            )
-
-        user_id = courier["user_id"]
-
-        conn.execute("""
-            UPDATE couriers
-            SET
-                active=0,
-                online=0
-            WHERE id=?
-        """, (
-            courier_id,
-        ))
-
-        conn.execute("""
-            UPDATE users
-            SET active=0
-            WHERE id=?
-        """, (
-            user_id,
-        ))
-
-        conn.execute("""
+        c.execute(
+            """
             DELETE FROM sessions
             WHERE user_id=?
-        """, (
-            user_id,
-        ))
-
-        conn.execute("""
-            UPDATE orders
-            SET
-                courier_id=NULL,
-                status='new'
-            WHERE courier_id=?
-              AND status NOT IN (
-                  'closed',
-                  'delivered'
-              )
-        """, (
-            courier_id,
-        ))
+            """,
+            (customer_id,)
+        )
 
     return {
         "ok": True
     }
 
 
-# ============================================================
-# ORDERS
-# ============================================================
+# =========================================================
+# ADMIN ORDERS
+# =========================================================
 
 @app.get("/api/admin/orders")
 async def admin_orders(
     authorization: str = Header(None)
 ):
 
-    admin_only(
-        auth_user(authorization)
+    auth = get_auth(
+        authorization
     )
 
-    with db() as conn:
+    admin_only(auth)
 
-        rows = conn.execute("""
+    with db() as c:
+
+        rows = c.execute(
+            """
             SELECT
                 o.*,
                 cu.name AS customer_name,
-                cu.phone AS customer_phone,
-                cr.name AS courier_name,
-                co.lat AS courier_lat,
-                co.lon AS courier_lon
+                cu.phone AS customer_phone
             FROM orders o
-            JOIN users cu
+            LEFT JOIN users cu
                 ON cu.id=o.customer_id
-            LEFT JOIN couriers co
-                ON co.id=o.courier_id
-            LEFT JOIN users cr
-                ON cr.id=co.user_id
             WHERE
-                o.status!='closed'
+                o.status != 'closed'
                 OR o.closed_at IS NULL
-                OR o.closed_at>?
+                OR o.closed_at > ?
             ORDER BY o.id DESC
-        """, (
-            time.time() - 300,
-        )).fetchall()
+            """,
+            (
+                now() - 300,
+            )
+        ).fetchall()
 
     return [
         dict(row)
@@ -1338,218 +1123,82 @@ async def admin_orders(
     ]
 
 
-@app.post("/api/admin/orders")
-async def admin_create_order(
-    data: OrderCreate,
+# =========================================================
+# ADMIN COURIERS
+# =========================================================
+
+@app.get("/api/admin/couriers")
+async def admin_couriers(
     authorization: str = Header(None)
 ):
 
-    admin_only(
-        auth_user(authorization)
+    auth = get_auth(
+        authorization
     )
 
-    phone = norm_phone(
-        data.phone
-    )
+    admin_only(auth)
 
-    with db() as conn:
+    with db() as c:
 
-        customer = conn.execute("""
-            SELECT id
-            FROM users
-            WHERE phone=?
-              AND role='customer'
-              AND active=1
-        """, (
-            phone,
-        )).fetchone()
+        rows = c.execute(
+            """
+            SELECT
+                co.*,
+                u.name,
+                u.phone
+            FROM couriers co
+            JOIN users u
+                ON u.id=co.user_id
+            WHERE co.active=1
+            ORDER BY co.id DESC
+            """
+        ).fetchall()
 
-        if not customer:
-
-            raise HTTPException(
-                404,
-                "Активный клиент не найден"
-            )
-
-        conn.execute("""
-            INSERT INTO orders(
-                customer_id,
-                title,
-                address,
-                price,
-                status,
-                created_at
-            )
-            VALUES(?,?,?,?,?,?)
-        """, (
-            customer["id"],
-            data.title.strip(),
-            data.address.strip(),
-            max(0, data.price),
-            "new",
-            time.time()
-        ))
-
-        order_id = conn.execute(
-            "SELECT last_insert_rowid()"
-        ).fetchone()[0]
-
-    return {
-        "ok": True,
-        "id": order_id
-    }
+    return [
+        dict(row)
+        for row in rows
+    ]
 
 
-@app.post(
-    "/api/admin/orders/{order_id}/assign"
-)
-async def assign_order(
-    order_id: int,
-    data: AssignIn,
-    authorization: str = Header(None)
-):
+# =========================================================
+# CUSTOMER ORDERS
+# =========================================================
 
-    admin_only(
-        auth_user(authorization)
-    )
-
-    with db() as conn:
-
-        courier = conn.execute("""
-            SELECT id
-            FROM couriers
-            WHERE id=?
-              AND active=1
-              AND approved=1
-        """, (
-            data.courier_id,
-        )).fetchone()
-
-        if not courier:
-
-            raise HTTPException(
-                404,
-                "Курьер не найден или не одобрен"
-            )
-
-        order = conn.execute("""
-            SELECT id
-            FROM orders
-            WHERE id=?
-        """, (
-            order_id,
-        )).fetchone()
-
-        if not order:
-
-            raise HTTPException(
-                404,
-                "Заказ не найден"
-            )
-
-        conn.execute("""
-            UPDATE orders
-            SET
-                courier_id=?,
-                status='assigned'
-            WHERE id=?
-        """, (
-            data.courier_id,
-            order_id
-        ))
-
-    return {
-        "ok": True
-    }
-
-
-@app.post(
-    "/api/admin/orders/{order_id}/close"
-)
-async def close_order(
-    order_id: int,
-    authorization: str = Header(None)
-):
-
-    admin_only(
-        auth_user(authorization)
-    )
-
-    with db() as conn:
-
-        order = conn.execute("""
-            SELECT id
-            FROM orders
-            WHERE id=?
-        """, (
-            order_id,
-        )).fetchone()
-
-        if not order:
-
-            raise HTTPException(
-                404,
-                "Заказ не найден"
-            )
-
-        conn.execute("""
-            UPDATE orders
-            SET
-                status='closed',
-                closed_at=?
-            WHERE id=?
-        """, (
-            time.time(),
-            order_id
-        ))
-
-    return {
-        "ok": True
-    }
-
-
-# ============================================================
-# CUSTOMER
-# ============================================================
-
-@app.get("/api/customer/orders")
+@app.get("/api/orders")
 async def customer_orders(
     authorization: str = Header(None)
 ):
 
-    user = auth_user(
+    auth = get_auth(
         authorization
     )
 
-    if user["role"] != "customer":
+    if auth["role"] != "customer":
 
         raise HTTPException(
             403,
-            "Только клиент"
+            "Недоступно"
         )
 
-    with db() as conn:
+    with db() as c:
 
-        rows = conn.execute("""
-            SELECT
-                o.*,
-                co.lat,
-                co.lon
-            FROM orders o
-            LEFT JOIN couriers co
-                ON co.id=o.courier_id
-            WHERE
-                o.customer_id=?
-                AND (
-                    o.status!='closed'
-                    OR o.closed_at IS NULL
-                    OR o.closed_at>?
-                )
-            ORDER BY o.id DESC
-        """, (
-            user["user_id"],
-            time.time() - 300
-        )).fetchall()
+        rows = c.execute(
+            """
+            SELECT *
+            FROM orders
+            WHERE customer_id=?
+              AND (
+                    status != 'closed'
+                    OR closed_at IS NULL
+                    OR closed_at > ?
+                  )
+            ORDER BY id DESC
+            """,
+            (
+                auth["user_id"],
+                now() - 300
+            )
+        ).fetchall()
 
     return [
         dict(row)
@@ -1557,367 +1206,446 @@ async def customer_orders(
     ]
 
 
-@app.post(
-    "/api/customer/orders/{order_id}/confirm"
-)
-async def customer_confirm(
-    order_id: int,
-    authorization: str = Header(None)
-):
-
-    user = auth_user(
-        authorization
-    )
-
-    if user["role"] != "customer":
-
-        raise HTTPException(
-            403,
-            "Только клиент"
-        )
-
-    with db() as conn:
-
-        order = conn.execute("""
-            SELECT
-                id,
-                status
-            FROM orders
-            WHERE id=?
-              AND customer_id=?
-        """, (
-            order_id,
-            user["user_id"]
-        )).fetchone()
-
-        if not order:
-
-            raise HTTPException(
-                404,
-                "Заказ не найден"
-            )
-
-        if order["status"] != "delivered":
-
-            raise HTTPException(
-                400,
-                "Заказ ещё не доставлен"
-            )
-
-        conn.execute("""
-            UPDATE orders
-            SET
-                customer_confirmed=1,
-                status='closed',
-                closed_at=?
-            WHERE id=?
-        """, (
-            time.time(),
-            order_id
-        ))
-
-    return {
-        "ok": True
-    }
-
-
-# ============================================================
-# COURIER
-# ============================================================
-
-def get_courier(user_id):
-
-    with db() as conn:
-
-        return conn.execute("""
-            SELECT *
-            FROM couriers
-            WHERE user_id=?
-              AND active=1
-        """, (
-            user_id,
-        )).fetchone()
-
+# =========================================================
+# COURIER ORDERS
+# =========================================================
 
 @app.get("/api/courier/orders")
 async def courier_orders(
     authorization: str = Header(None)
 ):
 
-    user = auth_user(
+    auth = get_auth(
         authorization
     )
 
-    if user["role"] != "courier":
+    if auth["role"] != "courier":
 
         raise HTTPException(
             403,
-            "Только курьер"
+            "Недоступно"
         )
 
-    courier = get_courier(
-        user["user_id"]
-    )
+    with db() as c:
 
-    if not courier:
+        courier = c.execute(
+            """
+            SELECT id
+            FROM couriers
+            WHERE user_id=?
+              AND active=1
+            LIMIT 1
+            """,
+            (auth["user_id"],)
+        ).fetchone()
 
-        raise HTTPException(
-            403,
-            "Курьер неактивен"
-        )
+        if not courier:
 
-    with db() as conn:
+            return []
 
-        rows = conn.execute("""
+        rows = c.execute(
+            """
             SELECT
                 o.*,
-                cu.name AS customer_name,
-                cu.phone AS customer_phone
+                u.name AS customer_name,
+                u.phone AS customer_phone
             FROM orders o
-            JOIN users cu
-                ON cu.id=o.customer_id
+            LEFT JOIN users u
+                ON u.id=o.customer_id
             WHERE o.courier_id=?
-              AND o.status!='closed'
+              AND (
+                    o.status != 'closed'
+                    OR o.closed_at IS NULL
+                    OR o.closed_at > ?
+                  )
             ORDER BY o.id DESC
-        """, (
-            courier["id"],
-        )).fetchall()
+            """,
+            (
+                courier["id"],
+                now() - 300
+            )
+        ).fetchall()
 
-    return {
-        "online": bool(
-            courier["online"]
-        ),
-        "orders": [
-            dict(row)
-            for row in rows
-        ]
-    }
+    return [
+        dict(row)
+        for row in rows
+    ]
 
+
+# =========================================================
+# COURIER ONLINE
+# =========================================================
 
 @app.post("/api/courier/online")
 async def courier_online(
-    data: OnlineIn,
     authorization: str = Header(None)
 ):
 
-    user = auth_user(
+    auth = get_auth(
         authorization
     )
 
-    if user["role"] != "courier":
+    if auth["role"] != "courier":
 
         raise HTTPException(
             403,
-            "Только курьер"
+            "Недоступно"
         )
 
-    courier = get_courier(
-        user["user_id"]
-    )
+    with db() as c:
 
-    if not courier:
+        courier = c.execute(
+            """
+            SELECT *
+            FROM couriers
+            WHERE user_id=?
+              AND active=1
+            LIMIT 1
+            """,
+            (auth["user_id"],)
+        ).fetchone()
 
-        raise HTTPException(
-            403,
-            "Курьер не найден"
-        )
-
-    if not courier["approved"]:
-
-        raise HTTPException(
-            403,
-            "Курьер не одобрен"
-        )
-
-    with db() as conn:
-
-        conn.execute("""
-            UPDATE couriers
-            SET online=?
-            WHERE id=?
-        """, (
-            int(data.online),
-            courier["id"]
-        ))
-
-    return {
-        "ok": True,
-        "online": data.online
-    }
-
-
-async def courier_action(
-    order_id,
-    user_id,
-    old_status,
-    new_status
-):
-
-    courier = get_courier(
-        user_id
-    )
-
-    if not courier:
-
-        raise HTTPException(
-            403,
-            "Курьер не найден"
-        )
-
-    with db() as conn:
-
-        order = conn.execute("""
-            SELECT
-                id,
-                status
-            FROM orders
-            WHERE id=?
-              AND courier_id=?
-        """, (
-            order_id,
-            courier["id"]
-        )).fetchone()
-
-        if not order:
+        if not courier:
 
             raise HTTPException(
                 404,
-                "Заказ не найден"
+                "Курьер не найден"
             )
 
-        if order["status"] != old_status:
+        new_status = 0 if courier["online"] else 1
 
-            raise HTTPException(
-                400,
-                "Неверный статус заказа"
-            )
-
-        conn.execute("""
-            UPDATE orders
-            SET status=?
-            WHERE id=?
-        """, (
-            new_status,
-            order_id
-        ))
-
-    return {
-        "ok": True
-    }
-
-
-@app.post(
-    "/api/courier/orders/{order_id}/accept"
-)
-async def courier_accept(
-    order_id: int,
-    authorization: str = Header(None)
-):
-
-    user = auth_user(
-        authorization
-    )
-
-    return await courier_action(
-        order_id,
-        user["user_id"],
-        "assigned",
-        "accepted"
-    )
-
-
-@app.post(
-    "/api/courier/orders/{order_id}/start"
-)
-async def courier_start(
-    order_id: int,
-    authorization: str = Header(None)
-):
-
-    user = auth_user(
-        authorization
-    )
-
-    return await courier_action(
-        order_id,
-        user["user_id"],
-        "accepted",
-        "delivering"
-    )
-
-
-@app.post(
-    "/api/courier/orders/{order_id}/complete"
-)
-async def courier_complete(
-    order_id: int,
-    authorization: str = Header(None)
-):
-
-    user = auth_user(
-        authorization
-    )
-
-    return await courier_action(
-        order_id,
-        user["user_id"],
-        "delivering",
-        "delivered"
-    )
-
-
-@app.post("/api/courier/location")
-async def courier_location(
-    data: LocationIn,
-    authorization: str = Header(None)
-):
-
-    user = auth_user(
-        authorization
-    )
-
-    if user["role"] != "courier":
-
-        raise HTTPException(
-            403,
-            "Только курьер"
-        )
-
-    courier = get_courier(
-        user["user_id"]
-    )
-
-    if not courier:
-
-        raise HTTPException(
-            403,
-            "Курьер не найден"
-        )
-
-    with db() as conn:
-
-        conn.execute("""
+        c.execute(
+            """
             UPDATE couriers
             SET
-                lat=?,
-                lon=?,
+                online=?,
                 updated_at=?
             WHERE id=?
-        """, (
-            data.lat,
-            data.lon,
-            time.time(),
-            courier["id"]
-        ))
+            """,
+            (
+                new_status,
+                now(),
+                courier["id"]
+            )
+        )
 
     return {
-        "ok": True
+        "ok": True,
+        "online": bool(new_status)
     }
 
 
-# ============================================================
-# SERVER
-# ============================================================
+# =========================================================
+# TELEGRAM BOT
+# =========================================================
+
+telegram_app = None
+
+
+async def start_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    if not WEB_APP_URL:
+
+        await update.message.reply_text(
+            "Web App URL не настроен."
+        )
+
+        return
+
+    keyboard = ReplyKeyboardMarkup(
+        [
+            [
+                KeyboardButton(
+                    "🍽 Открыть приложение",
+                    web_app=WebAppInfo(
+                        url=WEB_APP_URL
+                    )
+                )
+            ]
+        ],
+        resize_keyboard=True
+    )
+
+    await update.message.reply_text(
+        "Добро пожаловать в RESTARAN!",
+        reply_markup=keyboard
+    )
+
+
+async def random_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    keyboard = ReplyKeyboardMarkup(
+        [
+            [
+                KeyboardButton(
+                    "📱 Поделиться контактом",
+                    request_contact=True
+                )
+            ]
+        ],
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
+
+    await update.message.reply_text(
+        "Поделитесь номером телефона, "
+        "чтобы получить данные аккаунта.",
+        reply_markup=keyboard
+    )
+
+
+async def contact_handler(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    contact = update.message.contact
+
+    if not contact:
+
+        return
+
+    phone = norm_phone(
+        contact.phone_number
+    )
+
+    with db() as c:
+
+        user = c.execute(
+            """
+            SELECT
+                name,
+                phone,
+                pin_plain,
+                active
+            FROM users
+            WHERE phone=?
+              AND role='customer'
+            LIMIT 1
+            """,
+            (phone,)
+        ).fetchone()
+
+    if not user:
+
+        await update.message.reply_text(
+            "Аккаунт с таким номером не найден."
+        )
+
+        return
+
+    if not user["active"]:
+
+        await update.message.reply_text(
+            "Этот аккаунт отключён."
+        )
+
+        return
+
+    await update.message.reply_text(
+        "Ваш аккаунт:\n\n"
+        f"Имя: {user['name']}\n"
+        f"Телефон: {user['phone']}\n"
+        f"PIN: {user['pin_plain']}"
+    )
+
+
+# =========================================================
+# START TELEGRAM
+# =========================================================
+
+async def start_telegram():
+
+    global telegram_app
+
+    if not BOT_TOKEN:
+
+        print(
+            "BOT_TOKEN не задан. "
+            "Telegram bot не запущен."
+        )
+
+        return
+
+    telegram_app = (
+        Application
+        .builder()
+        .token(BOT_TOKEN)
+        .build()
+    )
+
+    telegram_app.add_handler(
+        CommandHandler(
+            "start",
+            start_command
+        )
+    )
+
+    telegram_app.add_handler(
+        CommandHandler(
+            "random",
+            random_command
+        )
+    )
+
+    telegram_app.add_handler(
+        MessageHandler(
+            filters.CONTACT,
+            contact_handler
+        )
+    )
+
+    await telegram_app.initialize()
+
+    await telegram_app.start()
+
+    if telegram_app.updater:
+
+        await telegram_app.updater.start_polling(
+            drop_pending_updates=True
+        )
+
+    print(
+        "Telegram bot started"
+    )
+
+
+async def stop_telegram():
+
+    global telegram_app
+
+    if not telegram_app:
+        return
+
+    try:
+
+        if telegram_app.updater:
+
+            await telegram_app.updater.stop()
+
+    except Exception:
+        pass
+
+    try:
+
+        await telegram_app.stop()
+
+    except Exception:
+        pass
+
+    try:
+
+        await telegram_app.shutdown()
+
+    except Exception:
+        pass
+
+    telegram_app = None
+
+
+# =========================================================
+# CLEANUP
+# =========================================================
+
+async def cleanup_loop():
+
+    while True:
+
+        try:
+
+            with db() as c:
+
+                cutoff = now() - 300
+
+                c.execute(
+                    """
+                    DELETE FROM orders
+                    WHERE status='closed'
+                      AND closed_at IS NOT NULL
+                      AND closed_at <= ?
+                    """,
+                    (cutoff,)
+                )
+
+                c.execute(
+                    """
+                    DELETE FROM sessions
+                    WHERE created_at <= ?
+                    """,
+                    (
+                        now() - 2592000,
+                    )
+                )
+
+        except Exception as error:
+
+            print(
+                "Cleanup error:",
+                error
+            )
+
+        await asyncio.sleep(60)
+
+
+cleanup_task = None
+
+
+@app.on_event("startup")
+async def startup():
+
+    global cleanup_task
+
+    init_db()
+
+    await start_telegram()
+
+    cleanup_task = asyncio.create_task(
+        cleanup_loop()
+    )
+
+
+@app.on_event("shutdown")
+async def shutdown():
+
+    global cleanup_task
+
+    if cleanup_task:
+
+        cleanup_task.cancel()
+
+        try:
+            await cleanup_task
+        except asyncio.CancelledError:
+            pass
+
+    await stop_telegram()
+
+
+# =========================================================
+# HEALTH
+# =========================================================
+
+@app.get("/health")
+async def health():
+
+    return {
+        "ok": True,
+        "service": "RESTARAN",
+        "admins": sorted(
+            ADMIN_IDS
+        )
+    }
+
+
+# =========================================================
+# RUN
+# =========================================================
 
 if __name__ == "__main__":
 
