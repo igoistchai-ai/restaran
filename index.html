@@ -2,10 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
-/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 
 <title>RESTARAN</title>
 
@@ -20,54 +17,38 @@
 :root{
     --bg:#08090d;
     --card:rgba(255,255,255,.065);
-    --card2:rgba(255,255,255,.09);
-    --text:#fff;
-    --muted:#9295a3;
-    --accent:#ff8a3d;
-    --accent2:#ffbd66;
-    --green:#4ade80;
-    --red:#ff5757;
     --border:rgba(255,255,255,.09);
+    --text:#fff;
+    --muted:#999daa;
+    --orange:#ff8b3d;
+    --yellow:#ffc36a;
+    --green:#49df80;
+    --red:#ff5959;
 }
 
 body{
     margin:0;
     min-height:100vh;
-    background:
-        radial-gradient(
-            circle at 10% 0%,
-            rgba(255,138,61,.18),
-            transparent 35%
-        ),
-        radial-gradient(
-            circle at 100% 20%,
-            rgba(255,189,102,.10),
-            transparent 30%
-        ),
-        var(--bg);
     color:var(--text);
-    font-family:
-        Inter,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
+    background:
+        radial-gradient(circle at 10% 0%,rgba(255,139,61,.17),transparent 35%),
+        radial-gradient(circle at 100% 20%,rgba(255,195,106,.08),transparent 35%),
+        var(--bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 }
 
-button,
-input{
+button,input{
     font:inherit;
 }
 
 button{
     border:0;
-    cursor:pointer;
 }
 
 #app{
-    max-width:760px;
+    width:min(760px,100%);
     margin:auto;
-    padding:18px 15px 100px;
+    padding:15px 13px 105px;
 }
 
 .hidden{
@@ -77,188 +58,147 @@ button{
 .glass{
     background:var(--card);
     border:1px solid var(--border);
-    backdrop-filter:blur(24px);
-    -webkit-backdrop-filter:blur(24px);
-    box-shadow:0 20px 60px rgba(0,0,0,.25);
+    backdrop-filter:blur(25px);
+    -webkit-backdrop-filter:blur(25px);
+    box-shadow:0 18px 55px rgba(0,0,0,.25);
+}
+
+.logo{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.logoIcon{
+    width:44px;
+    height:44px;
+    border-radius:15px;
+    display:grid;
+    place-items:center;
+    font-size:23px;
+    background:linear-gradient(135deg,var(--orange),var(--yellow));
+}
+
+.logoTitle{
+    font-weight:950;
+    font-size:20px;
+}
+
+.logoSub{
+    color:var(--muted);
+    font-size:11px;
 }
 
 .top{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    margin-bottom:18px;
-}
-
-.logo{
-    display:flex;
-    align-items:center;
-    gap:11px;
-}
-
-.logoIcon{
-    width:44px;
-    height:44px;
-    display:grid;
-    place-items:center;
-    border-radius:15px;
-    background:linear-gradient(
-        135deg,
-        var(--accent),
-        var(--accent2)
-    );
-    font-size:23px;
-    box-shadow:0 10px 30px rgba(255,138,61,.25);
-}
-
-.logoTitle{
-    font-size:20px;
-    font-weight:900;
-}
-
-.logoSub{
-    font-size:11px;
-    color:var(--muted);
-    margin-top:2px;
+    margin-bottom:15px;
 }
 
 .userBadge{
     padding:9px 12px;
-    border-radius:14px;
+    border-radius:13px;
     background:rgba(255,255,255,.07);
-    color:#ddd;
-    font-size:12px;
+    font-size:11px;
 }
 
 .hero{
     padding:23px;
-    border-radius:28px;
-    margin-bottom:15px;
-    overflow:hidden;
-    position:relative;
-}
-
-.hero:after{
-    content:"";
-    position:absolute;
-    width:180px;
-    height:180px;
-    border-radius:50%;
-    background:rgba(255,138,61,.16);
-    right:-60px;
-    top:-80px;
-    filter:blur(10px);
+    border-radius:27px;
+    margin-bottom:12px;
 }
 
 .hero h1{
     margin:0;
-    font-size:29px;
+    font-size:27px;
     line-height:1.05;
-    position:relative;
-    z-index:1;
 }
 
 .hero p{
     color:var(--muted);
-    margin:10px 0 0;
     font-size:13px;
-    position:relative;
-    z-index:1;
+    margin:10px 0 0;
 }
 
 .login{
     max-width:430px;
-    margin:10vh auto 0;
+    margin:12vh auto 0;
 }
 
-.login .glass{
-    padding:24px;
+.loginBox{
+    padding:25px;
     border-radius:30px;
+}
+
+.title{
+    font-size:20px;
+    font-weight:950;
+    margin-bottom:13px;
 }
 
 .input{
     width:100%;
-    padding:15px 16px;
-    margin-top:10px;
+    padding:15px;
     border-radius:16px;
     border:1px solid var(--border);
     background:rgba(255,255,255,.055);
     color:white;
     outline:none;
+    margin-top:8px;
 }
 
 .input:focus{
-    border-color:rgba(255,138,61,.7);
-    box-shadow:0 0 0 3px rgba(255,138,61,.1);
+    border-color:rgba(255,139,61,.7);
+    box-shadow:0 0 0 3px rgba(255,139,61,.1);
 }
 
 .primary{
     width:100%;
+    margin-top:10px;
     padding:15px;
-    margin-top:13px;
-    border-radius:17px;
+    border-radius:16px;
     color:#15100b;
-    font-weight:900;
-    background:linear-gradient(
-        135deg,
-        var(--accent),
-        var(--accent2)
-    );
-    box-shadow:0 12px 30px rgba(255,138,61,.2);
-    transition:.2s;
-}
-
-.primary:active{
-    transform:scale(.98);
-}
-
-.danger{
-    background:rgba(255,87,87,.12);
-    color:#ff7777;
-    border:1px solid rgba(255,87,87,.2);
-}
-
-.success{
-    background:rgba(74,222,128,.12);
-    color:#6ef29a;
-    border:1px solid rgba(74,222,128,.2);
+    font-weight:950;
+    background:linear-gradient(135deg,var(--orange),var(--yellow));
 }
 
 .section{
-    margin-top:18px;
+    margin-top:16px;
 }
 
 .sectionTitle{
+    font-weight:950;
     font-size:18px;
-    font-weight:900;
     margin-bottom:10px;
 }
 
 .grid{
     display:grid;
     grid-template-columns:repeat(2,1fr);
-    gap:10px;
+    gap:9px;
 }
 
 .stat{
     padding:17px;
-    border-radius:21px;
+    border-radius:20px;
 }
 
 .statNum{
-    font-size:25px;
+    font-size:26px;
     font-weight:950;
 }
 
 .statName{
     color:var(--muted);
     font-size:11px;
-    margin-top:4px;
+    margin-top:3px;
 }
 
 .card{
-    padding:17px;
-    border-radius:22px;
-    margin-bottom:10px;
+    padding:16px;
+    border-radius:21px;
+    margin-bottom:9px;
 }
 
 .cardTop{
@@ -269,25 +209,25 @@ button{
 
 .cardTitle{
     font-weight:900;
-    font-size:16px;
 }
 
 .muted{
     color:var(--muted);
     font-size:12px;
+    margin-top:5px;
 }
 
 .price{
+    color:#ffd28d;
     font-weight:950;
-    color:#ffd08b;
     white-space:nowrap;
 }
 
 .status{
-    display:inline-flex;
-    margin-top:10px;
+    display:inline-block;
     padding:6px 9px;
-    border-radius:10px;
+    margin-top:9px;
+    border-radius:9px;
     background:rgba(255,255,255,.07);
     font-size:11px;
     font-weight:800;
@@ -295,84 +235,92 @@ button{
 
 .actions{
     display:flex;
-    gap:8px;
-    margin-top:12px;
     flex-wrap:wrap;
+    gap:7px;
+    margin-top:11px;
 }
 
 .smallBtn{
     flex:1;
-    min-width:110px;
-    padding:11px 12px;
+    min-width:105px;
+    padding:11px;
     border-radius:13px;
-    background:rgba(255,255,255,.07);
     color:white;
+    background:rgba(255,255,255,.075);
     border:1px solid var(--border);
     font-size:12px;
-    font-weight:800;
+    font-weight:850;
 }
 
-.smallBtn:active{
-    transform:scale(.98);
+.success{
+    color:#70ef9b;
+    background:rgba(73,223,128,.1);
 }
 
-.map{
-    margin-top:12px;
-    width:100%;
-    height:220px;
-    border:0;
-    border-radius:18px;
-    overflow:hidden;
+.danger{
+    color:#ff7777;
+    background:rgba(255,89,89,.1);
+}
+
+.notice{
+    padding:12px;
+    border-radius:14px;
+    background:rgba(255,139,61,.08);
+    color:#d2d3d8;
+    font-size:12px;
+    margin-bottom:10px;
 }
 
 .tabs{
     display:flex;
     gap:7px;
-    overflow:auto;
-    padding:3px;
-    margin-bottom:15px;
+    overflow-x:auto;
+    padding-bottom:4px;
 }
 
 .tab{
     white-space:nowrap;
-    padding:11px 14px;
-    border-radius:14px;
-    background:rgba(255,255,255,.055);
+    padding:10px 13px;
+    border-radius:13px;
     color:#aaa;
+    background:rgba(255,255,255,.055);
     font-size:12px;
-    font-weight:800;
+    font-weight:850;
 }
 
 .tab.active{
-    background:linear-gradient(
-        135deg,
-        rgba(255,138,61,.25),
-        rgba(255,189,102,.12)
-    );
-    color:#fff;
+    color:white;
+    background:rgba(255,139,61,.2);
+}
+
+.empty{
+    padding:35px 15px;
+    text-align:center;
+    color:var(--muted);
+    border-radius:21px;
 }
 
 .bottom{
     position:fixed;
     left:50%;
+    bottom:11px;
     transform:translateX(-50%);
-    bottom:12px;
-    width:min(730px,calc(100% - 24px));
+    width:min(735px,calc(100% - 22px));
     display:flex;
-    gap:6px;
-    padding:7px;
+    gap:5px;
+    padding:6px;
     border-radius:20px;
     z-index:50;
 }
 
 .nav{
     flex:1;
-    padding:11px 5px;
+    padding:10px 4px;
     border-radius:14px;
-    color:#9295a3;
+    color:#888b98;
     background:transparent;
-    font-size:11px;
-    font-weight:800;
+    font-size:10px;
+    font-weight:850;
 }
 
 .nav.active{
@@ -380,24 +328,52 @@ button{
     background:rgba(255,255,255,.09);
 }
 
-.empty{
+.loading{
     text-align:center;
-    padding:35px 20px;
+    padding:50px;
     color:var(--muted);
-    border-radius:23px;
+}
+
+.toast{
+    position:fixed;
+    left:50%;
+    bottom:82px;
+    transform:translate(-50%,20px);
+    opacity:0;
+    pointer-events:none;
+    z-index:100;
+    max-width:90%;
+    padding:12px 16px;
+    border-radius:14px;
+    background:#191a20;
+    border:1px solid var(--border);
+    font-size:12px;
+    text-align:center;
+    transition:.25s;
+}
+
+.toast.show{
+    opacity:1;
+    transform:translate(-50%,0);
+}
+
+.formGrid{
+    display:grid;
+    gap:8px;
+}
+
+.map{
+    width:100%;
+    height:210px;
+    border:0;
+    border-radius:17px;
+    margin-top:10px;
 }
 
 .game{
-    min-height:190px;
-    padding:22px;
-    border-radius:25px;
-    margin-bottom:12px;
-    position:relative;
-    overflow:hidden;
-}
-
-.gameIcon{
-    font-size:42px;
+    padding:20px;
+    border-radius:23px;
+    margin-bottom:10px;
 }
 
 .game h3{
@@ -410,91 +386,32 @@ button{
 }
 
 .gameBtn{
-    padding:11px 14px;
+    padding:11px 15px;
     border-radius:13px;
     background:white;
     color:#111;
     font-weight:900;
 }
 
-.memoryBoard{
+.memory{
     display:grid;
     grid-template-columns:repeat(4,1fr);
-    gap:7px;
-    margin-top:15px;
+    gap:6px;
+    margin-top:12px;
 }
 
 .memoryCard{
     aspect-ratio:1;
-    border-radius:13px;
-    background:rgba(255,255,255,.09);
     display:grid;
     place-items:center;
-    font-size:23px;
-    cursor:pointer;
-}
-
-.formGrid{
-    display:grid;
-    gap:8px;
-}
-
-.two{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:8px;
-}
-
-.notice{
-    padding:12px 14px;
-    border-radius:15px;
-    background:rgba(255,138,61,.08);
-    border:1px solid rgba(255,138,61,.12);
-    color:#d7d7dc;
-    font-size:12px;
-    margin-bottom:12px;
-}
-
-.loading{
-    text-align:center;
-    padding:50px 10px;
-    color:var(--muted);
-}
-
-.toast{
-    position:fixed;
-    left:50%;
-    bottom:82px;
-    transform:translateX(-50%) translateY(15px);
-    background:#191a20;
-    border:1px solid var(--border);
-    padding:12px 17px;
-    border-radius:14px;
-    opacity:0;
-    pointer-events:none;
-    transition:.25s;
-    z-index:100;
-    font-size:12px;
-    box-shadow:0 15px 40px rgba(0,0,0,.4);
-}
-
-.toast.show{
-    opacity:1;
-    transform:translateX(-50%) translateY(0);
+    border-radius:12px;
+    background:rgba(255,255,255,.08);
+    font-size:22px;
 }
 
 @media(max-width:480px){
-    #app{
-        padding-left:12px;
-        padding-right:12px;
-    }
-
     .hero h1{
-        font-size:26px;
-    }
-
-    .two{
-        grid-template-columns:1fr;
+        font-size:25px;
     }
 }
 </style>
@@ -504,103 +421,115 @@ button{
 
 <div id="app">
 
-    <div id="loginScreen" class="login">
-        <div class="glass">
-            <div class="logo">
-                <div class="logoIcon">🍽</div>
-                <div>
-                    <div class="logoTitle">RESTARAN</div>
-                    <div class="logoSub">Delivery • Food • Games</div>
-                </div>
-            </div>
+<div id="loginScreen" class="login">
+    <div class="glass loginBox">
 
-            <div style="margin-top:25px">
-                <div class="sectionTitle">Вход</div>
-
-                <input
-                    id="loginPhone"
-                    class="input"
-                    placeholder="Номер телефона"
-                    inputmode="tel"
-                >
-
-                <input
-                    id="loginPin"
-                    class="input"
-                    placeholder="PIN"
-                    inputmode="numeric"
-                    type="password"
-                >
-
-                <button
-                    class="primary"
-                    onclick="login()"
-                >
-                    Войти →
-                </button>
-            </div>
-        </div>
-    </div>
-
-
-    <div id="main" class="hidden">
-
-        <div class="top">
-            <div class="logo">
-                <div class="logoIcon">🍽</div>
-                <div>
-                    <div class="logoTitle">RESTARAN</div>
-                    <div class="logoSub">Ваше приложение</div>
-                </div>
-            </div>
-
-            <div id="userBadge" class="userBadge">
-                —
+        <div class="logo">
+            <div class="logoIcon">🍽</div>
+            <div>
+                <div class="logoTitle">RESTARAN</div>
+                <div class="logoSub">Food • Delivery • Games</div>
             </div>
         </div>
 
+        <div style="margin-top:25px">
+            <div class="title">Вход в приложение</div>
 
-        <div id="content"></div>
+            <input
+                id="loginPhone"
+                class="input"
+                type="tel"
+                inputmode="tel"
+                placeholder="Номер телефона"
+            >
 
-
-        <div class="bottom glass">
+            <input
+                id="loginPin"
+                class="input"
+                type="password"
+                inputmode="numeric"
+                placeholder="PIN"
+            >
 
             <button
-                class="nav active"
-                data-page="home"
-                onclick="showPage('home')"
+                class="primary"
+                onclick="login()"
             >
-                🏠<br>Главная
+                Войти →
             </button>
-
-            <button
-                class="nav"
-                data-page="orders"
-                onclick="showPage('orders')"
-            >
-                📦<br>Заказы
-            </button>
-
-            <button
-                class="nav"
-                data-page="games"
-                onclick="showPage('games')"
-            >
-                🎮<br>Игры
-            </button>
-
-            <button
-                id="adminNav"
-                class="nav hidden"
-                data-page="admin"
-                onclick="showPage('admin')"
-            >
-                ⚙️<br>Админ
-            </button>
-
         </div>
 
     </div>
+</div>
+
+
+<div id="main" class="hidden">
+
+    <div class="top">
+
+        <div class="logo">
+            <div class="logoIcon">🍽</div>
+
+            <div>
+                <div class="logoTitle">
+                    RESTARAN
+                </div>
+
+                <div class="logoSub">
+                    Ваш ресторан
+                </div>
+            </div>
+        </div>
+
+        <div
+            id="userBadge"
+            class="userBadge"
+        >
+            —
+        </div>
+
+    </div>
+
+    <div id="content"></div>
+
+    <div class="bottom glass">
+
+        <button
+            class="nav active"
+            data-page="home"
+            onclick="showPage('home')"
+        >
+            🏠<br>Главная
+        </button>
+
+        <button
+            class="nav"
+            data-page="orders"
+            onclick="showPage('orders')"
+        >
+            📦<br>Заказы
+        </button>
+
+        <button
+            class="nav"
+            data-page="games"
+            onclick="showPage('games')"
+        >
+            🎮<br>Игры
+        </button>
+
+        <button
+            id="adminNav"
+            class="nav hidden"
+            data-page="admin"
+            onclick="showPage('admin')"
+        >
+            ⚙️<br>Админ
+        </button>
+
+    </div>
+
+</div>
 
 </div>
 
@@ -609,79 +538,171 @@ button{
 
 <script>
 
-const tg = window.Telegram?.WebApp;
+const tg =
+    window.Telegram?.WebApp;
 
 if(tg){
     tg.ready();
     tg.expand();
 }
 
-let TOKEN = localStorage.getItem("restaran_token") || "";
+let TOKEN =
+    localStorage.getItem(
+        "restaran_token"
+    ) || "";
+
 let ROLE = "";
 let USER = null;
-let CURRENT_PAGE = "home";
+
+
+/* ================= ERROR FIX ================= */
+
+function readableError(error){
+
+    if(error === null ||
+       error === undefined){
+        return "Неизвестная ошибка";
+    }
+
+    if(typeof error === "string"){
+        return error;
+    }
+
+    if(Array.isArray(error)){
+
+        return error
+            .map(item => {
+
+                if(typeof item === "string"){
+                    return item;
+                }
+
+                if(item?.msg){
+                    return item.msg;
+                }
+
+                return JSON.stringify(item);
+
+            })
+            .join(", ");
+    }
+
+    if(typeof error === "object"){
+
+        if(error.msg){
+            return error.msg;
+        }
+
+        if(error.message){
+            return error.message;
+        }
+
+        if(error.detail){
+
+            return readableError(
+                error.detail
+            );
+        }
+
+        try{
+            return JSON.stringify(error);
+        }catch{
+            return "Ошибка сервера";
+        }
+    }
+
+    return String(error);
+}
 
 
 function toast(text){
 
     const el =
-        document.getElementById("toast");
+        document.getElementById(
+            "toast"
+        );
 
-    el.textContent = text;
+    el.textContent =
+        readableError(text);
+
     el.classList.add("show");
 
-    setTimeout(
-        () => el.classList.remove("show"),
-        2500
+    clearTimeout(
+        window.toastTimer
     );
+
+    window.toastTimer =
+        setTimeout(
+            () => el.classList.remove("show"),
+            3000
+        );
 }
 
+
+/* ================= API ================= */
 
 async function api(
     url,
     options={}
 ){
 
-    options.headers = {
-        "Content-Type":
-            "application/json",
+    const headers = {
         ...(options.headers || {})
     };
 
+    if(
+        options.body &&
+        typeof options.body === "string"
+    ){
+        headers["Content-Type"] =
+            headers["Content-Type"] ||
+            "application/json";
+    }
+
     if(TOKEN){
-        options.headers.Authorization =
+        headers.Authorization =
             "Bearer " + TOKEN;
     }
 
     const response =
         await fetch(
             url,
-            options
+            {
+                ...options,
+                headers
+            }
         );
 
     const text =
         await response.text();
 
-    let data = {};
+    let data = null;
 
     try{
-        data = text
+        data =
+            text
             ? JSON.parse(text)
             : {};
     }catch{
-        data = {};
+        data = {
+            detail:text
+        };
     }
 
     if(!response.ok){
+
         throw new Error(
-            data.detail ||
-            "Ошибка сервера"
+            readableError(
+                data?.detail ?? data
+            )
         );
     }
 
     return data;
 }
 
+
+/* ================= LOGIN ================= */
 
 async function login(){
 
@@ -696,7 +717,9 @@ async function login(){
         ).value.trim();
 
     if(!phone || !pin){
-        toast("Введите номер и PIN");
+        toast(
+            "Введите номер телефона и PIN"
+        );
         return;
     }
 
@@ -725,12 +748,13 @@ async function login(){
         await boot();
 
     }catch(e){
+
         toast(e.message);
     }
 }
 
 
-async function telegramAdminLogin(){
+async function adminTelegramLogin(){
 
     if(
         !tg ||
@@ -785,13 +809,18 @@ async function boot(){
 
     if(!TOKEN){
 
-        const adminLogged =
-            await telegramAdminLogin();
+        const ok =
+            await adminTelegramLogin();
 
-        if(!adminLogged){
+        if(!ok){
+
             document
-                .getElementById("loginScreen")
-                .classList.remove("hidden");
+                .getElementById(
+                    "loginScreen"
+                )
+                .classList.remove(
+                    "hidden"
+                );
 
             return;
         }
@@ -806,29 +835,42 @@ async function boot(){
             USER.role;
 
         document
-            .getElementById("loginScreen")
-            .classList.add("hidden");
+            .getElementById(
+                "loginScreen"
+            )
+            .classList.add(
+                "hidden"
+            );
 
         document
-            .getElementById("main")
-            .classList.remove("hidden");
+            .getElementById(
+                "main"
+            )
+            .classList.remove(
+                "hidden"
+            );
 
         document
-            .getElementById("userBadge")
+            .getElementById(
+                "userBadge"
+            )
             .textContent =
                 USER.name;
 
         if(ROLE === "admin"){
 
             document
-                .getElementById("adminNav")
-                .classList.remove("hidden");
-
+                .getElementById(
+                    "adminNav"
+                )
+                .classList.remove(
+                    "hidden"
+                );
         }
 
         showPage("home");
 
-    }catch{
+    }catch(e){
 
         TOKEN = "";
 
@@ -837,21 +879,32 @@ async function boot(){
         );
 
         document
-            .getElementById("loginScreen")
-            .classList.remove("hidden");
+            .getElementById(
+                "loginScreen"
+            )
+            .classList.remove(
+                "hidden"
+            );
+
+        toast(
+            readableError(e)
+        );
     }
 }
 
 
-function setActiveNav(page){
+/* ================= NAV ================= */
+
+function setActive(page){
 
     document
         .querySelectorAll(".nav")
         .forEach(
-            btn => {
-                btn.classList.toggle(
+            button => {
+
+                button.classList.toggle(
                     "active",
-                    btn.dataset.page === page
+                    button.dataset.page === page
                 );
             }
         );
@@ -860,9 +913,7 @@ function setActiveNav(page){
 
 async function showPage(page){
 
-    CURRENT_PAGE = page;
-
-    setActiveNav(page);
+    setActive(page);
 
     const content =
         document.getElementById(
@@ -874,36 +925,38 @@ async function showPage(page){
 
     try{
 
-        if(page === "home")
-            await renderHome();
+        if(page === "home"){
+            await home();
+        }
 
-        if(page === "orders")
-            await renderOrders();
+        if(page === "orders"){
+            await ordersPage();
+        }
 
-        if(page === "games")
-            renderGames();
+        if(page === "games"){
+            gamesPage();
+        }
 
-        if(page === "admin")
-            await renderAdmin();
+        if(page === "admin"){
+            await adminPage();
+        }
 
     }catch(e){
 
         content.innerHTML = `
             <div class="empty glass">
-                ❌ Не удалось загрузить данные
-                <br><br>
-                <small>${e.message}</small>
+                ❌ ${escapeHtml(
+                    readableError(e)
+                )}
             </div>
         `;
     }
 }
 
 
-/* =====================================================
-   CUSTOMER HOME
-===================================================== */
+/* ================= HOME ================= */
 
-async function renderHome(){
+async function home(){
 
     const content =
         document.getElementById(
@@ -912,7 +965,7 @@ async function renderHome(){
 
     if(ROLE === "admin"){
 
-        const stats =
+        const s =
             await api(
                 "/api/admin/stats"
             );
@@ -921,10 +974,12 @@ async function renderHome(){
 
             <div class="hero glass">
                 <h1>
-                    Панель управления 👋
+                    RESTARAN Control ⚡
                 </h1>
+
                 <p>
-                    Всё под контролем.
+                    Добро пожаловать,
+                    администратор.
                 </p>
             </div>
 
@@ -932,57 +987,58 @@ async function renderHome(){
 
                 <div class="stat glass">
                     <div class="statNum">
-                        ${stats.customers}
+                        ${s.customers}
                     </div>
                     <div class="statName">
-                        Клиентов
+                        Клиенты
                     </div>
                 </div>
 
                 <div class="stat glass">
                     <div class="statNum">
-                        ${stats.couriers}
+                        ${s.couriers}
                     </div>
                     <div class="statName">
-                        Курьеров
+                        Сотрудники
                     </div>
                 </div>
 
                 <div class="stat glass">
                     <div class="statNum">
-                        ${stats.orders}
+                        ${s.orders}
                     </div>
                     <div class="statName">
-                        Заказов
+                        Заказы
                     </div>
                 </div>
 
                 <div class="stat glass">
                     <div class="statNum">
-                        ${stats.active_orders}
+                        ${s.active_orders}
                     </div>
                     <div class="statName">
-                        Активных
+                        Активные
                     </div>
                 </div>
 
             </div>
 
-            <div class="section">
-                <div class="card glass">
-                    <div class="cardTitle">
-                        💰 Оборот
-                    </div>
-                    <div style="
-                        font-size:30px;
-                        font-weight:950;
-                        margin-top:8px;
-                    ">
-                        ${Number(
-                            stats.revenue
-                        ).toFixed(2)} ₽
-                    </div>
+            <div class="card glass section">
+
+                <div class="muted">
+                    Оборот
                 </div>
+
+                <div style="
+                    font-size:30px;
+                    font-weight:950;
+                    margin-top:5px
+                ">
+                    ${Number(
+                        s.revenue
+                    ).toFixed(2)} ₽
+                </div>
+
             </div>
         `;
 
@@ -992,44 +1048,35 @@ async function renderHome(){
 
     if(ROLE === "courier"){
 
-        const orders =
+        const list =
             await api(
                 "/api/courier/orders"
             );
-
-        const active =
-            orders.filter(
-                o =>
-                    ![
-                        "closed",
-                        "delivered"
-                    ].includes(o.status)
-            ).length;
 
         content.innerHTML = `
 
             <div class="hero glass">
                 <h1>
-                    Добро пожаловать,
+                    Привет,
                     ${escapeHtml(USER.name)} 👋
                 </h1>
 
                 <p>
-                    Активных заказов:
-                    <b>${active}</b>
+                    Управляйте своими доставками
+                    в разделе заказов.
                 </p>
             </div>
 
             <div class="card glass">
 
                 <div class="cardTitle">
-                    🚴 Рабочий режим
+                    🚴 Курьер
                 </div>
 
-                <p class="muted">
-                    Управляйте доступностью
-                    курьера в разделе заказов.
-                </p>
+                <div class="muted">
+                    Заказов:
+                    ${list.length}
+                </div>
 
             </div>
         `;
@@ -1038,17 +1085,14 @@ async function renderHome(){
     }
 
 
-    const orders =
+    const list =
         await api(
             "/api/customer/orders"
         );
 
     const active =
-        orders.filter(
-            o =>
-                ![
-                    "closed"
-                ].includes(o.status)
+        list.filter(
+            x => x.status !== "closed"
         );
 
     content.innerHTML = `
@@ -1060,66 +1104,57 @@ async function renderHome(){
             </h1>
 
             <p>
-                Здесь появятся ваши заказы.
+                Добро пожаловать в RESTARAN.
             </p>
         </div>
 
-        <div class="section">
-
-            <div class="sectionTitle">
-                📦 Активные заказы
-            </div>
-
-            ${
-                active.length
-                ? active.slice(0,3)
-                    .map(customerOrderHtml)
-                    .join("")
-                : `
-                    <div class="empty glass">
-                        Пока нет активных заказов 🍽
-                    </div>
-                `
-            }
-
+        <div class="sectionTitle">
+            📦 Активные заказы
         </div>
+
+        ${
+            active.length
+            ? active
+                .slice(0,3)
+                .map(customerOrder)
+                .join("")
+            : `
+                <div class="empty glass">
+                    Пока нет активных заказов 🍽
+                </div>
+            `
+        }
     `;
 }
 
 
-/* =====================================================
-   ORDERS
-===================================================== */
+/* ================= ORDERS ================= */
 
-async function renderOrders(){
-
-    const content =
-        document.getElementById(
-            "content"
-        );
-
+async function ordersPage(){
 
     if(ROLE === "customer"){
 
-        const orders =
+        const list =
             await api(
                 "/api/customer/orders"
             );
 
-        content.innerHTML = `
+        document
+            .getElementById(
+                "content"
+            )
+            .innerHTML = `
 
             <div class="hero glass">
                 <h1>Мои заказы 📦</h1>
                 <p>
-                    История и текущие доставки
+                    Все ваши заказы
                 </p>
             </div>
 
             ${
-                orders.length
-                ? orders
-                    .map(customerOrderHtml)
-                    .join("")
+                list.length
+                ? list.map(customerOrder).join("")
                 : `
                     <div class="empty glass">
                         Заказов пока нет
@@ -1134,17 +1169,21 @@ async function renderOrders(){
 
     if(ROLE === "courier"){
 
-        const orders =
+        const list =
             await api(
                 "/api/courier/orders"
             );
 
-        content.innerHTML = `
+        document
+            .getElementById(
+                "content"
+            )
+            .innerHTML = `
 
             <div class="hero glass">
                 <h1>Мои доставки 🚴</h1>
                 <p>
-                    Управляйте назначенными заказами.
+                    Управление заказами
                 </p>
             </div>
 
@@ -1153,18 +1192,16 @@ async function renderOrders(){
                     class="primary"
                     onclick="toggleOnline()"
                 >
-                    🟢 Онлайн / Оффлайн
+                    🟢 Изменить онлайн-статус
                 </button>
             </div>
 
             ${
-                orders.length
-                ? orders
-                    .map(courierOrderHtml)
-                    .join("")
+                list.length
+                ? list.map(courierOrder).join("")
                 : `
                     <div class="empty glass">
-                        Вам пока ничего не назначено
+                        Заказов нет
                     </div>
                 `
             }
@@ -1173,24 +1210,22 @@ async function renderOrders(){
         return;
     }
 
-
-    if(ROLE === "admin"){
-
-        await renderAdminOrders();
-    }
+    await adminOrders();
 }
 
 
-function customerOrderHtml(o){
+/* ================= CUSTOMER ORDER ================= */
 
-    const statuses = {
+function customerOrder(o){
+
+    const status = {
         new:"🆕 Новый",
         assigned:"👤 Курьер назначен",
         accepted:"✅ Принят",
         delivering:"🚴 Доставляется",
         delivered:"📦 Доставлен",
         closed:"🔒 Закрыт"
-    };
+    }[o.status] || o.status;
 
     let map = "";
 
@@ -1206,33 +1241,13 @@ function customerOrderHtml(o){
         const lon =
             Number(o.courier_lon);
 
-        const delta = 0.01;
-
-        const bbox =
-            `${lon-delta},${lat-delta},${lon+delta},${lat+delta}`;
+        const d = .01;
 
         map = `
             <iframe
                 class="map"
-                src="https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}"
+                src="https://www.openstreetmap.org/export/embed.html?bbox=${lon-d},${lat-d},${lon+d},${lat+d}&layer=mapnik&marker=${lat},${lon}"
             ></iframe>
-        `;
-    }
-
-    let confirmButton = "";
-
-    if(
-        o.status === "delivered" &&
-        !o.customer_confirmed
-    ){
-
-        confirmButton = `
-            <button
-                class="smallBtn success"
-                onclick="confirmOrder(${o.id})"
-            >
-                ✅ Подтвердить получение
-            </button>
         `;
     }
 
@@ -1243,14 +1258,31 @@ function customerOrderHtml(o){
             <div class="cardTop">
 
                 <div>
+
                     <div class="cardTitle">
-                        #${o.id} ·
+                        #${o.id}
+                        ·
                         ${escapeHtml(o.title)}
                     </div>
 
                     <div class="muted">
-                        📍 ${escapeHtml(o.address)}
+                        📍
+                        ${escapeHtml(o.address)}
                     </div>
+
+                    ${
+                        o.courier_name
+                        ? `
+                            <div class="muted">
+                                🚴
+                                ${escapeHtml(
+                                    o.courier_name
+                                )}
+                            </div>
+                        `
+                        : ""
+                    }
+
                 </div>
 
                 <div class="price">
@@ -1260,28 +1292,22 @@ function customerOrderHtml(o){
             </div>
 
             <div class="status">
-                ${statuses[o.status] || o.status}
+                ${status}
             </div>
-
-            ${
-                o.courier_name
-                ? `
-                    <div class="muted"
-                         style="margin-top:9px">
-                        🚴 Курьер:
-                        ${escapeHtml(o.courier_name)}
-                    </div>
-                `
-                : ""
-            }
 
             ${map}
 
             ${
-                confirmButton
+                o.status === "delivered" &&
+                !o.customer_confirmed
                 ? `
                     <div class="actions">
-                        ${confirmButton}
+                        <button
+                            class="smallBtn success"
+                            onclick="confirmOrder(${o.id})"
+                        >
+                            ✅ Подтвердить получение
+                        </button>
                     </div>
                 `
                 : ""
@@ -1292,15 +1318,9 @@ function customerOrderHtml(o){
 }
 
 
-function courierOrderHtml(o){
+/* ================= COURIER ORDER ================= */
 
-    const status = {
-        assigned:"👤 Назначен",
-        accepted:"✅ Принят",
-        delivering:"🚴 В пути",
-        delivered:"📦 Доставлен",
-        closed:"🔒 Закрыт"
-    }[o.status] || o.status;
+function courierOrder(o){
 
     let buttons = "";
 
@@ -1329,7 +1349,7 @@ function courierOrderHtml(o){
                     'start'
                 )"
             >
-                🚴 Начать доставку
+                🚴 Начать
             </button>
         `;
     }
@@ -1356,22 +1376,34 @@ function courierOrderHtml(o){
             <div class="cardTop">
 
                 <div>
+
                     <div class="cardTitle">
                         #${o.id}
+                        ·
                         ${escapeHtml(o.title)}
                     </div>
 
                     <div class="muted">
-                        👤 ${escapeHtml(o.customer_name)}
+                        👤
+                        ${escapeHtml(
+                            o.customer_name
+                        )}
                     </div>
 
                     <div class="muted">
-                        📱 ${escapeHtml(o.customer_phone)}
+                        📱
+                        ${escapeHtml(
+                            o.customer_phone
+                        )}
                     </div>
 
                     <div class="muted">
-                        📍 ${escapeHtml(o.address)}
+                        📍
+                        ${escapeHtml(
+                            o.address
+                        )}
                     </div>
+
                 </div>
 
                 <div class="price">
@@ -1381,7 +1413,7 @@ function courierOrderHtml(o){
             </div>
 
             <div class="status">
-                ${status}
+                ${o.status}
             </div>
 
             <div class="actions">
@@ -1393,11 +1425,9 @@ function courierOrderHtml(o){
 }
 
 
-/* =====================================================
-   ADMIN
-===================================================== */
+/* ================= ADMIN ================= */
 
-async function renderAdmin(){
+async function adminPage(){
 
     const content =
         document.getElementById(
@@ -1413,12 +1443,11 @@ async function renderAdmin(){
 
         <div class="hero glass">
             <h1>
-                RESTARAN Control ⚡
+                Панель администратора ⚡
             </h1>
 
             <p>
-                Управление рестораном
-                в одном месте.
+                Полное управление RESTARAN.
             </p>
         </div>
 
@@ -1466,28 +1495,28 @@ async function renderAdmin(){
 
             <button
                 class="tab active"
-                onclick="adminTab('orders')"
+                onclick="adminTab('orders',this)"
             >
                 📦 Заказы
             </button>
 
             <button
                 class="tab"
-                onclick="adminTab('customers')"
+                onclick="adminTab('customers',this)"
             >
                 👤 Клиенты
             </button>
 
             <button
                 class="tab"
-                onclick="adminTab('couriers')"
+                onclick="adminTab('couriers',this)"
             >
                 🚴 Сотрудники
             </button>
 
             <button
                 class="tab"
-                onclick="adminTab('create')"
+                onclick="adminTab('create',this)"
             >
                 ➕ Создать
             </button>
@@ -1501,29 +1530,39 @@ async function renderAdmin(){
 }
 
 
-async function adminTab(tab){
+async function adminTab(
+    tab,
+    clickedButton=null
+){
+
+    document
+        .querySelectorAll(".tab")
+        .forEach(
+            x => x.classList.remove("active")
+        );
+
+    if(clickedButton){
+        clickedButton.classList.add("active");
+    }
 
     const area =
         document.getElementById(
             "adminArea"
         );
 
-    if(!area) return;
-
     area.innerHTML =
         `<div class="loading">Загрузка...</div>`;
 
 
     if(tab === "orders"){
-
-        await renderAdminOrders();
+        await adminOrders();
         return;
     }
 
 
     if(tab === "customers"){
 
-        const customers =
+        const list =
             await api(
                 "/api/admin/customers"
             );
@@ -1535,25 +1574,33 @@ async function adminTab(tab){
             </div>
 
             ${
-                customers.length
-                ? customers.map(c => `
+                list.length
+                ? list.map(
+                    c => `
+
                     <div class="card glass">
 
                         <div class="cardTop">
 
                             <div>
+
                                 <div class="cardTitle">
                                     ${escapeHtml(c.name)}
                                 </div>
 
                                 <div class="muted">
-                                    📱 ${escapeHtml(c.phone)}
+                                    📱
+                                    ${escapeHtml(c.phone)}
                                 </div>
 
                                 <div class="muted">
                                     Telegram:
-                                    ${c.telegram_id || "не привязан"}
+                                    ${
+                                        c.telegram_id
+                                        || "не привязан"
+                                    }
                                 </div>
+
                             </div>
 
                             <div>
@@ -1567,10 +1614,11 @@ async function adminTab(tab){
                         </div>
 
                     </div>
-                `).join("")
+                `
+                ).join("")
                 : `
                     <div class="empty glass">
-                        Клиентов пока нет
+                        Клиентов нет
                     </div>
                 `
             }
@@ -1582,7 +1630,7 @@ async function adminTab(tab){
 
     if(tab === "couriers"){
 
-        const couriers =
+        const list =
             await api(
                 "/api/admin/couriers"
             );
@@ -1594,19 +1642,23 @@ async function adminTab(tab){
             </div>
 
             ${
-                couriers.length
-                ? couriers.map(c => `
+                list.length
+                ? list.map(
+                    c => `
+
                     <div class="card glass">
 
                         <div class="cardTop">
 
                             <div>
+
                                 <div class="cardTitle">
                                     ${escapeHtml(c.name)}
                                 </div>
 
                                 <div class="muted">
-                                    📱 ${escapeHtml(c.phone)}
+                                    📱
+                                    ${escapeHtml(c.phone)}
                                 </div>
 
                                 <div class="muted">
@@ -1616,6 +1668,7 @@ async function adminTab(tab){
                                         : "⚪ Оффлайн"
                                     }
                                 </div>
+
                             </div>
 
                             <div>
@@ -1631,7 +1684,8 @@ async function adminTab(tab){
                         <div class="actions">
 
                             ${
-                                !c.approved
+                                !c.approved &&
+                                c.active
                                 ? `
                                     <button
                                         class="smallBtn success"
@@ -1654,19 +1708,20 @@ async function adminTab(tab){
                                     </button>
                                 `
                                 : `
-                                    <span class="muted">
+                                    <div class="muted">
                                         Сотрудник уволен
-                                    </span>
+                                    </div>
                                 `
                             }
 
                         </div>
 
                     </div>
-                `).join("")
+                `
+                ).join("")
                 : `
                     <div class="empty glass">
-                        Сотрудников пока нет
+                        Сотрудников нет
                     </div>
                 `
             }
@@ -1683,7 +1738,7 @@ async function adminTab(tab){
             <div class="card glass">
 
                 <div class="sectionTitle">
-                    👤 Новый клиент
+                    👤 Создать клиента
                 </div>
 
                 <div class="formGrid">
@@ -1691,21 +1746,21 @@ async function adminTab(tab){
                     <input
                         id="newCustomerName"
                         class="input"
-                        placeholder="Имя клиента"
+                        placeholder="Имя"
                     >
 
                     <input
                         id="newCustomerPhone"
                         class="input"
+                        type="tel"
                         placeholder="Номер телефона"
-                        inputmode="tel"
                     >
 
                     <input
                         id="newCustomerPin"
                         class="input"
-                        placeholder="PIN"
                         inputmode="numeric"
+                        placeholder="PIN"
                     >
 
                     <button
@@ -1723,7 +1778,7 @@ async function adminTab(tab){
             <div class="card glass">
 
                 <div class="sectionTitle">
-                    🚴 Новый сотрудник
+                    🚴 Создать сотрудника
                 </div>
 
                 <div class="formGrid">
@@ -1731,21 +1786,21 @@ async function adminTab(tab){
                     <input
                         id="newCourierName"
                         class="input"
-                        placeholder="Имя курьера"
+                        placeholder="Имя"
                     >
 
                     <input
                         id="newCourierPhone"
                         class="input"
+                        type="tel"
                         placeholder="Номер телефона"
-                        inputmode="tel"
                     >
 
                     <input
                         id="newCourierPin"
                         class="input"
-                        placeholder="PIN"
                         inputmode="numeric"
+                        placeholder="PIN"
                     >
 
                     <button
@@ -1763,13 +1818,13 @@ async function adminTab(tab){
             <div class="card glass">
 
                 <div class="sectionTitle">
-                    📦 Новый заказ
+                    📦 Создать заказ
                 </div>
 
                 <div class="notice">
-                    Номер телефона должен совпадать
-                    с номером клиента.
-                    Никаких внутренних ID.
+                    Введи именно
+                    <b>номер телефона клиента</b>.
+                    ID больше не нужен.
                 </div>
 
                 <div class="formGrid">
@@ -1777,27 +1832,30 @@ async function adminTab(tab){
                     <input
                         id="orderPhone"
                         class="input"
-                        placeholder="📱 Номер клиента"
+                        type="tel"
                         inputmode="tel"
+                        placeholder="📱 Номер телефона клиента"
                     >
 
                     <input
                         id="orderTitle"
                         class="input"
-                        placeholder="Название заказа"
+                        placeholder="🍕 Название заказа"
                     >
 
                     <input
                         id="orderAddress"
                         class="input"
-                        placeholder="Адрес доставки"
+                        placeholder="📍 Адрес доставки"
                     >
 
                     <input
                         id="orderPrice"
                         class="input"
-                        placeholder="Цена"
+                        type="number"
                         inputmode="decimal"
+                        min="0"
+                        placeholder="💰 Цена"
                     >
 
                     <button
@@ -1815,16 +1873,16 @@ async function adminTab(tab){
 }
 
 
-async function renderAdminOrders(){
+/* ================= ADMIN ORDERS ================= */
+
+async function adminOrders(){
 
     const area =
         document.getElementById(
             "adminArea"
         );
 
-    if(!area) return;
-
-    const orders =
+    const list =
         await api(
             "/api/admin/orders"
         );
@@ -1836,8 +1894,8 @@ async function renderAdminOrders(){
         </div>
 
         ${
-            orders.length
-            ? orders.map(adminOrderHtml).join("")
+            list.length
+            ? list.map(adminOrder).join("")
             : `
                 <div class="empty glass">
                     Заказов пока нет
@@ -1848,16 +1906,7 @@ async function renderAdminOrders(){
 }
 
 
-function adminOrderHtml(o){
-
-    const statuses = {
-        new:"🆕 Новый",
-        assigned:"👤 Назначен",
-        accepted:"✅ Принят",
-        delivering:"🚴 Доставка",
-        delivered:"📦 Доставлен",
-        closed:"🔒 Закрыт"
-    };
+function adminOrder(o){
 
     return `
 
@@ -1869,34 +1918,35 @@ function adminOrderHtml(o){
 
                     <div class="cardTitle">
                         #${o.id}
+                        ·
                         ${escapeHtml(o.title)}
                     </div>
 
                     <div class="muted">
-                        👤 ${escapeHtml(o.customer_name)}
+                        👤
+                        ${escapeHtml(o.customer_name)}
                     </div>
 
                     <div class="muted">
-                        📱 ${escapeHtml(o.customer_phone)}
+                        📱
+                        ${escapeHtml(o.customer_phone)}
                     </div>
 
                     <div class="muted">
-                        📍 ${escapeHtml(o.address)}
+                        📍
+                        ${escapeHtml(o.address)}
                     </div>
 
-                    ${
-                        o.courier_name
-                        ? `
-                            <div class="muted">
-                                🚴 ${escapeHtml(o.courier_name)}
-                            </div>
-                        `
-                        : `
-                            <div class="muted">
-                                🚴 Курьер не назначен
-                            </div>
-                        `
-                    }
+                    <div class="muted">
+                        🚴
+                        ${
+                            o.courier_name
+                            ? escapeHtml(
+                                o.courier_name
+                            )
+                            : "Не назначен"
+                        }
+                    </div>
 
                 </div>
 
@@ -1907,10 +1957,7 @@ function adminOrderHtml(o){
             </div>
 
             <div class="status">
-                ${
-                    statuses[o.status]
-                    || o.status
-                }
+                ${o.status}
             </div>
 
             <div class="actions">
@@ -1951,9 +1998,7 @@ function adminOrderHtml(o){
 }
 
 
-/* =====================================================
-   ADMIN ACTIONS
-===================================================== */
+/* ================= CREATE ================= */
 
 async function createCustomer(){
 
@@ -1974,6 +2019,13 @@ async function createCustomer(){
                 "newCustomerPin"
             ).value.trim();
 
+        if(!name || !phone || !pin){
+            toast(
+                "Заполните все поля"
+            );
+            return;
+        }
+
         await api(
             "/api/admin/customers",
             {
@@ -1987,12 +2039,13 @@ async function createCustomer(){
         );
 
         toast(
-            "Клиент создан"
+            "✅ Клиент создан"
         );
 
-        adminTab("customers");
+        await adminTab("customers");
 
     }catch(e){
+
         toast(e.message);
     }
 }
@@ -2017,6 +2070,13 @@ async function createCourier(){
                 "newCourierPin"
             ).value.trim();
 
+        if(!name || !phone || !pin){
+            toast(
+                "Заполните все поля"
+            );
+            return;
+        }
+
         await api(
             "/api/admin/couriers",
             {
@@ -2030,16 +2090,28 @@ async function createCourier(){
         );
 
         toast(
-            "Сотрудник создан"
+            "✅ Сотрудник создан"
         );
 
-        adminTab("couriers");
+        await adminTab("couriers");
 
     }catch(e){
+
         toast(e.message);
     }
 }
 
+
+/*
+    ГЛАВНОЕ ИСПРАВЛЕНИЕ:
+
+    orderPhone -> телефон клиента
+
+    Сервер сам находит:
+    users.phone
+    -> users.id
+    -> orders.customer_id
+*/
 
 async function createOrder(){
 
@@ -2060,34 +2132,77 @@ async function createOrder(){
                 "orderAddress"
             ).value.trim();
 
+        const priceValue =
+            document.getElementById(
+                "orderPrice"
+            ).value.trim();
+
         const price =
-            Number(
-                document.getElementById(
-                    "orderPrice"
-                ).value || 0
+            priceValue
+            ? Number(priceValue)
+            : 0;
+
+        if(!phone){
+            toast(
+                "Введите номер телефона клиента"
+            );
+            return;
+        }
+
+        if(!title){
+            toast(
+                "Введите название заказа"
+            );
+            return;
+        }
+
+        if(!address){
+            toast(
+                "Введите адрес доставки"
+            );
+            return;
+        }
+
+        if(
+            Number.isNaN(price) ||
+            price < 0
+        ){
+            toast(
+                "Введите правильную цену"
+            );
+            return;
+        }
+
+        const result =
+            await api(
+                "/api/admin/orders",
+                {
+                    method:"POST",
+                    body:JSON.stringify({
+                        phone:phone,
+                        title:title,
+                        address:address,
+                        price:price
+                    })
+                }
             );
 
-        await api(
-            "/api/admin/orders",
-            {
-                method:"POST",
-                body:JSON.stringify({
-                    phone,
-                    title,
-                    address,
-                    price
-                })
-            }
-        );
-
         toast(
-            "Заказ создан для клиента"
+            `✅ Заказ #${result.id} создан`
         );
 
-        adminTab("orders");
+        await adminTab("orders");
 
     }catch(e){
-        toast(e.message);
+
+        /*
+            Здесь больше не будет
+            [object Object].
+        */
+
+        toast(
+            readableError(e)
+        );
     }
 }
 
@@ -2104,10 +2219,10 @@ async function verifyCourier(id){
         );
 
         toast(
-            "Сотрудник одобрен"
+            "✅ Сотрудник одобрен"
         );
 
-        adminTab("couriers");
+        await adminTab("couriers");
 
     }catch(e){
         toast(e.message);
@@ -2135,10 +2250,10 @@ async function fireCourier(id){
         );
 
         toast(
-            "Сотрудник уволен"
+            "🚫 Сотрудник уволен"
         );
 
-        adminTab("couriers");
+        await adminTab("couriers");
 
     }catch(e){
         toast(e.message);
@@ -2150,58 +2265,69 @@ async function assignCourier(orderId){
 
     try{
 
-        const couriers =
+        const list =
             await api(
                 "/api/admin/couriers"
             );
 
         const available =
-            couriers.filter(
-                c =>
-                    c.approved &&
-                    c.active
+            list.filter(
+                x =>
+                    x.approved &&
+                    x.active
             );
 
         if(!available.length){
+
             toast(
                 "Нет доступных курьеров"
             );
+
             return;
         }
 
-        const list =
+        const text =
             available
             .map(
-                c =>
-                    `${c.id} — ${c.name}`
+                x =>
+                    `${x.id} — ${x.name}`
             )
             .join("\n");
 
-        const selected =
+        const value =
             prompt(
                 "Введите ID курьера:\n\n" +
-                list
+                text
             );
 
-        if(!selected)
+        if(!value)
             return;
+
+        const id =
+            Number(value);
+
+        if(!Number.isInteger(id)){
+            toast(
+                "Неверный ID курьера"
+            );
+            return;
+        }
 
         await api(
             `/api/admin/orders/${orderId}/assign`,
             {
                 method:"POST",
                 body:JSON.stringify({
-                    courier_id:
-                        Number(selected)
+                    courier_id:id
                 })
             }
         );
 
         toast(
-            "Курьер назначен"
+            "🚴 Курьер назначен"
         );
 
-        await renderAdminOrders();
+        await adminOrders();
 
     }catch(e){
         toast(e.message);
@@ -2229,10 +2355,10 @@ async function closeOrder(id){
         );
 
         toast(
-            "Заказ закрыт"
+            "🔒 Заказ закрыт"
         );
 
-        await renderAdminOrders();
+        await adminOrders();
 
     }catch(e){
         toast(e.message);
@@ -2240,9 +2366,7 @@ async function closeOrder(id){
 }
 
 
-/* =====================================================
-   CUSTOMER ACTIONS
-===================================================== */
+/* ================= CUSTOMER ================= */
 
 async function confirmOrder(id){
 
@@ -2256,10 +2380,10 @@ async function confirmOrder(id){
         );
 
         toast(
-            "Получение подтверждено ✅"
+            "✅ Получение подтверждено"
         );
 
-        await renderOrders();
+        await ordersPage();
 
     }catch(e){
         toast(e.message);
@@ -2267,9 +2391,7 @@ async function confirmOrder(id){
 }
 
 
-/* =====================================================
-   COURIER ACTIONS
-===================================================== */
+/* ================= COURIER ================= */
 
 async function courierAction(
     id,
@@ -2286,10 +2408,10 @@ async function courierAction(
         );
 
         toast(
-            "Статус обновлён"
+            "✅ Статус изменён"
         );
 
-        await renderOrders();
+        await ordersPage();
 
     }catch(e){
         toast(e.message);
@@ -2321,11 +2443,9 @@ async function toggleOnline(){
 }
 
 
-/* =====================================================
-   GAMES
-===================================================== */
+/* ================= GAMES ================= */
 
-function renderGames(){
+function gamesPage(){
 
     const content =
         document.getElementById(
@@ -2340,14 +2460,14 @@ function renderGames(){
             </h1>
 
             <p>
-                Немного развлечений
-                пока ждёшь заказ.
+                Пока ждёшь заказ —
+                можно немного поиграть.
             </p>
         </div>
 
         <div class="game glass">
 
-            <div class="gameIcon">
+            <div style="font-size:40px">
                 🧠
             </div>
 
@@ -2356,7 +2476,7 @@ function renderGames(){
             </h3>
 
             <p>
-                Найди одинаковые пары.
+                Найди все одинаковые пары.
             </p>
 
             <button
@@ -2368,7 +2488,7 @@ function renderGames(){
 
             <div
                 id="memory"
-                class="memoryBoard"
+                class="memory"
             ></div>
 
         </div>
@@ -2376,7 +2496,7 @@ function renderGames(){
 
         <div class="game glass">
 
-            <div class="gameIcon">
+            <div style="font-size:40px">
                 🎯
             </div>
 
@@ -2391,17 +2511,17 @@ function renderGames(){
 
             <button
                 class="gameBtn"
-                onclick="startTapGame()"
+                onclick="startTap()"
             >
                 Начать
             </button>
 
             <div
-                id="tapGame"
+                id="tap"
                 style="
-                    margin-top:14px;
+                    margin-top:12px;
                     font-size:28px;
-                    font-weight:950;
+                    font-weight:950
                 "
             >
                 0
@@ -2412,12 +2532,12 @@ function renderGames(){
 
         <div class="game glass">
 
-            <div class="gameIcon">
-                🍔
+            <div style="font-size:40px">
+                🍀
             </div>
 
             <h3>
-                RESTARAN Lucky
+                Lucky
             </h3>
 
             <p>
@@ -2432,10 +2552,10 @@ function renderGames(){
             </button>
 
             <div
-                id="luckyResult"
+                id="lucky"
                 style="
                     margin-top:12px;
-                    font-weight:900;
+                    font-weight:900
                 "
             ></div>
 
@@ -2444,9 +2564,9 @@ function renderGames(){
 }
 
 
-let memoryFirst = null;
+let firstMemory = null;
 let memoryLock = false;
-let memoryPairs = 0;
+let pairs = 0;
 
 
 function startMemory(){
@@ -2456,7 +2576,7 @@ function startMemory(){
             "memory"
         );
 
-    const emojis = [
+    const arr = [
         "🍕","🍕",
         "🍔","🍔",
         "🍟","🍟",
@@ -2467,20 +2587,19 @@ function startMemory(){
         "🍰","🍰"
     ];
 
-    emojis.sort(
-        () => Math.random() - .5
+    arr.sort(
+        () => Math.random()-.5
     );
 
-    memoryFirst = null;
+    firstMemory = null;
     memoryLock = false;
-    memoryPairs = 0;
+    pairs = 0;
 
     board.innerHTML =
-        emojis.map(
+        arr.map(
             (emoji,i) => `
                 <div
                     class="memoryCard"
-                    data-index="${i}"
                     data-value="${emoji}"
                     onclick="memoryClick(this)"
                 >
@@ -2507,21 +2626,21 @@ function memoryClick(card){
         "open"
     );
 
-    if(!memoryFirst){
+    if(!firstMemory){
 
-        memoryFirst = card;
+        firstMemory = card;
         return;
     }
 
     if(
-        memoryFirst.dataset.value ===
+        firstMemory.dataset.value ===
         card.dataset.value
     ){
 
-        memoryFirst = null;
-        memoryPairs++;
+        firstMemory = null;
+        pairs++;
 
-        if(memoryPairs === 8){
+        if(pairs === 8){
             toast(
                 "🎉 Все пары найдены!"
             );
@@ -2533,26 +2652,18 @@ function memoryClick(card){
     memoryLock = true;
 
     const first =
-        memoryFirst;
+        firstMemory;
 
     setTimeout(
         () => {
 
-            first.textContent =
-                "❔";
+            first.textContent = "❔";
+            card.textContent = "❔";
 
-            card.textContent =
-                "❔";
+            first.classList.remove("open");
+            card.classList.remove("open");
 
-            first.classList.remove(
-                "open"
-            );
-
-            card.classList.remove(
-                "open"
-            );
-
-            memoryFirst = null;
+            firstMemory = null;
             memoryLock = false;
 
         },
@@ -2561,27 +2672,27 @@ function memoryClick(card){
 }
 
 
-let tapCount = 0;
 let tapRunning = false;
+let tapCount = 0;
 
 
-function startTapGame(){
+function startTap(){
 
     if(tapRunning)
         return;
 
-    tapCount = 0;
     tapRunning = true;
+    tapCount = 0;
 
     const el =
         document.getElementById(
-            "tapGame"
+            "tap"
         );
 
-    el.textContent =
-        "Нажимай! 10";
-
     let seconds = 10;
+
+    el.textContent =
+        "0 • 10";
 
     el.onclick = () => {
 
@@ -2590,7 +2701,7 @@ function startTapGame(){
             tapCount++;
 
             el.textContent =
-                tapCount;
+                `${tapCount} • ${seconds}`;
         }
     };
 
@@ -2605,7 +2716,6 @@ function startTapGame(){
                     clearInterval(timer);
 
                     tapRunning = false;
-
                     el.onclick = null;
 
                     toast(
@@ -2616,7 +2726,7 @@ function startTapGame(){
                 }
 
                 el.textContent =
-                    `${tapCount} • ${seconds}s`;
+                    `${tapCount} • ${seconds}`;
 
             },
             1000
@@ -2627,34 +2737,29 @@ function startTapGame(){
 function lucky(){
 
     const prizes = [
-        "🍕 Бесплатная пицца!",
-        "🍔 Бургер в подарок!",
-        "🥤 Бесплатный напиток!",
-        "🍟 Картошка фри!",
-        "😢 В этот раз мимо!",
-        "🔥 JACKPOT!"
+        "🍕 Пицца!",
+        "🍔 Бургер!",
+        "🍟 Картошка!",
+        "🥤 Напиток!",
+        "🔥 JACKPOT!",
+        "😢 Не повезло!"
     ];
-
-    const result =
-        prizes[
-            Math.floor(
-                Math.random() *
-                prizes.length
-            )
-        ];
 
     document
         .getElementById(
-            "luckyResult"
+            "lucky"
         )
         .textContent =
-            result;
+            prizes[
+                Math.floor(
+                    Math.random() *
+                    prizes.length
+                )
+            ];
 }
 
 
-/* =====================================================
-   HELPERS
-===================================================== */
+/* ================= ESCAPE ================= */
 
 function escapeHtml(value){
 
@@ -2667,9 +2772,7 @@ function escapeHtml(value){
 }
 
 
-/* =====================================================
-   START
-===================================================== */
+/* ================= START ================= */
 
 boot();
 
