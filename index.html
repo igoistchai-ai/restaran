@@ -4,478 +4,115 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>RESTARAN</title>
-
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
-*{
-    box-sizing:border-box;
-    -webkit-tap-highlight-color:transparent;
-}
-
-html,body{
-    margin:0;
-    padding:0;
-    width:100%;
-    min-height:100%;
-    background:#09090b;
-    color:#fff;
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-}
-
-body{
-    overflow-x:hidden;
-}
-
-button,input{
-    font:inherit;
-}
-
-button{
-    border:0;
-    cursor:pointer;
-}
-
-.app{
-    width:100%;
-    min-height:100vh;
-    padding:16px;
-}
-
-.hidden{
-    display:none!important;
-}
-
-/* =========================
-   LOADING
-========================= */
-
-#loadingScreen{
-    position:fixed;
-    inset:0;
-    z-index:99999;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:#09090b;
-}
-
-.loaderBox{
-    text-align:center;
-}
-
-.logo{
-    font-size:32px;
-    font-weight:900;
-    letter-spacing:2px;
-    margin-bottom:20px;
-}
-
-.loader{
-    width:38px;
-    height:38px;
-    border:4px solid #29292e;
-    border-top-color:#fff;
-    border-radius:50%;
-    animation:spin .8s linear infinite;
-    margin:auto;
-}
-
-@keyframes spin{
-    to{transform:rotate(360deg)}
-}
-
-/* =========================
-   LOGIN
-========================= */
-
-#loginScreen{
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:20px;
-}
-
-.loginCard{
-    width:100%;
-    max-width:430px;
-    background:#111114;
-    border:1px solid #27272c;
-    border-radius:26px;
-    padding:28px;
-    box-shadow:0 20px 70px #000;
-}
-
-.loginTitle{
-    font-size:30px;
-    font-weight:900;
-    margin-bottom:7px;
-}
-
-.loginSubtitle{
-    color:#8b8b94;
-    margin-bottom:25px;
-}
-
-.input{
-    width:100%;
-    height:54px;
-    background:#19191e;
-    border:1px solid #303038;
-    border-radius:15px;
-    color:#fff;
-    padding:0 16px;
-    outline:none;
-    margin-bottom:12px;
-}
-
-.input:focus{
-    border-color:#77777f;
-}
-
-.primary{
-    width:100%;
-    min-height:52px;
-    border-radius:15px;
-    background:#fff;
-    color:#000;
-    font-weight:800;
-}
-
-.danger{
-    background:#35171b!important;
-    color:#ff707b!important;
-    border:1px solid #61252d!important;
-}
-
-.secondary{
-    background:#1b1b20;
-    color:#fff;
-    border:1px solid #303038;
-}
-
-/* =========================
-   HEADER
-========================= */
-
-.header{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    margin-bottom:18px;
-}
-
-.headerTitle{
-    font-size:25px;
-    font-weight:900;
-}
-
-.headerSub{
-    color:#81818b;
-    font-size:13px;
-    margin-top:3px;
-}
-
-.iconButton{
-    width:45px;
-    height:45px;
-    border-radius:14px;
-    background:#17171b;
-    color:#fff;
-    border:1px solid #2a2a30;
-}
-
-/* =========================
-   CARDS
-========================= */
-
-.card{
-    background:#111114;
-    border:1px solid #25252b;
-    border-radius:20px;
-    padding:17px;
-    margin-bottom:13px;
-}
-
-.stats{
-    display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:10px;
-}
-
-.stat{
-    background:#17171b;
-    border:1px solid #292930;
-    border-radius:17px;
-    padding:15px;
-}
-
-.statValue{
-    font-size:25px;
-    font-weight:900;
-}
-
-.statName{
-    color:#80808a;
-    font-size:12px;
-    margin-top:4px;
-}
-
-/* =========================
-   TABS
-========================= */
-
-.tabs{
-    display:flex;
-    gap:7px;
-    overflow-x:auto;
-    padding-bottom:4px;
-    margin-bottom:15px;
-}
-
-.tab{
-    flex:none;
-    padding:11px 14px;
-    border-radius:13px;
-    background:#151519;
-    color:#8d8d97;
-    border:1px solid #292930;
-    font-weight:700;
-}
-
-.tab.active{
-    background:#fff;
-    color:#000;
-}
-
-/* =========================
-   ORDER
-========================= */
-
-.order{
-    background:#16161a;
-    border:1px solid #292930;
-    border-radius:17px;
-    padding:15px;
-    margin-bottom:10px;
-}
-
-.orderTop{
-    display:flex;
-    justify-content:space-between;
-    gap:10px;
-}
-
-.orderTitle{
-    font-weight:800;
-}
-
-.status{
-    font-size:11px;
-    padding:6px 9px;
-    border-radius:9px;
-    background:#24242a;
-    white-space:nowrap;
-}
-
-.muted{
-    color:#85858f;
-}
-
-.small{
-    font-size:12px;
-}
-
-/* =========================
-   CUSTOMER
-========================= */
-
-.customer{
-    background:#16161a;
-    border:1px solid #292930;
-    border-radius:18px;
-    padding:15px;
-    margin-bottom:10px;
-}
-
-.customerName{
-    font-weight:900;
-    font-size:17px;
-    margin-bottom:5px;
-}
-
-.customerInfo{
-    color:#8c8c96;
-    font-size:13px;
-    line-height:1.7;
-}
-
-.customerActions{
-    display:flex;
-    gap:8px;
-    margin-top:12px;
-}
-
-.customerActions button{
-    flex:1;
-    min-height:43px;
-    border-radius:12px;
-    background:#222228;
-    color:#fff;
-    border:1px solid #303038;
-    font-weight:700;
-}
-
-/* =========================
-   FORMS
-========================= */
-
-.formGrid{
-    display:grid;
-    gap:10px;
-}
-
-.formTitle{
-    font-weight:900;
-    font-size:18px;
-    margin-bottom:12px;
-}
-
-.formButton{
-    width:100%;
-    min-height:48px;
-    border-radius:14px;
-    background:#fff;
-    color:#000;
-    font-weight:800;
-}
-
-/* =========================
-   ERROR
-========================= */
-
-#errorBox{
-    margin-top:12px;
-    color:#ff737d;
-    font-size:13px;
-    line-height:1.5;
-}
-
-/* =========================
-   TOAST
-========================= */
-
-#toast{
-    position:fixed;
-    left:50%;
-    bottom:25px;
-    transform:translateX(-50%) translateY(20px);
-    background:#fff;
-    color:#000;
-    padding:12px 18px;
-    border-radius:14px;
-    font-weight:800;
-    opacity:0;
-    pointer-events:none;
-    transition:.25s;
-    z-index:100000;
-    max-width:90%;
-    text-align:center;
-}
-
-#toast.show{
-    opacity:1;
-    transform:translateX(-50%) translateY(0);
-}
-
-/* =========================
-   MODAL
-========================= */
-
-.modal{
-    position:fixed;
-    inset:0;
-    background:#000b;
-    z-index:5000;
-    display:flex;
-    align-items:flex-end;
-    justify-content:center;
-}
-
-.modalBox{
-    width:100%;
-    max-width:600px;
-    background:#111114;
-    border:1px solid #2b2b31;
-    border-radius:25px 25px 0 0;
-    padding:20px;
-    max-height:90vh;
-    overflow:auto;
-}
-
-.modalHeader{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:18px;
-}
-
-.modalTitle{
-    font-size:20px;
-    font-weight:900;
-}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#09090b;color:#fff;font-family:Inter,Arial,sans-serif}
+body{min-height:100vh}
+.hidden{display:none!important}
+#loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#09090b;z-index:9999}
+.loader{text-align:center}
+.logo{font-size:30px;font-weight:900;letter-spacing:2px}
+.spinner{width:35px;height:35px;border:3px solid #25252b;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;margin:20px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+#app{max-width:700px;margin:auto;padding:16px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.title{font-size:25px;font-weight:900}
+.subtitle{font-size:12px;color:#777;margin-top:4px}
+.card{background:#111114;border:1px solid #25252b;border-radius:20px;padding:16px;margin-bottom:14px}
+.card-title{font-size:18px;font-weight:800;margin-bottom:14px}
+.input{width:100%;height:52px;background:#18181d;border:1px solid #303038;border-radius:14px;color:#fff;padding:0 15px;font-size:15px;outline:none;margin-bottom:10px}
+.input:focus{border-color:#777}
+button{border:0;border-radius:14px;min-height:48px;padding:0 16px;color:#fff;background:#25252c;font-size:14px;font-weight:700;cursor:pointer}
+button:active{transform:scale(.98)}
+.primary{width:100%;background:#fff;color:#000}
+.danger{background:#35171a;color:#ff7b83;margin-top:10px;width:100%}
+.create{width:100%;background:#173c25;color:#79e99b}
+.logout{font-size:12px;min-height:38px}
+.error{color:#ff707a;font-size:13px;margin:8px 0}
+.muted{color:#777}
+.small{font-size:13px;line-height:1.7}
+
+#login{max-width:430px;margin:0 auto;padding:25px 18px}
+.login-logo{text-align:center;font-size:34px;font-weight:900;margin:50px 0 30px}
+.login-card{background:#111114;border:1px solid #25252b;border-radius:24px;padding:20px}
+
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px}
+.tab{min-height:42px;padding:0 5px;font-size:11px}
+.tab.active{background:#fff;color:#000}
+
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.stat{background:#18181d;border-radius:16px;padding:15px}
+.stat-number{font-size:25px;font-weight:900}
+.stat-label{font-size:11px;color:#777;margin-top:4px}
+
+.customer,.order,.courier{background:#18181d;border-radius:16px;padding:14px;margin-top:9px}
+.customer-name,.order-name{font-weight:800;font-size:16px}
+.customer-info{font-size:13px;color:#999;line-height:1.8;margin-top:7px}
+.order-head{display:flex;justify-content:space-between;gap:10px}
+.order-status{font-size:11px;background:#27272e;border-radius:10px;padding:6px 9px;height:max-content}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.empty{text-align:center;padding:25px;color:#666}
+
+#fatal{position:fixed;inset:0;background:#09090b;z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px}
+.fatal-card{max-width:430px;width:100%;background:#111114;border:1px solid #452126;border-radius:20px;padding:20px;text-align:center;color:#ff747d}
 </style>
 </head>
 
 <body>
 
-<div id="loadingScreen">
-    <div class="loaderBox">
+<div id="loading">
+    <div class="loader">
         <div class="logo">RESTARAN</div>
-        <div class="loader"></div>
+        <div class="spinner"></div>
     </div>
 </div>
 
-<div id="loginScreen" class="hidden">
-    <div class="loginCard">
-        <div class="loginTitle">RESTARAN</div>
-        <div class="loginSubtitle">Войдите в аккаунт</div>
+<div id="fatal" class="hidden">
+    <div class="fatal-card">
+        <div style="font-size:25px;font-weight:900;margin-bottom:12px">RESTARAN</div>
+        <div id="fatalText"></div>
+    </div>
+</div>
 
-        <input
-            id="phoneInput"
-            class="input"
-            type="tel"
-            placeholder="Номер телефона"
-        >
+<div id="login" class="hidden">
+    <div class="login-logo">RESTARAN</div>
 
-        <input
-            id="pinInput"
-            class="input"
-            type="password"
-            inputmode="numeric"
-            placeholder="PIN"
-        >
+    <div class="login-card">
+        <div class="card-title">Вход</div>
+
+        <input id="phone"
+               class="input"
+               type="tel"
+               placeholder="Номер телефона">
+
+        <input id="pin"
+               class="input"
+               type="password"
+               inputmode="numeric"
+               maxlength="8"
+               placeholder="PIN">
+
+        <div id="loginError" class="error"></div>
 
         <button class="primary" onclick="login()">
             Войти
         </button>
-
-        <div id="errorBox"></div>
     </div>
 </div>
 
-<div id="app" class="app hidden">
+<div id="app" class="hidden">
 
     <div class="header">
         <div>
-            <div class="headerTitle">RESTARAN</div>
-            <div id="roleText" class="headerSub"></div>
+            <div class="title">RESTARAN</div>
+            <div id="subtitle" class="subtitle"></div>
         </div>
 
-        <button class="iconButton" onclick="logout()">
-            ⎋
+        <button class="logout" onclick="logout()">
+            Выйти
         </button>
     </div>
 
@@ -483,115 +120,116 @@ button{
 
     <section id="adminView" class="hidden">
 
-        <div class="stats">
-            <div class="stat">
-                <div id="statOrders" class="statValue">0</div>
-                <div class="statName">Заказы</div>
-            </div>
-
-            <div class="stat">
-                <div id="statCustomers" class="statValue">0</div>
-                <div class="statName">Клиенты</div>
-            </div>
-
-            <div class="stat">
-                <div id="statCouriers" class="statValue">0</div>
-                <div class="statName">Курьеры</div>
-            </div>
-
-            <div class="stat">
-                <div id="statActive" class="statValue">0</div>
-                <div class="statName">Активные</div>
-            </div>
-        </div>
-
-        <br>
-
         <div class="tabs">
-            <button class="tab active" onclick="adminTab('orders',this)">
-                Заказы
-            </button>
-
-            <button class="tab" onclick="adminTab('customers',this)">
-                Клиенты
-            </button>
-
-            <button class="tab" onclick="adminTab('couriers',this)">
-                Курьеры
-            </button>
-
-            <button class="tab" onclick="adminTab('statistics',this)">
-                Статистика
-            </button>
+            <button class="tab active" onclick="tab('orders',this)">Заказы</button>
+            <button class="tab" onclick="tab('customers',this)">Клиенты</button>
+            <button class="tab" onclick="tab('couriers',this)">Курьеры</button>
+            <button class="tab" onclick="tab('stats',this)">Стата</button>
         </div>
 
-        <div id="adminOrdersArea"></div>
-        <div id="adminCustomersArea" class="hidden"></div>
-        <div id="adminCouriersArea" class="hidden"></div>
-        <div id="adminStatsArea" class="hidden"></div>
+        <div id="ordersTab">
+            <div id="adminOrdersArea"></div>
+        </div>
+
+        <div id="customersTab" class="hidden">
+            <div id="adminCustomersArea"></div>
+        </div>
+
+        <div id="couriersTab" class="hidden">
+            <div id="adminCouriersArea"></div>
+        </div>
+
+        <div id="statsTab" class="hidden">
+            <div id="adminStatsArea"></div>
+        </div>
 
     </section>
 
     <!-- CUSTOMER -->
 
     <section id="customerView" class="hidden">
+
         <div class="card">
-            <div class="formTitle">Мои заказы</div>
+            <div class="card-title">Мой аккаунт</div>
+            <div id="customerInfo" class="small"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Мои заказы</div>
             <div id="customerOrders"></div>
         </div>
+
     </section>
 
     <!-- COURIER -->
 
     <section id="courierView" class="hidden">
-        <div class="card">
-            <div class="formTitle">Курьер</div>
 
-            <button
-                id="courierOnlineButton"
-                class="primary"
-                onclick="toggleCourierOnline()">
+        <div class="card">
+            <div class="card-title">Курьер</div>
+            <button id="onlineButton"
+                    class="primary"
+                    onclick="toggleOnline()">
                 Выйти на линию
             </button>
         </div>
 
         <div class="card">
-            <div class="formTitle">Мои заказы</div>
+            <div class="card-title">Мои заказы</div>
             <div id="courierOrders"></div>
         </div>
+
     </section>
 
 </div>
 
-<div id="toast"></div>
-
 <script>
-const tg = window.Telegram?.WebApp;
-
-if(tg){
-    tg.ready();
-    tg.expand();
-}
-
-/*
-=========================================================
-ВАЖНО:
-АДМИН ПРОВЕРЯЕТСЯ ДО ПОКАЗА LOGIN SCREEN.
-=========================================================
-*/
+const tg = window.Telegram?.WebApp || null;
 
 const ADMIN_IDS = new Set([
     "8357023784",
     "7003441441"
 ]);
 
-let authToken = null;
-let currentRole = null;
-let currentUser = null;
+let token = null;
+let role = null;
+let user = null;
+
+if(tg){
+    tg.ready();
+    tg.expand();
+}
+
+function $(id){
+    return document.getElementById(id);
+}
+
+function show(id){
+    $(id)?.classList.remove("hidden");
+}
+
+function hide(id){
+    $(id)?.classList.add("hidden");
+}
+
+function esc(v){
+    return String(v ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+}
+
+function errorText(e){
+    if(typeof e === "string") return e;
+    return e?.message || "Неизвестная ошибка";
+}
 
 function telegramId(){
-    const id = tg?.initDataUnsafe?.user?.id;
-    return id ? String(id) : null;
+    return tg?.initDataUnsafe?.user?.id
+        ? String(tg.initDataUnsafe.user.id)
+        : null;
 }
 
 function isAdminTelegram(){
@@ -599,109 +237,72 @@ function isAdminTelegram(){
     return !!id && ADMIN_IDS.has(id);
 }
 
-function show(id){
-    document.getElementById(id)?.classList.remove("hidden");
-}
-
-function hide(id){
-    document.getElementById(id)?.classList.add("hidden");
-}
-
-function toast(text){
-    const el = document.getElementById("toast");
-
-    el.textContent = text;
-    el.classList.add("show");
-
-    setTimeout(()=>{
-        el.classList.remove("show");
-    },2500);
-}
-
-function formatError(error){
-    if(!error) return "Неизвестная ошибка";
-
-    if(typeof error === "string") return error;
-
-    if(error.message) return error.message;
-
-    try{
-        return JSON.stringify(error);
-    }catch{
-        return "Ошибка";
-    }
-}
-
 async function api(url,options={}){
     const headers = {
         ...(options.headers || {})
     };
 
-    if(authToken){
-        headers.Authorization = "Bearer " + authToken;
+    if(token){
+        headers.Authorization = "Bearer " + token;
     }
 
-    if(
-        options.body &&
-        typeof options.body !== "string"
-    ){
+    let body = options.body;
+
+    if(body && typeof body !== "string"){
         headers["Content-Type"] = "application/json";
-        options.body = JSON.stringify(options.body);
+        body = JSON.stringify(body);
     }
 
-    const response = await fetch(url,{
+    const r = await fetch(url,{
         ...options,
-        headers
+        headers,
+        body
     });
 
-    let data = null;
+    let data;
 
     try{
-        data = await response.json();
+        data = await r.json();
     }catch{
-        data = null;
+        data = {};
     }
 
-    if(!response.ok){
+    if(!r.ok){
         throw new Error(
-            data?.detail ||
-            data?.message ||
-            "Ошибка сервера"
+            typeof data.detail === "string"
+                ? data.detail
+                : "Ошибка сервера"
         );
     }
 
     return data;
 }
 
-/*
-=========================================================
-ADMIN AUTO LOGIN
-НИКАКОГО PHONE/PIN ДЛЯ АДМИНА
-=========================================================
-*/
+function fatal(message){
+    hide("loading");
+    hide("login");
+    hide("app");
+    show("fatal");
+    $("fatalText").textContent = message;
+}
 
-async function adminAutoLogin(){
+async function adminLogin(){
 
     if(!isAdminTelegram()){
         return false;
     }
 
-    /*
-    Старый токен специально игнорируем.
-    Админ каждый раз авторизуется через Telegram initData.
-    */
-
-    localStorage.removeItem("restaran_token");
+    hide("login");
 
     if(!tg){
         throw new Error(
-            "Откройте RESTARAN через Telegram"
+            "Откройте Web App через Telegram."
         );
     }
 
     if(!tg.initData){
         throw new Error(
-            "Telegram initData отсутствует. Откройте Web App через Telegram."
+            "Telegram initData отсутствует. Откройте приложение через Telegram."
         );
     }
 
@@ -715,239 +316,39 @@ async function adminAutoLogin(){
         }
     );
 
-    if(!result?.token){
-        throw new Error(
-            "Сервер не выдал токен администратора"
-        );
-    }
+    token = result.token;
+    role = "admin";
+    user = result.user;
 
-    authToken = result.token;
-    currentRole = "admin";
-    currentUser = result.user || null;
-
+    localStorage.removeItem("restaran_token");
     localStorage.setItem(
-        "restaran_token",
-        authToken
+        "restaran_admin_token",
+        token
     );
 
     return true;
 }
 
-/*
-=========================================================
-BOOT
-=========================================================
-*/
-
-async function boot(){
-
-    hide("loginScreen");
-    hide("app");
-
-    try{
-
-        /*
-        ПЕРВАЯ ПРОВЕРКА — АДМИН.
-        Поэтому LOGIN НИКОГДА НЕ ПОЯВИТСЯ АДМИНУ.
-        */
-
-        if(isAdminTelegram()){
-
-            await adminAutoLogin();
-
-            show("app");
-            show("adminView");
-
-            document.getElementById("roleText").textContent =
-                "Администратор";
-
-            hide("loadingScreen");
-
-            await loadAdmin();
-
-            return;
-        }
-
-        /*
-        Обычные пользователи могут использовать сохранённую
-        сессию.
-        */
-
-        const saved =
-            localStorage.getItem("restaran_token");
-
-        if(saved){
-
-            try{
-
-                authToken = saved;
-
-                const me = await api(
-                    "/api/me"
-                );
-
-                currentRole = me.role;
-                currentUser = me.user;
-
-                hide("loadingScreen");
-                showAppByRole();
-
-                return;
-
-            }catch{
-
-                localStorage.removeItem(
-                    "restaran_token"
-                );
-
-                authToken = null;
-            }
-        }
-
-        hide("loadingScreen");
-        show("loginScreen");
-
-    }catch(error){
-
-        hide("loadingScreen");
-
-        /*
-        Даже если adminAutoLogin упал,
-        LOGIN НЕ ПОКАЗЫВАЕМ АДМИНУ.
-        */
-
-        if(isAdminTelegram()){
-
-            show("loginScreen");
-
-            document.getElementById(
-                "errorBox"
-            ).textContent =
-                formatError(error);
-
-            /*
-            Повторная попытка.
-            */
-
-            setTimeout(async()=>{
-                try{
-
-                    await adminAutoLogin();
-
-                    hide("loginScreen");
-                    show("app");
-                    show("adminView");
-
-                    document.getElementById(
-                        "roleText"
-                    ).textContent =
-                        "Администратор";
-
-                    await loadAdmin();
-
-                }catch(e){
-
-                    document.getElementById(
-                        "errorBox"
-                    ).textContent =
-                        formatError(e);
-                }
-            },1500);
-
-            return;
-        }
-
-        show("loginScreen");
-
-        document.getElementById(
-            "errorBox"
-        ).textContent =
-            formatError(error);
-    }
-}
-
-function showAppByRole(){
-
-    hide("loginScreen");
-    show("app");
-
-    hide("adminView");
-    hide("customerView");
-    hide("courierView");
-
-    if(currentRole === "admin"){
-        show("adminView");
-        document.getElementById("roleText").textContent =
-            "Администратор";
-    }
-
-    if(currentRole === "customer"){
-        show("customerView");
-        document.getElementById("roleText").textContent =
-            "Клиент";
-
-        loadCustomerOrders();
-    }
-
-    if(currentRole === "courier"){
-        show("courierView");
-        document.getElementById("roleText").textContent =
-            "Курьер";
-
-        loadCourierOrders();
-    }
-}
-
-/*
-=========================================================
-LOGIN
-=========================================================
-*/
-
 async function login(){
 
-    /*
-    НОВАЯ ЗАЩИТА:
-    если это админ — login вообще не выполняется.
-    */
-
     if(isAdminTelegram()){
-
         try{
-
-            await adminAutoLogin();
-
-            showAppByRole();
-            await loadAdmin();
-
-        }catch(error){
-
-            toast(
-                "Ошибка админ-входа: " +
-                formatError(error)
-            );
+            await adminLogin();
+            await showApp();
+        }catch(e){
+            fatal(errorText(e));
         }
-
         return;
     }
 
-    const phone =
-        document.getElementById(
-            "phoneInput"
-        ).value.trim();
+    const phone = $("phone").value.trim();
+    const pin = $("pin").value.trim();
 
-    const pin =
-        document.getElementById(
-            "pinInput"
-        ).value.trim();
+    $("loginError").textContent = "";
 
     if(!phone || !pin){
-
-        document.getElementById(
-            "errorBox"
-        ).textContent =
-            "Введите номер телефона и PIN";
-
+        $("loginError").textContent =
+            "Введите телефон и PIN";
         return;
     }
 
@@ -957,392 +358,284 @@ async function login(){
             "/api/login",
             {
                 method:"POST",
-                body:{
-                    phone,
-                    pin
-                }
+                body:{phone,pin}
             }
         );
 
-        authToken = result.token;
-        currentRole = result.role;
-        currentUser = result.user;
+        token = result.token;
+        role = result.role;
+        user = result.user;
 
         localStorage.setItem(
             "restaran_token",
-            authToken
+            token
         );
 
-        showAppByRole();
+        await showApp();
 
-    }catch(error){
+    }catch(e){
 
-        document.getElementById(
-            "errorBox"
-        ).textContent =
-            formatError(error);
+        $("loginError").textContent =
+            errorText(e);
     }
 }
 
-function logout(){
+async function showApp(){
 
-    /*
-    Админа НЕ отправляем на login.
-    */
+    hide("loading");
+    hide("login");
+    show("app");
 
-    if(isAdminTelegram()){
+    hide("adminView");
+    hide("customerView");
+    hide("courierView");
 
-        adminAutoLogin()
-            .then(()=>{
-                showAppByRole();
-                loadAdmin();
-            })
-            .catch(e=>{
-                toast(formatError(e));
-            });
+    if(role === "admin"){
 
+        hide("login");
+        show("adminView");
+
+        $("subtitle").textContent =
+            "Администратор";
+
+        await loadAdmin();
         return;
     }
 
-    localStorage.removeItem(
-        "restaran_token"
-    );
+    if(role === "customer"){
 
-    authToken = null;
-    currentRole = null;
+        show("customerView");
 
-    hide("app");
-    show("loginScreen");
+        $("subtitle").textContent =
+            "Клиент";
+
+        $("customerInfo").innerHTML = `
+            <b>${esc(user?.name || "Клиент")}</b><br>
+            📱 ${esc(user?.phone || "—")}
+        `;
+
+        await loadCustomerOrders();
+        return;
+    }
+
+    if(role === "courier"){
+
+        show("courierView");
+
+        $("subtitle").textContent =
+            "Курьер";
+
+        await loadCourierOrders();
+    }
 }
-
-/*
-=========================================================
-ADMIN
-=========================================================
-*/
 
 async function loadAdmin(){
 
-    await loadAdminStats();
-    await loadAdminOrders();
-    await loadAdminCustomers();
-    await loadAdminCouriers();
+    if(role !== "admin"){
+        return;
+    }
+
+    await Promise.all([
+        loadOrders(),
+        loadCustomers(),
+        loadCouriers(),
+        loadStats()
+    ]);
 }
 
-async function loadAdminStats(){
+function tab(name,button){
+
+    document.querySelectorAll(".tab")
+        .forEach(x=>x.classList.remove("active"));
+
+    button?.classList.add("active");
+
+    hide("ordersTab");
+    hide("customersTab");
+    hide("couriersTab");
+    hide("statsTab");
+
+    if(name==="orders") show("ordersTab");
+    if(name==="customers") show("customersTab");
+    if(name==="couriers") show("couriersTab");
+    if(name==="stats") show("statsTab");
+}
+
+async function loadOrders(){
+
+    const area = $("adminOrdersArea");
+    if(!area)return;
 
     try{
 
-        const data = await api(
-            "/api/admin/stats"
-        );
-
-        document.getElementById(
-            "statOrders"
-        ).textContent =
-            data.orders ?? 0;
-
-        document.getElementById(
-            "statCustomers"
-        ).textContent =
-            data.customers ?? 0;
-
-        document.getElementById(
-            "statCouriers"
-        ).textContent =
-            data.couriers ?? 0;
-
-        document.getElementById(
-            "statActive"
-        ).textContent =
-            data.active_orders ?? 0;
-
-    }catch(error){
-
-        toast(formatError(error));
-    }
-}
-
-function adminTab(name,button){
-
-    document.querySelectorAll(
-        ".tabs .tab"
-    ).forEach(x=>{
-        x.classList.remove("active");
-    });
-
-    button.classList.add("active");
-
-    hide("adminOrdersArea");
-    hide("adminCustomersArea");
-    hide("adminCouriersArea");
-    hide("adminStatsArea");
-
-    if(name === "orders"){
-        show("adminOrdersArea");
-        loadAdminOrders();
-    }
-
-    if(name === "customers"){
-        show("adminCustomersArea");
-        loadAdminCustomers();
-    }
-
-    if(name === "couriers"){
-        show("adminCouriersArea");
-        loadAdminCouriers();
-    }
-
-    if(name === "statistics"){
-        show("adminStatsArea");
-        loadAdminStatsPage();
-    }
-}
-
-async function loadAdminOrders(){
-
-    const area =
-        document.getElementById(
-            "adminOrdersArea"
-        );
-
-    if(!area) return;
-
-    try{
-
-        const orders =
+        const data =
             await api("/api/admin/orders");
+
+        if(!data.length){
+            area.innerHTML =
+                `<div class="card empty">Заказов нет</div>`;
+            return;
+        }
 
         area.innerHTML = `
             <div class="card">
-                <div class="formTitle">
-                    Все заказы
-                </div>
-
-                ${
-                    orders.length
-                    ? orders.map(renderAdminOrder).join("")
-                    : '<div class="muted">Заказов нет</div>'
-                }
+                <div class="card-title">Заказы</div>
+                ${data.map(o=>`
+                    <div class="order">
+                        <div class="order-head">
+                            <div class="order-name">
+                                #${esc(o.id)}
+                            </div>
+                            <div class="order-status">
+                                ${esc(o.status)}
+                            </div>
+                        </div>
+                        <div class="small muted">
+                            👤 ${esc(o.customer_name || "—")}<br>
+                            📍 ${esc(o.address || "—")}<br>
+                            💰 ${esc(o.price || 0)}
+                        </div>
+                    </div>
+                `).join("")}
             </div>
         `;
 
-    }catch(error){
+    }catch(e){
 
         area.innerHTML =
-            `<div class="card">${escapeHtml(
-                formatError(error)
-            )}</div>`;
+            `<div class="card error">${esc(errorText(e))}</div>`;
     }
 }
 
-function renderAdminOrder(order){
+async function loadCustomers(){
 
-    return `
-        <div class="order">
-
-            <div class="orderTop">
-
-                <div>
-                    <div class="orderTitle">
-                        #${order.id}
-                    </div>
-
-                    <div class="small muted">
-                        ${escapeHtml(
-                            order.title || "Заказ"
-                        )}
-                    </div>
-                </div>
-
-                <div class="status">
-                    ${escapeHtml(
-                        order.status || "new"
-                    )}
-                </div>
-
-            </div>
-
-            <div class="small muted">
-                Клиент:
-                ${escapeHtml(
-                    order.customer_name || "—"
-                )}
-            </div>
-
-            <div class="small muted">
-                Адрес:
-                ${escapeHtml(
-                    order.address || "—"
-                )}
-            </div>
-
-            <div class="small">
-                ${escapeHtml(
-                    String(order.price ?? 0)
-                )} ֏
-            </div>
-        </div>
-    `;
-}
-
-/*
-=========================================================
-CUSTOMERS
-=========================================================
-*/
-
-async function loadAdminCustomers(){
-
-    const area =
-        document.getElementById(
-            "adminCustomersArea"
-        );
-
-    if(!area) return;
+    const area = $("adminCustomersArea");
+    if(!area)return;
 
     try{
 
-        const customers =
+        const data =
             await api("/api/admin/customers");
 
         area.innerHTML = `
 
             <div class="card">
 
-                <div class="formTitle">
-                    Создать клиента
+                <div class="card-title">
+                    Новый клиент
                 </div>
 
-                <div class="formGrid">
+                <input
+                    id="newCustomerName"
+                    class="input"
+                    placeholder="Имя"
+                >
 
-                    <input
-                        id="newCustomerName"
-                        class="input"
-                        placeholder="Имя клиента"
-                    >
+                <input
+                    id="newCustomerPhone"
+                    class="input"
+                    type="tel"
+                    placeholder="Номер телефона"
+                >
 
-                    <input
-                        id="newCustomerPhone"
-                        class="input"
-                        type="tel"
-                        placeholder="Номер телефона"
-                    >
+                <input
+                    id="newCustomerPin"
+                    class="input"
+                    inputmode="numeric"
+                    maxlength="8"
+                    placeholder="PIN клиента"
+                >
 
-                    <input
-                        id="newCustomerPin"
-                        class="input"
-                        type="text"
-                        inputmode="numeric"
-                        maxlength="8"
-                        placeholder="PIN клиента"
-                    >
-
-                    <button
-                        class="formButton"
-                        onclick="createCustomer()">
-                        Создать клиента
-                    </button>
-
-                </div>
+                <button
+                    class="create"
+                    onclick="createCustomer()"
+                >
+                    Создать аккаунт
+                </button>
 
             </div>
 
             <div class="card">
 
-                <div class="formTitle">
+                <div class="card-title">
                     Клиенты
                 </div>
 
                 ${
-                    customers.length
-                    ? customers.map(renderCustomer).join("")
-                    : '<div class="muted">Клиентов нет</div>'
+                    data.length
+                    ?
+                    data.map(c=>`
+
+                        <div class="customer">
+
+                            <div class="customer-name">
+                                ${esc(c.name)}
+                            </div>
+
+                            <div class="customer-info">
+                                📱 ${esc(c.phone)}<br>
+                                🔐 PIN:
+                                <b>${esc(c.pin_plain || "—")}</b><br>
+                                ${
+                                    c.active
+                                    ? "🟢 Активен"
+                                    : "🔴 Удалён"
+                                }
+                            </div>
+
+                            ${
+                                c.active
+                                ?
+                                `<button
+                                    class="danger"
+                                    onclick="deleteCustomer(${Number(c.id)})"
+                                >
+                                    🗑 Удалить аккаунт
+                                </button>`
+                                :
+                                ""
+                            }
+
+                        </div>
+
+                    `).join("")
+                    :
+                    `<div class="empty">Клиентов нет</div>`
                 }
 
             </div>
         `;
 
-    }catch(error){
+    }catch(e){
 
         area.innerHTML =
-            `<div class="card">${escapeHtml(
-                formatError(error)
-            )}</div>`;
+            `<div class="card error">${esc(errorText(e))}</div>`;
     }
-}
-
-function renderCustomer(c){
-
-    return `
-        <div class="customer">
-
-            <div class="customerName">
-                ${escapeHtml(c.name || "Без имени")}
-            </div>
-
-            <div class="customerInfo">
-
-                📱 ${escapeHtml(c.phone || "—")}<br>
-
-                🔐 PIN:
-                <b>
-                    ${escapeHtml(
-                        c.pin_plain || "—"
-                    )}
-                </b><br>
-
-                🟢 Статус:
-                ${c.active ? "Активен" : "Удалён"}
-
-            </div>
-
-            <div class="customerActions">
-
-                <button
-                    onclick="deleteCustomer(${Number(c.id)})"
-                    class="danger">
-                    🗑 Удалить аккаунт
-                </button>
-
-            </div>
-
-        </div>
-    `;
 }
 
 async function createCustomer(){
 
     const name =
-        document.getElementById(
-            "newCustomerName"
-        )?.value.trim();
+        $("newCustomerName")?.value.trim();
 
     const phone =
-        document.getElementById(
-            "newCustomerPhone"
-        )?.value.trim();
+        $("newCustomerPhone")?.value.trim();
 
     const pin =
-        document.getElementById(
-            "newCustomerPin"
-        )?.value.trim();
+        $("newCustomerPin")?.value.trim();
 
-    if(!name || !phone || !pin){
+    if(!name){
+        alert("Введите имя");
+        return;
+    }
 
-        toast(
-            "Заполните имя, телефон и PIN"
-        );
-
+    if(!phone){
+        alert("Введите номер телефона");
         return;
     }
 
     if(!/^\d{4,8}$/.test(pin)){
-
-        toast(
-            "PIN должен содержать 4–8 цифр"
-        );
-
+        alert("PIN должен содержать 4-8 цифр");
         return;
     }
 
@@ -1352,283 +645,358 @@ async function createCustomer(){
             "/api/admin/customers",
             {
                 method:"POST",
-                body:{
-                    name,
-                    phone,
-                    pin
-                }
+                body:{name,phone,pin}
             }
         );
 
-        toast("Клиент создан");
+        await loadCustomers();
+        await loadStats();
 
-        await loadAdminCustomers();
-        await loadAdminStats();
+    }catch(e){
 
-    }catch(error){
-
-        toast(formatError(error));
+        alert(errorText(e));
     }
 }
 
 async function deleteCustomer(id){
 
-    if(!confirm(
-        "Удалить аккаунт клиента?"
-    )){
+    if(!confirm("Удалить аккаунт клиента?")){
         return;
     }
 
     try{
 
         await api(
-            `/api/admin/customers/${id}`,
+            "/api/admin/customers/" +
+            encodeURIComponent(id),
             {
                 method:"DELETE"
             }
         );
 
-        toast("Аккаунт удалён");
+        await loadCustomers();
+        await loadStats();
 
-        await loadAdminCustomers();
-        await loadAdminStats();
+    }catch(e){
 
-    }catch(error){
-
-        toast(formatError(error));
+        alert(errorText(e));
     }
 }
 
-/*
-=========================================================
-COURIERS
-=========================================================
-*/
+async function loadCouriers(){
 
-async function loadAdminCouriers(){
-
-    const area =
-        document.getElementById(
-            "adminCouriersArea"
-        );
-
-    if(!area) return;
-
-    try{
-
-        const couriers =
-            await api("/api/admin/couriers");
-
-        area.innerHTML = `
-            <div class="card">
-
-                <div class="formTitle">
-                    Курьеры
-                </div>
-
-                ${
-                    couriers.length
-                    ? couriers.map(c=>`
-                        <div class="customer">
-
-                            <div class="customerName">
-                                ${escapeHtml(
-                                    c.name || "Курьер"
-                                )}
-                            </div>
-
-                            <div class="customerInfo">
-                                📱 ${escapeHtml(c.phone || "—")}<br>
-                                ${
-                                    c.online
-                                    ? "🟢 Онлайн"
-                                    : "⚫ Оффлайн"
-                                }<br>
-                                ${
-                                    c.approved
-                                    ? "✅ Одобрен"
-                                    : "⏳ Ожидает"
-                                }
-                            </div>
-
-                        </div>
-                    `).join("")
-                    : '<div class="muted">Курьеров нет</div>'
-                }
-
-            </div>
-        `;
-
-    }catch(error){
-
-        area.innerHTML =
-            `<div class="card">${escapeHtml(
-                formatError(error)
-            )}</div>`;
-    }
-}
-
-async function loadAdminStatsPage(){
-
-    const area =
-        document.getElementById(
-            "adminStatsArea"
-        );
-
-    if(!area) return;
+    const area = $("adminCouriersArea");
+    if(!area)return;
 
     try{
 
         const data =
-            await api("/api/admin/stats");
+            await api("/api/admin/couriers");
 
         area.innerHTML = `
             <div class="card">
+                <div class="card-title">Курьеры</div>
 
-                <div class="formTitle">
-                    Статистика
-                </div>
-
-                <div class="customerInfo">
-
-                    Всего заказов:
-                    <b>${data.orders ?? 0}</b><br>
-
-                    Клиентов:
-                    <b>${data.customers ?? 0}</b><br>
-
-                    Курьеров:
-                    <b>${data.couriers ?? 0}</b><br>
-
-                    Активных заказов:
-                    <b>${data.active_orders ?? 0}</b>
-
-                </div>
+                ${
+                    data.length
+                    ?
+                    data.map(c=>`
+                        <div class="courier">
+                            <div class="customer-name">
+                                ${esc(c.name || "Курьер")}
+                            </div>
+                            <div class="customer-info">
+                                📱 ${esc(c.phone || "—")}<br>
+                                ${
+                                    c.online
+                                    ? "🟢 Онлайн"
+                                    : "⚫ Оффлайн"
+                                }
+                            </div>
+                        </div>
+                    `).join("")
+                    :
+                    `<div class="empty">Курьеров нет</div>`
+                }
 
             </div>
         `;
 
-    }catch(error){
+    }catch(e){
 
         area.innerHTML =
-            `<div class="card">${escapeHtml(
-                formatError(error)
-            )}</div>`;
+            `<div class="card error">${esc(errorText(e))}</div>`;
     }
 }
 
-/*
-=========================================================
-CUSTOMER
-=========================================================
-*/
+async function loadStats(){
+
+    const area = $("adminStatsArea");
+    if(!area)return;
+
+    try{
+
+        const s =
+            await api("/api/admin/stats");
+
+        area.innerHTML = `
+            <div class="card">
+                <div class="card-title">
+                    Статистика
+                </div>
+
+                <div class="stat-grid">
+
+                    <div class="stat">
+                        <div class="stat-number">
+                            ${Number(s.orders || 0)}
+                        </div>
+                        <div class="stat-label">
+                            Заказов
+                        </div>
+                    </div>
+
+                    <div class="stat">
+                        <div class="stat-number">
+                            ${Number(s.customers || 0)}
+                        </div>
+                        <div class="stat-label">
+                            Клиентов
+                        </div>
+                    </div>
+
+                    <div class="stat">
+                        <div class="stat-number">
+                            ${Number(s.couriers || 0)}
+                        </div>
+                        <div class="stat-label">
+                            Курьеров
+                        </div>
+                    </div>
+
+                    <div class="stat">
+                        <div class="stat-number">
+                            ${Number(s.active_orders || 0)}
+                        </div>
+                        <div class="stat-label">
+                            Активных
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        `;
+
+    }catch(e){
+
+        area.innerHTML =
+            `<div class="card error">${esc(errorText(e))}</div>`;
+    }
+}
 
 async function loadCustomerOrders(){
 
-    const area =
-        document.getElementById(
-            "customerOrders"
-        );
+    const area = $("customerOrders");
+    if(!area)return;
 
     try{
 
-        const orders =
+        const data =
             await api("/api/orders");
 
         area.innerHTML =
-            orders.length
-            ? orders.map(renderAdminOrder).join("")
-            : '<div class="muted">Заказов нет</div>';
+            data.length
+            ?
+            data.map(o=>`
+                <div class="order">
+                    <div class="order-head">
+                        <div class="order-name">
+                            #${esc(o.id)}
+                        </div>
+                        <div class="order-status">
+                            ${esc(o.status)}
+                        </div>
+                    </div>
+                    <div class="small muted">
+                        ${esc(o.title || "Заказ")}<br>
+                        📍 ${esc(o.address || "—")}
+                    </div>
+                </div>
+            `).join("")
+            :
+            `<div class="empty">Заказов нет</div>`;
 
-    }catch(error){
+    }catch(e){
 
         area.innerHTML =
-            escapeHtml(formatError(error));
+            `<div class="error">${esc(errorText(e))}</div>`;
     }
 }
-
-/*
-=========================================================
-COURIER
-=========================================================
-*/
 
 async function loadCourierOrders(){
 
-    const area =
-        document.getElementById(
-            "courierOrders"
-        );
+    const area = $("courierOrders");
+    if(!area)return;
 
     try{
 
-        const orders =
+        const data =
             await api("/api/courier/orders");
 
         area.innerHTML =
-            orders.length
-            ? orders.map(renderAdminOrder).join("")
-            : '<div class="muted">Заказов нет</div>';
+            data.length
+            ?
+            data.map(o=>`
+                <div class="order">
+                    <div class="order-head">
+                        <div class="order-name">
+                            #${esc(o.id)}
+                        </div>
+                        <div class="order-status">
+                            ${esc(o.status)}
+                        </div>
+                    </div>
+                    <div class="small muted">
+                        👤 ${esc(o.customer_name || "—")}<br>
+                        📍 ${esc(o.address || "—")}
+                    </div>
+                </div>
+            `).join("")
+            :
+            `<div class="empty">Заказов нет</div>`;
 
-    }catch(error){
+    }catch(e){
 
         area.innerHTML =
-            escapeHtml(formatError(error));
+            `<div class="error">${esc(errorText(e))}</div>`;
     }
 }
 
-async function toggleCourierOnline(){
+async function toggleOnline(){
 
     try{
 
-        const result =
+        const r =
             await api(
                 "/api/courier/online",
-                {
-                    method:"POST"
-                }
+                {method:"POST"}
             );
 
-        document.getElementById(
-            "courierOnlineButton"
-        ).textContent =
-            result.online
+        $("onlineButton").textContent =
+            r.online
             ? "Выйти с линии"
             : "Выйти на линию";
 
-    }catch(error){
+    }catch(e){
 
-        toast(formatError(error));
+        alert(errorText(e));
     }
 }
 
-/*
-=========================================================
-UTILS
-=========================================================
-*/
+async function logout(){
 
-function escapeHtml(value){
+    if(isAdminTelegram()){
 
-    return String(value ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
+        try{
+            await adminLogin();
+            await showApp();
+        }catch(e){
+            fatal(errorText(e));
+        }
+
+        return;
+    }
+
+    try{
+        await api("/api/logout",{
+            method:"POST"
+        });
+    }catch{}
+
+    localStorage.removeItem("restaran_token");
+
+    token = null;
+    role = null;
+    user = null;
+
+    hide("app");
+    show("login");
 }
 
-/*
-=========================================================
-START
-=========================================================
-*/
+async function boot(){
 
-document.addEventListener(
-    "DOMContentLoaded",
-    boot
-);
+    /*
+     * АДМИН ПРОВЕРЯЕТСЯ ПЕРВЫМ.
+     * LOGIN ДЛЯ АДМИНА НИКОГДА НЕ ПОКАЗЫВАЕТСЯ.
+     */
+
+    hide("login");
+    hide("app");
+
+    if(isAdminTelegram()){
+
+        try{
+
+            await adminLogin();
+            await showApp();
+
+            return;
+
+        }catch(e){
+
+            fatal(errorText(e));
+            return;
+        }
+    }
+
+    const saved =
+        localStorage.getItem(
+            "restaran_token"
+        );
+
+    if(saved){
+
+        try{
+
+            token = saved;
+
+            const me =
+                await api("/api/me");
+
+            role = me.role;
+            user = me.user;
+
+            await showApp();
+
+            return;
+
+        }catch{
+
+            localStorage.removeItem(
+                "restaran_token"
+            );
+
+            token = null;
+        }
+    }
+
+    hide("loading");
+    show("login");
+}
+
+if(document.readyState === "loading"){
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        boot,
+        {once:true}
+    );
+
+}else{
+
+    boot();
+}
 </script>
 
 </body>
-   </html>
+    </html>
