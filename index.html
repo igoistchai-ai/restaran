@@ -1,836 +1,1935 @@
-<!-- index.html -->
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>RESTARAN</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>
-*{box-sizing:border-box}
-body{
- margin:0;
- background:#08090d;
- color:#fff;
- font-family:Inter,Arial,sans-serif;
- min-height:100vh;
-}
-button,input{
- font:inherit;
-}
-button{
- border:0;
- cursor:pointer;
-}
-#app{
- max-width:650px;
- margin:auto;
- min-height:100vh;
- padding:18px;
-}
-.card{
- background:#11131a;
- border:1px solid #252936;
- border-radius:20px;
- padding:16px;
- margin-bottom:12px;
- box-shadow:0 12px 40px #0005;
-}
-h1,h2,h3,p{margin-top:0}
-input{
- width:100%;
- background:#0b0d12;
- color:#fff;
- border:1px solid #292d38;
- border-radius:14px;
- padding:14px;
- outline:none;
- margin:6px 0;
-}
-input:focus{
- border-color:#6d72ff;
-}
-.btn{
- width:100%;
- padding:14px;
- border-radius:14px;
- background:#6366f1;
- color:#fff;
- font-weight:700;
- margin-top:8px;
-}
-.btn.red{background:#dc3545}
-.btn.green{background:#19a974}
-.btn.gray{background:#252936}
-.row{
- display:flex;
- gap:8px;
-}
-.row>*{flex:1}
-.hidden{display:none!important}
-.title{
- font-size:28px;
- font-weight:900;
- margin-bottom:18px;
-}
-.small{
- color:#9ca3af;
- font-size:13px;
-}
-.stat{
- display:grid;
- grid-template-columns:1fr 1fr;
- gap:8px;
-}
-.statBox{
- background:#181b24;
- border-radius:16px;
- padding:15px;
-}
-.statBox b{
- display:block;
- font-size:25px;
- margin-top:5px;
-}
-.tabs{
- display:flex;
- gap:6px;
- overflow:auto;
- margin-bottom:12px;
-}
-.tab{
- white-space:nowrap;
- background:#181b24;
- color:#aaa;
- padding:11px 14px;
- border-radius:12px;
-}
-.tab.active{
- background:#6366f1;
- color:#fff;
-}
-.item{
- background:#181b24;
- border-radius:16px;
- padding:14px;
- margin:8px 0;
-}
-.item b{
- font-size:16px;
-}
-.badge{
- display:inline-block;
- padding:5px 9px;
- border-radius:9px;
- background:#292d3a;
- font-size:12px;
- margin-top:6px;
-}
-.pin{
- color:#8bffbd;
- font-weight:900;
- letter-spacing:2px;
-}
-#fatal{
- position:fixed;
- inset:0;
- background:#08090d;
- display:flex;
- align-items:center;
- justify-content:center;
- padding:25px;
- text-align:center;
- z-index:9999;
-}
-</style>
-</head>
-<body>
+# main.py
+import os
+import re
+import json
+import time
+import hmac
+import hashlib
+import secrets
+import sqlite3
+import asyncio
+from urllib.parse import parse_qsl
+from contextlib import contextmanager
 
-<div id="fatal" class="hidden">
- <div class="card">
-  <h2>Ошибка доступа</h2>
-  <p id="fatalText"></p>
- </div>
-</div>
+from fastapi import FastAPI, HTTPException, Header
+from fastapi.responses import FileResponse
+from pydantic import BaseModel
+from telegram import Update, KeyboardButton, ReplyKeyboardMarkup, WebAppInfo
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    MessageHandler,
+    ContextTypes,
+    filters,
+)
+import uvicorn
 
-<div id="app"></div>
 
-<script>
-const tg = window.Telegram?.WebApp;
-if(tg){
- tg.ready();
- tg.expand();
+BOT_TOKEN = os.getenv("BOT_TOKEN", "")
+WEB_APP_URL = os.getenv("RENDER_EXTERNAL_URL", "").rstrip("/")
+DB_PATH = os.getenv("DB_PATH", "restaran.db")
+
+ADMIN_IDS = {
+    8357023784,
+    7003441441,
 }
 
-const ADMIN_IDS = new Set(["8357023784","7003441441"]);
-let token = localStorage.getItem("restaran_token");
-let me = null;
+app = FastAPI(title="RESTARAN")
+bot_app = None
 
-const app = document.getElementById("app");
 
-function formatError(x){
- if(!x) return "Неизвестная ошибка";
- if(typeof x === "string") return x;
- if(x.detail) return typeof x.detail === "string" ? x.detail : JSON.stringify(x.detail);
- if(x.message) return x.message;
- try{return JSON.stringify(x)}catch{return String(x)}
-}
+# ============================================================
+# DATABASE
+# ============================================================
 
-function fatal(text){
- document.getElementById("fatalText").textContent = formatError(text);
- document.getElementById("fatal").classList.remove("hidden");
-}
+@contextmanager
+def db():
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.row_factory = sqlite3.Row
 
-async function api(url, options={}){
- options.headers = options.headers || {};
- options.headers["Content-Type"] = "application/json";
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
- if(token){
-  options.headers["Authorization"] = "Bearer " + token;
- }
 
- const r = await fetch(url,options);
- let data = {};
- try{data = await r.json()}catch{}
+def init_db():
+    with db() as conn:
 
- if(!r.ok){
-  throw new Error(formatError(data));
- }
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                phone TEXT UNIQUE,
+                pin_hash TEXT,
+                pin_plain TEXT,
+                role TEXT NOT NULL,
+                telegram_id INTEGER,
+                active INTEGER DEFAULT 1,
+                created_at REAL NOT NULL
+            )
+        """)
 
- return data;
-}
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS couriers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                approved INTEGER DEFAULT 0,
+                online INTEGER DEFAULT 0,
+                lat REAL,
+                lon REAL,
+                updated_at REAL,
+                active INTEGER DEFAULT 1
+            )
+        """)
 
-function logout(){
- localStorage.removeItem("restaran_token");
- token=null;
- location.reload();
-}
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS orders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                customer_id INTEGER NOT NULL,
+                courier_id INTEGER,
+                title TEXT NOT NULL,
+                address TEXT NOT NULL,
+                price REAL DEFAULT 0,
+                status TEXT DEFAULT 'new',
+                created_at REAL NOT NULL,
+                customer_confirmed INTEGER DEFAULT 0,
+                closed_at REAL
+            )
+        """)
 
-function loginScreen(){
- app.innerHTML = `
- <div style="padding-top:60px">
-  <div class="title">🍽 RESTARAN</div>
-  <div class="card">
-   <h2>Вход</h2>
-   <input id="loginPhone" placeholder="Телефон">
-   <input id="loginPin" placeholder="PIN" type="password" inputmode="numeric">
-   <button class="btn" onclick="doLogin()">Войти</button>
-  </div>
- </div>`;
-}
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS sessions (
+                token TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                role TEXT NOT NULL,
+                created_at REAL NOT NULL
+            )
+        """)
 
-async function doLogin(){
- try{
-  const phone=document.getElementById("loginPhone").value;
-  const pin=document.getElementById("loginPin").value;
+        migrations = [
+            ("users", "pin_plain", "TEXT"),
+            ("users", "telegram_id", "INTEGER"),
+            ("users", "active", "INTEGER DEFAULT 1"),
+            ("couriers", "lat", "REAL"),
+            ("couriers", "lon", "REAL"),
+            ("couriers", "updated_at", "REAL"),
+            ("couriers", "active", "INTEGER DEFAULT 1"),
+            ("orders", "customer_confirmed", "INTEGER DEFAULT 0"),
+            ("orders", "closed_at", "REAL"),
+        ]
 
-  const x=await api("/api/login",{
-   method:"POST",
-   body:JSON.stringify({phone,pin})
-  });
+        for table, column, definition in migrations:
+            columns = conn.execute(
+                f"PRAGMA table_info({table})"
+            ).fetchall()
 
-  token=x.token;
-  localStorage.setItem("restaran_token",token);
-  await boot();
- }catch(e){
-  alert(formatError(e.message));
- }
-}
+            names = {row["name"] for row in columns}
 
-async function adminTelegramLogin(){
- const tgId=String(tg?.initDataUnsafe?.user?.id || "");
+            if column not in names:
+                conn.execute(
+                    f"ALTER TABLE {table} ADD COLUMN {column} {definition}"
+                )
 
- if(!ADMIN_IDS.has(tgId)) return false;
 
- if(!tg?.initData){
-  fatal("Откройте RESTARAN через Telegram.");
-  return true;
- }
+# ============================================================
+# HELPERS
+# ============================================================
 
- try{
-  const x=await api("/api/admin/web-login",{
-   method:"POST",
-   body:JSON.stringify({init_data:tg.initData})
-  });
+def norm_phone(phone):
+    return re.sub(r"\D", "", phone or "")
 
-  token=x.token;
-  localStorage.setItem("restaran_token",token);
-  return true;
- }catch(e){
-  localStorage.removeItem("restaran_token");
-  token=null;
-  fatal("Не удалось подтвердить администратора:\n"+formatError(e.message));
-  return true;
- }
-}
 
-async function boot(){
- const tgId=String(tg?.initDataUnsafe?.user?.id || "");
+def hash_pin(pin):
+    salt = secrets.token_hex(16)
 
- if(ADMIN_IDS.has(tgId)){
-  const handled=await adminTelegramLogin();
-  if(handled){
-   if(!token)return;
-  }
- }else if(!token){
-  loginScreen();
-  return;
- }
+    digest = hashlib.sha256(
+        (salt + pin).encode()
+    ).hexdigest()
 
- try{
-  me=await api("/api/me");
+    return salt + ":" + digest
 
-  if(me.role==="admin"){
-   renderAdmin();
-  }else if(me.role==="customer"){
-   renderCustomer();
-  }else if(me.role==="courier"){
-   renderCourier();
-  }else{
-   logout();
-  }
- }catch(e){
-  localStorage.removeItem("restaran_token");
-  token=null;
 
-  if(ADMIN_IDS.has(tgId)){
-   fatal(formatError(e.message));
-  }else{
-   loginScreen();
-  }
- }
-}
+def check_pin(pin, stored):
+    try:
+        salt, digest = stored.split(":", 1)
 
-async function renderAdmin(){
- app.innerHTML=`
- <div class="title">🍽 RESTARAN</div>
+        actual = hashlib.sha256(
+            (salt + pin).encode()
+        ).hexdigest()
 
- <div class="card">
-  <div class="row">
-   <div>
-    <div class="small">Администратор</div>
-    <b>${escapeHtml(me.name)}</b>
-   </div>
-   <button class="btn gray" onclick="logout()">Выйти</button>
-  </div>
- </div>
+        return hmac.compare_digest(actual, digest)
 
- <div id="stats"></div>
+    except Exception:
+        return False
 
- <div class="tabs">
-  <button class="tab active" onclick="adminTab('orders',this)">Заказы</button>
-  <button class="tab" onclick="adminTab('customers',this)">Клиенты</button>
-  <button class="tab" onclick="adminTab('couriers',this)">Курьеры</button>
- </div>
 
- <div id="adminContent"></div>
- `;
+def new_token():
+    return secrets.token_urlsafe(48)
 
- await loadStats();
- adminTab("orders",document.querySelector(".tab"));
-}
 
-function adminTab(type,el){
- document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
- if(el)el.classList.add("active");
+def validate_init_data(init_data):
 
- if(type==="orders")loadAdminOrders();
- if(type==="customers")loadCustomers();
- if(type==="couriers")loadCouriers();
-}
+    if not BOT_TOKEN:
+        raise ValueError(
+            "BOT_TOKEN не задан на Render"
+        )
 
-async function loadStats(){
- try{
-  const s=await api("/api/admin/stats");
+    if not init_data:
+        raise ValueError(
+            "Telegram initData отсутствует"
+        )
 
-  document.getElementById("stats").innerHTML=`
-  <div class="card">
-   <div class="stat">
-    <div class="statBox">Клиенты<b>${s.customers}</b></div>
-    <div class="statBox">Курьеры<b>${s.couriers}</b></div>
-    <div class="statBox">Заказы<b>${s.orders}</b></div>
-    <div class="statBox">Выручка<b>${Number(s.revenue).toFixed(2)}</b></div>
-   </div>
-  </div>`;
- }catch(e){}
-}
+    data = dict(
+        parse_qsl(
+            init_data,
+            keep_blank_values=True
+        )
+    )
 
-async function loadAdminOrders(){
- const box=document.getElementById("adminContent");
+    received_hash = data.pop("hash", None)
 
- try{
-  const [orders,couriers]=await Promise.all([
-   api("/api/admin/orders"),
-   api("/api/admin/couriers")
-  ]);
+    if not received_hash:
+        raise ValueError(
+            "Hash отсутствует"
+        )
 
-  box.innerHTML=`
-  <div class="card">
-   <h3>Создать заказ</h3>
-   <input id="oPhone" placeholder="Телефон клиента">
-   <input id="oTitle" placeholder="Название заказа">
-   <input id="oAddress" placeholder="Адрес">
-   <input id="oPrice" placeholder="Цена" type="number">
-   <button class="btn green" onclick="createOrder()">Создать заказ</button>
-  </div>
+    check_string = "\n".join(
+        f"{key}={value}"
+        for key, value in sorted(data.items())
+    )
 
-  <div class="card">
-   <h3>Заказы</h3>
-   <div id="adminOrdersArea"></div>
-  </div>`;
+    secret_key = hmac.new(
+        b"WebAppData",
+        BOT_TOKEN.encode(),
+        hashlib.sha256
+    ).digest()
 
-  const area=document.getElementById("adminOrdersArea");
+    calculated_hash = hmac.new(
+        secret_key,
+        check_string.encode(),
+        hashlib.sha256
+    ).hexdigest()
 
-  if(!orders.length){
-   area.innerHTML='<div class="small">Заказов нет</div>';
-   return;
-  }
+    if not hmac.compare_digest(
+        calculated_hash,
+        received_hash
+    ):
+        raise ValueError(
+            "Неверная подпись Telegram. "
+            "Проверьте BOT_TOKEN на Render."
+        )
 
-  area.innerHTML=orders.map(o=>`
-   <div class="item">
-    <b>#${o.id} — ${escapeHtml(o.title)}</b>
-    <div class="small">Клиент: ${escapeHtml(o.customer_name)} · ${escapeHtml(o.customer_phone)}</div>
-    <div class="small">📍 ${escapeHtml(o.address)}</div>
-    <div>${Number(o.price).toFixed(2)}</div>
-    <span class="badge">${escapeHtml(o.status)}</span>
+    try:
+        auth_date = int(
+            data.get("auth_date", "0")
+        )
+    except Exception:
+        auth_date = 0
 
-    ${o.courier_name
-      ? `<div class="small">Курьер: ${escapeHtml(o.courier_name)}</div>`
-      : `
-      <select id="courier_${o.id}" style="width:100%;margin-top:8px;background:#0b0d12;color:#fff;border:1px solid #292d38;border-radius:12px;padding:12px">
-       <option value="">Выберите курьера</option>
-       ${couriers.filter(c=>c.active&&c.approved).map(c=>
-        `<option value="${c.id}">${escapeHtml(c.name)} · ${c.online?"онлайн":"оффлайн"}</option>`
-       ).join("")}
-      </select>
-      <button class="btn" onclick="assignOrder(${o.id})">Назначить</button>
-      `
+    if not auth_date:
+        raise ValueError(
+            "auth_date отсутствует"
+        )
+
+    if time.time() - auth_date > 86400:
+        raise ValueError(
+            "Telegram initData устарел"
+        )
+
+    try:
+        user = json.loads(
+            data.get("user", "{}")
+        )
+    except Exception:
+        raise ValueError(
+            "Невозможно прочитать Telegram user"
+        )
+
+    if not user.get("id"):
+        raise ValueError(
+            "Telegram user отсутствует"
+        )
+
+    return user
+
+
+def auth_user(authorization):
+
+    if not authorization:
+        raise HTTPException(
+            401,
+            "Нет авторизации"
+        )
+
+    token = authorization.replace(
+        "Bearer ",
+        ""
+    ).strip()
+
+    with db() as conn:
+
+        row = conn.execute("""
+            SELECT
+                sessions.*,
+                users.name,
+                users.phone,
+                users.active
+            FROM sessions
+            JOIN users
+                ON users.id = sessions.user_id
+            WHERE sessions.token = ?
+        """, (token,)).fetchone()
+
+    if not row:
+        raise HTTPException(
+            401,
+            "Сессия недействительна"
+        )
+
+    if not row["active"]:
+        raise HTTPException(
+            403,
+            "Аккаунт деактивирован"
+        )
+
+    return dict(row)
+
+
+def admin_only(user):
+
+    if user["role"] != "admin":
+        raise HTTPException(
+            403,
+            "Только администратор"
+        )
+
+
+# ============================================================
+# MODELS
+# ============================================================
+
+class LoginIn(BaseModel):
+    phone: str
+    pin: str
+
+
+class AdminWebLogin(BaseModel):
+    init_data: str
+
+
+class CustomerCreate(BaseModel):
+    name: str
+    phone: str
+    pin: str
+
+
+class CourierCreate(BaseModel):
+    name: str
+    phone: str
+    pin: str = ""
+
+
+class OrderCreate(BaseModel):
+    phone: str
+    title: str
+    address: str
+    price: float = 0
+
+
+class AssignIn(BaseModel):
+    courier_id: int
+
+
+class OnlineIn(BaseModel):
+    online: bool
+
+
+class LocationIn(BaseModel):
+    lat: float
+    lon: float
+
+
+# ============================================================
+# TELEGRAM
+# ============================================================
+
+async def start_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    if not WEB_APP_URL:
+
+        await update.message.reply_text(
+            "Web App URL ещё не настроен."
+        )
+
+        return
+
+    keyboard = [[
+        KeyboardButton(
+            "🍽 Открыть приложение",
+            web_app=WebAppInfo(
+                url=WEB_APP_URL
+            )
+        )
+    ]]
+
+    await update.message.reply_text(
+        "Добро пожаловать в RESTARAN.",
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard,
+            resize_keyboard=True
+        )
+    )
+
+
+async def random_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    keyboard = [[
+        KeyboardButton(
+            "📱 Поделиться контактом",
+            request_contact=True
+        )
+    ]]
+
+    await update.message.reply_text(
+        "Поделитесь контактом клиента, "
+        "чтобы получить его PIN.",
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard,
+            resize_keyboard=True
+        )
+    )
+
+
+async def contact_handler(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    if not update.message:
+        return
+
+    if not update.message.contact:
+        return
+
+    phone = norm_phone(
+        update.message.contact.phone_number
+    )
+
+    with db() as conn:
+
+        row = conn.execute("""
+            SELECT
+                name,
+                phone,
+                pin_plain
+            FROM users
+            WHERE role = 'customer'
+              AND phone = ?
+              AND active = 1
+        """, (phone,)).fetchone()
+
+    if not row:
+
+        await update.message.reply_text(
+            "Клиент с таким номером не найден."
+        )
+
+        return
+
+    await update.message.reply_text(
+        "Клиент: "
+        + str(row["name"])
+        + "\nТелефон: "
+        + str(row["phone"])
+        + "\nPIN: "
+        + str(row["pin_plain"] or "—")
+    )
+
+
+# ============================================================
+# STARTUP
+# ============================================================
+
+@app.on_event("startup")
+async def startup():
+
+    init_db()
+
+    asyncio.create_task(
+        cleanup_loop()
+    )
+
+    global bot_app
+
+    if not BOT_TOKEN:
+        return
+
+    bot_app = (
+        Application
+        .builder()
+        .token(BOT_TOKEN)
+        .build()
+    )
+
+    bot_app.add_handler(
+        CommandHandler(
+            "start",
+            start_command
+        )
+    )
+
+    bot_app.add_handler(
+        CommandHandler(
+            "random",
+            random_command
+        )
+    )
+
+    bot_app.add_handler(
+        MessageHandler(
+            filters.CONTACT,
+            contact_handler
+        )
+    )
+
+    await bot_app.initialize()
+    await bot_app.start()
+
+    if bot_app.updater:
+        await bot_app.updater.start_polling()
+
+
+@app.on_event("shutdown")
+async def shutdown():
+
+    global bot_app
+
+    if not bot_app:
+        return
+
+    try:
+
+        if bot_app.updater:
+            await bot_app.updater.stop()
+
+        await bot_app.stop()
+        await bot_app.shutdown()
+
+    except Exception:
+        pass
+
+
+async def cleanup_loop():
+
+    while True:
+
+        try:
+
+            with db() as conn:
+
+                conn.execute("""
+                    DELETE FROM orders
+                    WHERE status = 'closed'
+                      AND closed_at IS NOT NULL
+                      AND closed_at <= ?
+                """, (
+                    time.time() - 300,
+                ))
+
+        except Exception:
+            pass
+
+        await asyncio.sleep(30)
+
+
+# ============================================================
+# FRONT PAGE
+# ============================================================
+
+@app.get("/")
+async def index():
+    return FileResponse(
+        "index.html"
+    )
+
+
+# ============================================================
+# AUTH
+# ============================================================
+
+@app.post("/api/login")
+async def login(data: LoginIn):
+
+    phone = norm_phone(
+        data.phone
+    )
+
+    with db() as conn:
+
+        user = conn.execute("""
+            SELECT *
+            FROM users
+            WHERE phone = ?
+              AND active = 1
+              AND role IN ('customer','courier')
+        """, (phone,)).fetchone()
+
+    if not user:
+
+        raise HTTPException(
+            401,
+            "Неверный номер или PIN"
+        )
+
+    if not user["pin_hash"]:
+
+        raise HTTPException(
+            401,
+            "PIN не установлен"
+        )
+
+    if not check_pin(
+        data.pin,
+        user["pin_hash"]
+    ):
+
+        raise HTTPException(
+            401,
+            "Неверный номер или PIN"
+        )
+
+    token = new_token()
+
+    with db() as conn:
+
+        conn.execute("""
+            INSERT INTO sessions(
+                token,
+                user_id,
+                role,
+                created_at
+            )
+            VALUES(?,?,?,?)
+        """, (
+            token,
+            user["id"],
+            user["role"],
+            time.time()
+        ))
+
+    return {
+        "token": token,
+        "role": user["role"]
     }
 
-    ${o.status!=="closed"
-      ? `<button class="btn red" onclick="closeOrder(${o.id})">Закрыть заказ</button>`
-      : ""}
-   </div>
-  `).join("");
- }catch(e){
-  box.innerHTML=`<div class="card">${escapeHtml(formatError(e.message))}</div>`;
- }
-}
-
-async function createOrder(){
- try{
-  await api("/api/admin/orders",{
-   method:"POST",
-   body:JSON.stringify({
-    phone:document.getElementById("oPhone").value,
-    title:document.getElementById("oTitle").value,
-    address:document.getElementById("oAddress").value,
-    price:Number(document.getElementById("oPrice").value||0)
-   })
-  });
-
-  await loadStats();
-  await loadAdminOrders();
- }catch(e){
-  alert(formatError(e.message));
- }
-}
-
-async function assignOrder(id){
- try{
-  const courier=document.getElementById("courier_"+id).value;
-
-  if(!courier){
-   alert("Выберите курьера");
-   return;
-  }
-
-  await api("/api/admin/orders/"+id+"/assign",{
-   method:"POST",
-   body:JSON.stringify({courier_id:Number(courier)})
-  });
-
-  await loadAdminOrders();
- }catch(e){
-  alert(formatError(e.message));
- }
-}
-
-async function closeOrder(id){
- if(!confirm("Закрыть заказ?"))return;
-
- try{
-  await api("/api/admin/orders/"+id+"/close",{method:"POST"});
-  await loadStats();
-  await loadAdminOrders();
- }catch(e){
-  alert(formatError(e.message));
- }
-}
-
-async function loadCustomers(){
- const box=document.getElementById("adminContent");
-
- try{
-  const users=await api("/api/admin/customers");
-
-  box.innerHTML=`
-  <div class="card">
-   <h3>Новый клиент</h3>
-   <input id="cName" placeholder="Имя клиента">
-   <input id="cPhone" placeholder="Телефон">
-   <input id="cPin" placeholder="PIN клиента" inputmode="numeric">
-   <div class="small">PIN задаёте вы сами. Он будет отображаться в списке клиентов.</div>
-   <button class="btn green" onclick="createCustomer()">Создать клиента</button>
-  </div>
-
-  <div class="card">
-   <h3>Клиенты</h3>
-   <div id="adminCustomersArea"></div>
-  </div>`;
-
-  const area=document.getElementById("adminCustomersArea");
-
-  area.innerHTML=users.length ? users.map(u=>`
-   <div class="item">
-    <b>${escapeHtml(u.name)}</b>
-    <div class="small">📱 ${escapeHtml(u.phone)}</div>
-    <div>PIN: <span class="pin">${escapeHtml(u.pin_plain||"—")}</span></div>
-    <span class="badge">${u.active?"Активен":"Удалён"}</span>
-    ${u.active
-      ? `<button class="btn red" onclick="deleteCustomer(${u.id})">🗑 Удалить аккаунт</button>`
-      : ""}
-   </div>
-  `).join("") : '<div class="small">Клиентов нет</div>';
-
- }catch(e){
-  box.innerHTML=`<div class="card">${escapeHtml(formatError(e.message))}</div>`;
- }
-}
-
-async function createCustomer(){
- try{
-  const name=document.getElementById("cName").value.trim();
-  const phone=document.getElementById("cPhone").value.trim();
-  const pin=document.getElementById("cPin").value.trim();
-
-  if(!name||!phone||!pin){
-   alert("Заполните имя, телефон и PIN");
-   return;
-  }
-
-  await api("/api/admin/customers",{
-   method:"POST",
-   body:JSON.stringify({name,phone,pin})
-  });
-
-  await loadStats();
-  await loadCustomers();
- }catch(e){
-  alert(formatError(e.message));
- }
-}
-
-async function deleteCustomer(id){
- if(!confirm("Удалить аккаунт клиента?"))return;
-
- try{
-  await api("/api/admin/customers/"+id,{method:"DELETE"});
-  await loadStats();
-  await loadCustomers();
- }catch(e){
-  alert(formatError(e.message));
- }
-}
-
-async function loadCouriers(){
- const box=document.getElementById("adminContent");
-
- try{
-  const couriers=await api("/api/admin/couriers");
-
-  box.innerHTML=`
-  <div class="card">
-   <h3>Новый курьер</h3>
-   <input id="crName" placeholder="Имя курьера">
-   <input id="crPhone" placeholder="Телефон">
-   <input id="crPin" placeholder="PIN курьера" inputmode="numeric">
-   <button class="btn green" onclick="createCourier()">Создать курьера</button>
-  </div>
-
-  <div class="card">
-   <h3>Курьеры</h3>
-   <div id="adminCouriersArea"></div>
-  </div>`;
-
-  const area=document.getElementById("adminCouriersArea");
-
-  area.innerHTML=couriers.length ? couriers.map(c=>`
-   <div class="item">
-    <b>${escapeHtml(c.name)}</b>
-    <div class="small">📱 ${escapeHtml(c.phone)}</div>
-    <div>PIN: <span class="pin">${escapeHtml(c.pin_plain||"—")}</span></div>
-    <div>
-     <span class="badge">${c.approved?"Одобрен":"Ожидает"}</span>
-     <span class="badge">${c.online?"Онлайн":"Оффлайн"}</span>
-     <span class="badge">${c.active?"Активен":"Уволен"}</span>
-    </div>
-
-    ${c.active&&!c.approved
-      ? `<button class="btn green" onclick="approveCourier(${c.id})">Одобрить</button>`
-      : ""}
-
-    ${c.active
-      ? `<button class="btn red" onclick="fireCourier(${c.id})">Уволить</button>`
-      : ""}
-   </div>
-  `).join("") : '<div class="small">Курьеров нет</div>';
-
- }catch(e){
-  box.innerHTML=`<div class="card">${escapeHtml(formatError(e.message))}</div>`;
- }
-}
-
-async function createCourier(){
- try{
-  await api("/api/admin/couriers",{
-   method:"POST",
-   body:JSON.stringify({
-    name:document.getElementById("crName").value,
-    phone:document.getElementById("crPhone").value,
-    pin:document.getElementById("crPin").value
-   })
-  });
-
-  await loadStats();
-  await loadCouriers();
- }catch(e){
-  alert(formatError(e.message));
- }
-}
-
-async function approveCourier(id){
- try{
-  await api("/api/admin/couriers/"+id+"/approve",{method:"POST"});
-  await loadStats();
-  await loadCouriers();
- }catch(e){
-  alert(formatError(e.message));
- }
-}
-
-async function fireCourier(id){
- if(!confirm("Уволить курьера?"))return;
-
- try{
-  await api("/api/admin/couriers/"+id+"/fire",{method:"POST"});
-  await loadStats();
-  await loadCouriers();
- }catch(e){
-  alert(formatError(e.message));
- }
-}
-
-async function renderCustomer(){
- app.innerHTML=`
- <div class="title">🍽 RESTARAN</div>
-
- <div class="card">
-  <div class="small">Клиент</div>
-  <h2>${escapeHtml(me.name)}</h2>
-  <div>📱 ${escapeHtml(me.phone)}</div>
-  <button class="btn gray" onclick="logout()">Выйти</button>
- </div>
-
- <div class="card">
-  <h3>Мои заказы</h3>
-  <div id="customerOrders"></div>
- </div>`;
-
- await loadCustomerOrders();
-}
-
-async function loadCustomerOrders(){
- try{
-  const orders=await api("/api/customer/orders");
-  const area=document.getElementById("customerOrders");
-
-  if(!orders.length){
-   area.innerHTML='<div class="small">Заказов нет</div>';
-   return;
-  }
-
-  area.innerHTML=orders.map(o=>`
-   <div class="item">
-    <b>#${o.id} — ${escapeHtml(o.title)}</b>
-    <div class="small">📍 ${escapeHtml(o.address)}</div>
-    <div>💰 ${Number(o.price).toFixed(2)}</div>
-    <span class="badge">${escapeHtml(o.status)}</span>
-
-    ${o.status==="delivered"
-      ? `<button class="btn green" onclick="confirmOrder(${o.id})">Получил заказ</button>`
-      : ""}
-
-    ${o.status==="delivering"&&o.courier_lat&&o.courier_lon
-      ? `<div class="small" style="margin-top:8px">
-          📍 Курьер: ${o.courier_lat}, ${o.courier_lon}
-         </div>`
-      : ""}
-   </div>
-  `).join("");
- }catch(e){}
-}
-
-async function confirmOrder(id){
- try{
-  await api("/api/customer/orders/"+id+"/confirm",{method:"POST"});
-  await loadCustomerOrders();
- }catch(e){
-  alert(formatError(e.message));
- }
-}
-
-async function renderCourier(){
- app.innerHTML=`
- <div class="title">🚴 RESTARAN</div>
-
- <div class="card">
-  <div class="small">Курьер</div>
-  <h2>${escapeHtml(me.name)}</h2>
-  <div>📱 ${escapeHtml(me.phone)}</div>
-
-  <button id="onlineBtn" class="btn green" onclick="toggleOnline()">
-   Онлайн
-  </button>
-
-  <button class="btn gray" onclick="sendLocation()">📍 Отправить геолокацию</button>
-  <button class="btn gray" onclick="logout()">Выйти</button>
- </div>
-
- <div class="card">
-  <h3>Мои заказы</h3>
-  <div id="courierOrders"></div>
- </div>`;
-
- await loadCourierOrders();
-}
-
-let courierOnline=false;
-
-async function toggleOnline(){
- courierOnline=!courierOnline;
-
- try{
-  await api("/api/courier/online",{
-   method:"POST",
-   body:JSON.stringify({online:courierOnline})
-  });
-
-  document.getElementById("onlineBtn").textContent=
-   courierOnline?"Оффлайн":"Онлайн";
-
- }catch(e){
-  courierOnline=!courierOnline;
- }
-}
-
-async function sendLocation(){
- if(!navigator.geolocation){
-  alert("Геолокация недоступна");
-  return;
- }
-
- navigator.geolocation.getCurrentPosition(async pos=>{
-  try{
-   await api("/api/courier/location",{
-    method:"POST",
-    body:JSON.stringify({
-     lat:pos.coords.latitude,
-     lon:pos.coords.longitude
-    })
-   });
-
-   alert("Геолокация отправлена");
-  }catch(e){
-   alert(formatError(e.message));
-  }
- },()=>alert("Разрешите доступ к геолокации"));
-}
-
-async function loadCourierOrders(){
- try{
-  const orders=await api("/api/courier/orders");
-  const area=document.getElementById("courierOrders");
-
-  if(!orders.length){
-   area.innerHTML='<div class="small">Заказов нет</div>';
-   return;
-  }
-
-  area.innerHTML=orders.map(o=>`
-   <div class="item">
-    <b>#${o.id} — ${escapeHtml(o.title)}</b>
-    <div class="small">👤 ${escapeHtml(o.customer_name)}</div>
-    <div class="small">📱 ${escapeHtml(o.customer_phone)}</div>
-    <div class="small">📍 ${escapeHtml(o.address)}</div>
-    <div>💰 ${Number(o.price).toFixed(2)}</div>
-    <span class="badge">${escapeHtml(o.status)}</span>
-
-    ${o.status==="assigned"
-      ? `<button class="btn green" onclick="courierAction(${o.id},'accept')">Принять</button>`
-      : ""}
-
-    ${o.status==="accepted"
-      ? `<button class="btn green" onclick="courierAction(${o.id},'start')">Начать доставку</button>`
-      : ""}
-
-    ${o.status==="delivering"
-      ? `<button class="btn green" onclick="courierAction(${o.id},'complete')">Доставлено</button>`
-      : ""}
-   </div>
-  `).join("");
- }catch(e){}
-}
-
-async function courierAction(id,action){
- try{
-  await api("/api/courier/orders/"+id+"/"+action,{method:"POST"});
-  await loadCourierOrders();
- }catch(e){
-  alert(formatError(e.message));
- }
-}
-
-function escapeHtml(value){
- return String(value??"")
-  .replaceAll("&","&amp;")
-  .replaceAll("<","&lt;")
-  .replaceAll(">","&gt;")
-  .replaceAll('"',"&quot;")
-  .replaceAll("'","&#039;");
-}
-
-boot();
-
-setInterval(async()=>{
- if(!token||!me)return;
-
- try{
-  if(me.role==="admin"){
-   await loadStats();
-   const active=document.querySelector(".tab.active");
-   if(active){
-    if(active.textContent.includes("Заказы"))await loadAdminOrders();
-    if(active.textContent.includes("Клиенты"))await loadCustomers();
-    if(active.textContent.includes("Курьеры"))await loadCouriers();
-   }
-  }
-
-  if(me.role==="customer")await loadCustomerOrders();
-  if(me.role==="courier")await loadCourierOrders();
- }catch{}
-},10000);
-</script>
-
-</body>
-  </html>
+
+@app.post("/api/admin/web-login")
+async def admin_web_login(
+    data: AdminWebLogin
+):
+
+    try:
+
+        tg_user = validate_init_data(
+            data.init_data
+        )
+
+    except Exception as error:
+
+        raise HTTPException(
+            403,
+            "Ошибка доступа: "
+            "не вышло проверить админа: "
+            + str(error)
+        )
+
+    try:
+        telegram_id = int(
+            tg_user["id"]
+        )
+    except Exception:
+
+        raise HTTPException(
+            403,
+            "Неверный Telegram ID"
+        )
+
+    if telegram_id not in ADMIN_IDS:
+
+        raise HTTPException(
+            403,
+            "Нет прав администратора"
+        )
+
+    name = (
+        tg_user.get(
+            "first_name",
+            "Admin"
+        )
+    )
+
+    username = tg_user.get(
+        "username"
+    )
+
+    if username:
+        name += " @" + username
+
+    with db() as conn:
+
+        existing = conn.execute("""
+            SELECT id
+            FROM users
+            WHERE telegram_id = ?
+              AND role = 'admin'
+        """, (
+            telegram_id,
+        )).fetchone()
+
+        if existing:
+
+            user_id = existing["id"]
+
+            conn.execute("""
+                UPDATE users
+                SET
+                    name = ?,
+                    active = 1
+                WHERE id = ?
+            """, (
+                name,
+                user_id
+            ))
+
+        else:
+
+            conn.execute("""
+                INSERT INTO users(
+                    name,
+                    phone,
+                    pin_hash,
+                    pin_plain,
+                    role,
+                    telegram_id,
+                    active,
+                    created_at
+                )
+                VALUES(?,?,?,?,?,?,?,?)
+            """, (
+                name,
+                None,
+                None,
+                None,
+                "admin",
+                telegram_id,
+                1,
+                time.time()
+            ))
+
+            user_id = conn.execute(
+                "SELECT last_insert_rowid()"
+            ).fetchone()[0]
+
+    token = new_token()
+
+    with db() as conn:
+
+        conn.execute("""
+            INSERT INTO sessions(
+                token,
+                user_id,
+                role,
+                created_at
+            )
+            VALUES(?,?,?,?)
+        """, (
+            token,
+            user_id,
+            "admin",
+            time.time()
+        ))
+
+    return {
+        "token": token,
+        "role": "admin"
+    }
+
+
+@app.get("/api/me")
+async def me(
+    authorization: str = Header(None)
+):
+
+    user = auth_user(
+        authorization
+    )
+
+    return {
+        "id": user["user_id"],
+        "name": user["name"],
+        "phone": user["phone"],
+        "role": user["role"],
+        "active": user["active"]
+    }
+
+
+# ============================================================
+# ADMIN STATS
+# ============================================================
+
+@app.get("/api/admin/stats")
+async def admin_stats(
+    authorization: str = Header(None)
+):
+
+    admin_only(
+        auth_user(authorization)
+    )
+
+    with db() as conn:
+
+        customers = conn.execute("""
+            SELECT COUNT(*) AS count
+            FROM users
+            WHERE role='customer'
+              AND active=1
+        """).fetchone()["count"]
+
+        couriers = conn.execute("""
+            SELECT COUNT(*) AS count
+            FROM users
+            WHERE role='courier'
+              AND active=1
+        """).fetchone()["count"]
+
+        orders = conn.execute("""
+            SELECT COUNT(*) AS count
+            FROM orders
+            WHERE status != 'closed'
+        """).fetchone()["count"]
+
+        delivered = conn.execute("""
+            SELECT COUNT(*) AS count
+            FROM orders
+            WHERE status='delivered'
+        """).fetchone()["count"]
+
+        closed = conn.execute("""
+            SELECT COUNT(*) AS count
+            FROM orders
+            WHERE status='closed'
+        """).fetchone()["count"]
+
+        revenue = conn.execute("""
+            SELECT COALESCE(
+                SUM(price),
+                0
+            ) AS total
+            FROM orders
+            WHERE status IN (
+                'delivered',
+                'closed'
+            )
+        """).fetchone()["total"]
+
+    return {
+        "customers": customers,
+        "couriers": couriers,
+        "active_orders": orders,
+        "delivered": delivered,
+        "closed": closed,
+        "revenue": revenue
+    }
+
+
+# ============================================================
+# CUSTOMERS
+# ============================================================
+
+@app.get("/api/admin/customers")
+async def admin_customers(
+    authorization: str = Header(None)
+):
+
+    admin_only(
+        auth_user(authorization)
+    )
+
+    with db() as conn:
+
+        rows = conn.execute("""
+            SELECT
+                id,
+                name,
+                phone,
+                pin_plain,
+                active,
+                created_at
+            FROM users
+            WHERE role='customer'
+            ORDER BY id DESC
+        """).fetchall()
+
+    return [
+        dict(row)
+        for row in rows
+    ]
+
+
+@app.post("/api/admin/customers")
+async def admin_create_customer(
+    data: CustomerCreate,
+    authorization: str = Header(None)
+):
+
+    admin_only(
+        auth_user(authorization)
+    )
+
+    name = data.name.strip()
+    phone = norm_phone(
+        data.phone
+    )
+    pin = data.pin.strip()
+
+    if not name:
+        raise HTTPException(
+            400,
+            "Введите имя клиента"
+        )
+
+    if not phone:
+        raise HTTPException(
+            400,
+            "Введите номер телефона"
+        )
+
+    if not re.fullmatch(
+        r"\d{4,8}",
+        pin
+    ):
+        raise HTTPException(
+            400,
+            "PIN должен содержать 4–8 цифр"
+        )
+
+    with db() as conn:
+
+        exists = conn.execute("""
+            SELECT id
+            FROM users
+            WHERE phone = ?
+        """, (
+            phone,
+        )).fetchone()
+
+        if exists:
+
+            raise HTTPException(
+                409,
+                "Номер уже зарегистрирован"
+            )
+
+        conn.execute("""
+            INSERT INTO users(
+                name,
+                phone,
+                pin_hash,
+                pin_plain,
+                role,
+                active,
+                created_at
+            )
+            VALUES(?,?,?,?,?,?,?)
+        """, (
+            name,
+            phone,
+            hash_pin(pin),
+            pin,
+            "customer",
+            1,
+            time.time()
+        ))
+
+        user_id = conn.execute(
+            "SELECT last_insert_rowid()"
+        ).fetchone()[0]
+
+    return {
+        "ok": True,
+        "id": user_id,
+        "name": name,
+        "phone": phone,
+        "pin": pin
+    }
+
+
+@app.delete(
+    "/api/admin/customers/{customer_id}"
+)
+async def delete_customer(
+    customer_id: int,
+    authorization: str = Header(None)
+):
+
+    admin_only(
+        auth_user(authorization)
+    )
+
+    with db() as conn:
+
+        customer = conn.execute("""
+            SELECT id
+            FROM users
+            WHERE id=?
+              AND role='customer'
+        """, (
+            customer_id,
+        )).fetchone()
+
+        if not customer:
+
+            raise HTTPException(
+                404,
+                "Клиент не найден"
+            )
+
+        conn.execute("""
+            UPDATE users
+            SET active=0
+            WHERE id=?
+        """, (
+            customer_id,
+        ))
+
+        conn.execute("""
+            DELETE FROM sessions
+            WHERE user_id=?
+        """, (
+            customer_id,
+        ))
+
+    return {
+        "ok": True
+    }
+
+
+# ============================================================
+# COURIERS
+# ============================================================
+
+@app.get("/api/admin/couriers")
+async def admin_couriers(
+    authorization: str = Header(None)
+):
+
+    admin_only(
+        auth_user(authorization)
+    )
+
+    with db() as conn:
+
+        rows = conn.execute("""
+            SELECT
+                c.id,
+                c.approved,
+                c.online,
+                c.lat,
+                c.lon,
+                c.updated_at,
+                c.active,
+                u.name,
+                u.phone,
+                u.pin_plain
+            FROM couriers c
+            JOIN users u
+                ON u.id=c.user_id
+            ORDER BY c.id DESC
+        """).fetchall()
+
+    return [
+        dict(row)
+        for row in rows
+    ]
+
+
+@app.post("/api/admin/couriers")
+async def admin_create_courier(
+    data: CourierCreate,
+    authorization: str = Header(None)
+):
+
+    admin_only(
+        auth_user(authorization)
+    )
+
+    name = data.name.strip()
+    phone = norm_phone(
+        data.phone
+    )
+
+    pin = data.pin.strip()
+
+    if not pin:
+        pin = str(
+            secrets.randbelow(900000)
+            + 100000
+        )
+
+    if not re.fullmatch(
+        r"\d{4,8}",
+        pin
+    ):
+        raise HTTPException(
+            400,
+            "PIN должен содержать 4–8 цифр"
+        )
+
+    with db() as conn:
+
+        exists = conn.execute("""
+            SELECT id
+            FROM users
+            WHERE phone=?
+        """, (
+            phone,
+        )).fetchone()
+
+        if exists:
+
+            raise HTTPException(
+                409,
+                "Номер уже зарегистрирован"
+            )
+
+        conn.execute("""
+            INSERT INTO users(
+                name,
+                phone,
+                pin_hash,
+                pin_plain,
+                role,
+                active,
+                created_at
+            )
+            VALUES(?,?,?,?,?,?,?)
+        """, (
+            name,
+            phone,
+            hash_pin(pin),
+            pin,
+            "courier",
+            1,
+            time.time()
+        ))
+
+        user_id = conn.execute(
+            "SELECT last_insert_rowid()"
+        ).fetchone()[0]
+
+        conn.execute("""
+            INSERT INTO couriers(
+                user_id,
+                approved,
+                online,
+                active
+            )
+            VALUES(?,?,?,?)
+        """, (
+            user_id,
+            0,
+            0,
+            1
+        ))
+
+        courier_id = conn.execute(
+            "SELECT last_insert_rowid()"
+        ).fetchone()[0]
+
+    return {
+        "ok": True,
+        "id": courier_id,
+        "name": name,
+        "phone": phone,
+        "pin": pin
+    }
+
+
+@app.post(
+    "/api/admin/couriers/{courier_id}/approve"
+)
+async def approve_courier(
+    courier_id: int,
+    authorization: str = Header(None)
+):
+
+    admin_only(
+        auth_user(authorization)
+    )
+
+    with db() as conn:
+
+        courier = conn.execute("""
+            SELECT user_id
+            FROM couriers
+            WHERE id=?
+        """, (
+            courier_id,
+        )).fetchone()
+
+        if not courier:
+
+            raise HTTPException(
+                404,
+                "Курьер не найден"
+            )
+
+        conn.execute("""
+            UPDATE couriers
+            SET
+                approved=1,
+                active=1
+            WHERE id=?
+        """, (
+            courier_id,
+        ))
+
+        conn.execute("""
+            UPDATE users
+            SET active=1
+            WHERE id=?
+        """, (
+            courier["user_id"],
+        ))
+
+    return {
+        "ok": True
+    }
+
+
+@app.post(
+    "/api/admin/couriers/{courier_id}/fire"
+)
+async def fire_courier(
+    courier_id: int,
+    authorization: str = Header(None)
+):
+
+    admin_only(
+        auth_user(authorization)
+    )
+
+    with db() as conn:
+
+        courier = conn.execute("""
+            SELECT user_id
+            FROM couriers
+            WHERE id=?
+        """, (
+            courier_id,
+        )).fetchone()
+
+        if not courier:
+
+            raise HTTPException(
+                404,
+                "Курьер не найден"
+            )
+
+        user_id = courier["user_id"]
+
+        conn.execute("""
+            UPDATE couriers
+            SET
+                active=0,
+                online=0
+            WHERE id=?
+        """, (
+            courier_id,
+        ))
+
+        conn.execute("""
+            UPDATE users
+            SET active=0
+            WHERE id=?
+        """, (
+            user_id,
+        ))
+
+        conn.execute("""
+            DELETE FROM sessions
+            WHERE user_id=?
+        """, (
+            user_id,
+        ))
+
+        conn.execute("""
+            UPDATE orders
+            SET
+                courier_id=NULL,
+                status='new'
+            WHERE courier_id=?
+              AND status NOT IN (
+                  'closed',
+                  'delivered'
+              )
+        """, (
+            courier_id,
+        ))
+
+    return {
+        "ok": True
+    }
+
+
+# ============================================================
+# ORDERS
+# ============================================================
+
+@app.get("/api/admin/orders")
+async def admin_orders(
+    authorization: str = Header(None)
+):
+
+    admin_only(
+        auth_user(authorization)
+    )
+
+    with db() as conn:
+
+        rows = conn.execute("""
+            SELECT
+                o.*,
+                cu.name AS customer_name,
+                cu.phone AS customer_phone,
+                cr.name AS courier_name,
+                co.lat AS courier_lat,
+                co.lon AS courier_lon
+            FROM orders o
+            JOIN users cu
+                ON cu.id=o.customer_id
+            LEFT JOIN couriers co
+                ON co.id=o.courier_id
+            LEFT JOIN users cr
+                ON cr.id=co.user_id
+            WHERE
+                o.status!='closed'
+                OR o.closed_at IS NULL
+                OR o.closed_at>?
+            ORDER BY o.id DESC
+        """, (
+            time.time() - 300,
+        )).fetchall()
+
+    return [
+        dict(row)
+        for row in rows
+    ]
+
+
+@app.post("/api/admin/orders")
+async def admin_create_order(
+    data: OrderCreate,
+    authorization: str = Header(None)
+):
+
+    admin_only(
+        auth_user(authorization)
+    )
+
+    phone = norm_phone(
+        data.phone
+    )
+
+    with db() as conn:
+
+        customer = conn.execute("""
+            SELECT id
+            FROM users
+            WHERE phone=?
+              AND role='customer'
+              AND active=1
+        """, (
+            phone,
+        )).fetchone()
+
+        if not customer:
+
+            raise HTTPException(
+                404,
+                "Активный клиент не найден"
+            )
+
+        conn.execute("""
+            INSERT INTO orders(
+                customer_id,
+                title,
+                address,
+                price,
+                status,
+                created_at
+            )
+            VALUES(?,?,?,?,?,?)
+        """, (
+            customer["id"],
+            data.title.strip(),
+            data.address.strip(),
+            max(0, data.price),
+            "new",
+            time.time()
+        ))
+
+        order_id = conn.execute(
+            "SELECT last_insert_rowid()"
+        ).fetchone()[0]
+
+    return {
+        "ok": True,
+        "id": order_id
+    }
+
+
+@app.post(
+    "/api/admin/orders/{order_id}/assign"
+)
+async def assign_order(
+    order_id: int,
+    data: AssignIn,
+    authorization: str = Header(None)
+):
+
+    admin_only(
+        auth_user(authorization)
+    )
+
+    with db() as conn:
+
+        courier = conn.execute("""
+            SELECT id
+            FROM couriers
+            WHERE id=?
+              AND active=1
+              AND approved=1
+        """, (
+            data.courier_id,
+        )).fetchone()
+
+        if not courier:
+
+            raise HTTPException(
+                404,
+                "Курьер не найден или не одобрен"
+            )
+
+        order = conn.execute("""
+            SELECT id
+            FROM orders
+            WHERE id=?
+        """, (
+            order_id,
+        )).fetchone()
+
+        if not order:
+
+            raise HTTPException(
+                404,
+                "Заказ не найден"
+            )
+
+        conn.execute("""
+            UPDATE orders
+            SET
+                courier_id=?,
+                status='assigned'
+            WHERE id=?
+        """, (
+            data.courier_id,
+            order_id
+        ))
+
+    return {
+        "ok": True
+    }
+
+
+@app.post(
+    "/api/admin/orders/{order_id}/close"
+)
+async def close_order(
+    order_id: int,
+    authorization: str = Header(None)
+):
+
+    admin_only(
+        auth_user(authorization)
+    )
+
+    with db() as conn:
+
+        order = conn.execute("""
+            SELECT id
+            FROM orders
+            WHERE id=?
+        """, (
+            order_id,
+        )).fetchone()
+
+        if not order:
+
+            raise HTTPException(
+                404,
+                "Заказ не найден"
+            )
+
+        conn.execute("""
+            UPDATE orders
+            SET
+                status='closed',
+                closed_at=?
+            WHERE id=?
+        """, (
+            time.time(),
+            order_id
+        ))
+
+    return {
+        "ok": True
+    }
+
+
+# ============================================================
+# CUSTOMER
+# ============================================================
+
+@app.get("/api/customer/orders")
+async def customer_orders(
+    authorization: str = Header(None)
+):
+
+    user = auth_user(
+        authorization
+    )
+
+    if user["role"] != "customer":
+
+        raise HTTPException(
+            403,
+            "Только клиент"
+        )
+
+    with db() as conn:
+
+        rows = conn.execute("""
+            SELECT
+                o.*,
+                co.lat,
+                co.lon
+            FROM orders o
+            LEFT JOIN couriers co
+                ON co.id=o.courier_id
+            WHERE
+                o.customer_id=?
+                AND (
+                    o.status!='closed'
+                    OR o.closed_at IS NULL
+                    OR o.closed_at>?
+                )
+            ORDER BY o.id DESC
+        """, (
+            user["user_id"],
+            time.time() - 300
+        )).fetchall()
+
+    return [
+        dict(row)
+        for row in rows
+    ]
+
+
+@app.post(
+    "/api/customer/orders/{order_id}/confirm"
+)
+async def customer_confirm(
+    order_id: int,
+    authorization: str = Header(None)
+):
+
+    user = auth_user(
+        authorization
+    )
+
+    if user["role"] != "customer":
+
+        raise HTTPException(
+            403,
+            "Только клиент"
+        )
+
+    with db() as conn:
+
+        order = conn.execute("""
+            SELECT
+                id,
+                status
+            FROM orders
+            WHERE id=?
+              AND customer_id=?
+        """, (
+            order_id,
+            user["user_id"]
+        )).fetchone()
+
+        if not order:
+
+            raise HTTPException(
+                404,
+                "Заказ не найден"
+            )
+
+        if order["status"] != "delivered":
+
+            raise HTTPException(
+                400,
+                "Заказ ещё не доставлен"
+            )
+
+        conn.execute("""
+            UPDATE orders
+            SET
+                customer_confirmed=1,
+                status='closed',
+                closed_at=?
+            WHERE id=?
+        """, (
+            time.time(),
+            order_id
+        ))
+
+    return {
+        "ok": True
+    }
+
+
+# ============================================================
+# COURIER
+# ============================================================
+
+def get_courier(user_id):
+
+    with db() as conn:
+
+        return conn.execute("""
+            SELECT *
+            FROM couriers
+            WHERE user_id=?
+              AND active=1
+        """, (
+            user_id,
+        )).fetchone()
+
+
+@app.get("/api/courier/orders")
+async def courier_orders(
+    authorization: str = Header(None)
+):
+
+    user = auth_user(
+        authorization
+    )
+
+    if user["role"] != "courier":
+
+        raise HTTPException(
+            403,
+            "Только курьер"
+        )
+
+    courier = get_courier(
+        user["user_id"]
+    )
+
+    if not courier:
+
+        raise HTTPException(
+            403,
+            "Курьер неактивен"
+        )
+
+    with db() as conn:
+
+        rows = conn.execute("""
+            SELECT
+                o.*,
+                cu.name AS customer_name,
+                cu.phone AS customer_phone
+            FROM orders o
+            JOIN users cu
+                ON cu.id=o.customer_id
+            WHERE o.courier_id=?
+              AND o.status!='closed'
+            ORDER BY o.id DESC
+        """, (
+            courier["id"],
+        )).fetchall()
+
+    return {
+        "online": bool(
+            courier["online"]
+        ),
+        "orders": [
+            dict(row)
+            for row in rows
+        ]
+    }
+
+
+@app.post("/api/courier/online")
+async def courier_online(
+    data: OnlineIn,
+    authorization: str = Header(None)
+):
+
+    user = auth_user(
+        authorization
+    )
+
+    if user["role"] != "courier":
+
+        raise HTTPException(
+            403,
+            "Только курьер"
+        )
+
+    courier = get_courier(
+        user["user_id"]
+    )
+
+    if not courier:
+
+        raise HTTPException(
+            403,
+            "Курьер не найден"
+        )
+
+    if not courier["approved"]:
+
+        raise HTTPException(
+            403,
+            "Курьер не одобрен"
+        )
+
+    with db() as conn:
+
+        conn.execute("""
+            UPDATE couriers
+            SET online=?
+            WHERE id=?
+        """, (
+            int(data.online),
+            courier["id"]
+        ))
+
+    return {
+        "ok": True,
+        "online": data.online
+    }
+
+
+async def courier_action(
+    order_id,
+    user_id,
+    old_status,
+    new_status
+):
+
+    courier = get_courier(
+        user_id
+    )
+
+    if not courier:
+
+        raise HTTPException(
+            403,
+            "Курьер не найден"
+        )
+
+    with db() as conn:
+
+        order = conn.execute("""
+            SELECT
+                id,
+                status
+            FROM orders
+            WHERE id=?
+              AND courier_id=?
+        """, (
+            order_id,
+            courier["id"]
+        )).fetchone()
+
+        if not order:
+
+            raise HTTPException(
+                404,
+                "Заказ не найден"
+            )
+
+        if order["status"] != old_status:
+
+            raise HTTPException(
+                400,
+                "Неверный статус заказа"
+            )
+
+        conn.execute("""
+            UPDATE orders
+            SET status=?
+            WHERE id=?
+        """, (
+            new_status,
+            order_id
+        ))
+
+    return {
+        "ok": True
+    }
+
+
+@app.post(
+    "/api/courier/orders/{order_id}/accept"
+)
+async def courier_accept(
+    order_id: int,
+    authorization: str = Header(None)
+):
+
+    user = auth_user(
+        authorization
+    )
+
+    return await courier_action(
+        order_id,
+        user["user_id"],
+        "assigned",
+        "accepted"
+    )
+
+
+@app.post(
+    "/api/courier/orders/{order_id}/start"
+)
+async def courier_start(
+    order_id: int,
+    authorization: str = Header(None)
+):
+
+    user = auth_user(
+        authorization
+    )
+
+    return await courier_action(
+        order_id,
+        user["user_id"],
+        "accepted",
+        "delivering"
+    )
+
+
+@app.post(
+    "/api/courier/orders/{order_id}/complete"
+)
+async def courier_complete(
+    order_id: int,
+    authorization: str = Header(None)
+):
+
+    user = auth_user(
+        authorization
+    )
+
+    return await courier_action(
+        order_id,
+        user["user_id"],
+        "delivering",
+        "delivered"
+    )
+
+
+@app.post("/api/courier/location")
+async def courier_location(
+    data: LocationIn,
+    authorization: str = Header(None)
+):
+
+    user = auth_user(
+        authorization
+    )
+
+    if user["role"] != "courier":
+
+        raise HTTPException(
+            403,
+            "Только курьер"
+        )
+
+    courier = get_courier(
+        user["user_id"]
+    )
+
+    if not courier:
+
+        raise HTTPException(
+            403,
+            "Курьер не найден"
+        )
+
+    with db() as conn:
+
+        conn.execute("""
+            UPDATE couriers
+            SET
+                lat=?,
+                lon=?,
+                updated_at=?
+            WHERE id=?
+        """, (
+            data.lat,
+            data.lon,
+            time.time(),
+            courier["id"]
+        ))
+
+    return {
+        "ok": True
+    }
+
+
+# ============================================================
+# SERVER
+# ============================================================
+
+if __name__ == "__main__":
+
+    port = int(
+        os.getenv(
+            "PORT",
+            "10000"
+        )
+    )
+
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=port
+    )
