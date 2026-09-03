@@ -31,7 +31,7 @@ from telegram.ext import (
 # CONFIG
 # =========================================================
 
-BOT_TOKEN = os.getenv("8849558318:AAFcnAvMwjCVIREzfYfNg7rehkHTm_ysKgI")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID", "8357023784"))
 
 if not BOT_TOKEN:
