@@ -2,8 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 
 <title>RESTARAN</title>
 
@@ -11,442 +10,165 @@
 
 <style>
 :root{
-    --bg:#0b0d12;
-    --panel:#131720;
-    --panel2:#181c27;
-    --text:#f7f8fb;
-    --muted:#8f98a8;
-    --accent:#ffb347;
-    --accent2:#ff7a45;
-    --green:#35d58a;
-    --red:#ff5c6c;
-    --blue:#4da3ff;
-    --border:rgba(255,255,255,.08);
-    --shadow:0 20px 60px rgba(0,0,0,.35);
+--bg:#0b0d12;--text:#f7f8fb;--muted:#8f98a8;
+--accent:#ffb347;--accent2:#ff7a45;--green:#35d58a;
+--red:#ff5c6c;--blue:#4da3ff;--border:rgba(255,255,255,.08);
+--shadow:0 20px 60px rgba(0,0,0,.35)
 }
 
-*{
-    box-sizing:border-box;
-    -webkit-tap-highlight-color:transparent;
-}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 
 html,body{
-    margin:0;
-    min-height:100%;
-    background:
-        radial-gradient(circle at 10% 0%,rgba(255,179,71,.11),transparent 30%),
-        radial-gradient(circle at 90% 10%,rgba(255,122,69,.08),transparent 30%),
-        var(--bg);
-    color:var(--text);
-    font-family:
-        Inter,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
+margin:0;min-height:100%;
+background:
+radial-gradient(circle at 10% 0%,rgba(255,179,71,.11),transparent 30%),
+radial-gradient(circle at 90% 10%,rgba(255,122,69,.08),transparent 30%),
+var(--bg);
+color:var(--text);
+font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
 }
 
-body{
-    padding-bottom:30px;
-}
+body{padding-bottom:30px}
+button,input{font:inherit}
+button{border:0;cursor:pointer}
 
-button,input{
-    font:inherit;
-}
-
-button{
-    border:0;
-    cursor:pointer;
-}
-
-.app{
-    width:min(1100px,100%);
-    margin:auto;
-    padding:16px;
-}
+.app{width:min(1100px,100%);margin:auto;padding:16px}
 
 .glass{
-    background:linear-gradient(
-        145deg,
-        rgba(255,255,255,.065),
-        rgba(255,255,255,.025)
-    );
-    border:1px solid var(--border);
-    box-shadow:var(--shadow);
-    backdrop-filter:blur(22px);
-    -webkit-backdrop-filter:blur(22px);
+background:linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.025));
+border:1px solid var(--border);
+box-shadow:var(--shadow);
+backdrop-filter:blur(22px);
+-webkit-backdrop-filter:blur(22px)
 }
 
 .topbar{
-    position:sticky;
-    top:8px;
-    z-index:20;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:15px 17px;
-    border-radius:24px;
-    margin-bottom:16px;
+position:sticky;top:8px;z-index:20;
+display:flex;justify-content:space-between;align-items:center;
+padding:15px 17px;border-radius:24px;margin-bottom:16px
 }
 
-.logo{
-    display:flex;
-    align-items:center;
-    gap:11px;
-    font-size:20px;
-    font-weight:900;
-}
+.logo{display:flex;align-items:center;gap:11px;font-size:20px;font-weight:900}
 
 .logoIcon{
-    width:40px;
-    height:40px;
-    border-radius:14px;
-    display:grid;
-    place-items:center;
-    background:linear-gradient(135deg,var(--accent),var(--accent2));
-    box-shadow:0 10px 30px rgba(255,140,50,.25);
+width:40px;height:40px;border-radius:14px;
+display:grid;place-items:center;
+background:linear-gradient(135deg,var(--accent),var(--accent2))
 }
 
-.userPill{
-    color:var(--muted);
-    font-size:13px;
-    text-align:right;
-}
+.userPill{color:var(--muted);font-size:13px;text-align:right}
 
-.hero{
-    padding:24px;
-    border-radius:30px;
-    margin-bottom:16px;
-    position:relative;
-    overflow:hidden;
-}
+.hero{padding:24px;border-radius:30px;margin-bottom:16px;position:relative;overflow:hidden}
+.hero h1{margin:0 0 7px;font-size:30px}
+.hero p{margin:0;color:var(--muted)}
 
-.hero:after{
-    content:"";
-    position:absolute;
-    width:220px;
-    height:220px;
-    right:-80px;
-    top:-90px;
-    border-radius:50%;
-    background:rgba(255,179,71,.13);
-    filter:blur(10px);
-}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media(max-width:650px){.grid{grid-template-columns:1fr}}
 
-.hero h1{
-    margin:0 0 7px;
-    font-size:30px;
-    letter-spacing:-1px;
-}
+.stat{padding:18px;border-radius:22px}
+.statLabel{color:var(--muted);font-size:13px}
+.statValue{margin-top:7px;font-size:28px;font-weight:900}
 
-.hero p{
-    margin:0;
-    color:var(--muted);
-}
-
-.grid{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:14px;
-}
-
-@media(max-width:650px){
-    .grid{
-        grid-template-columns:1fr;
-    }
-}
-
-.stat{
-    padding:18px;
-    border-radius:22px;
-}
-
-.statLabel{
-    color:var(--muted);
-    font-size:13px;
-}
-
-.statValue{
-    margin-top:7px;
-    font-size:28px;
-    font-weight:900;
-}
-
-.section{
-    margin-top:16px;
-    padding:18px;
-    border-radius:26px;
-}
-
-.sectionTitle{
-    font-size:18px;
-    font-weight:900;
-    margin-bottom:14px;
-}
-
-.form{
-    display:grid;
-    gap:10px;
-}
+.section{margin-top:16px;padding:18px;border-radius:26px}
+.sectionTitle{font-size:18px;font-weight:900;margin-bottom:14px}
+.form{display:grid;gap:10px}
 
 input{
-    width:100%;
-    border:1px solid var(--border);
-    outline:0;
-    border-radius:17px;
-    background:rgba(255,255,255,.055);
-    color:var(--text);
-    padding:14px 15px;
-}
-
-input:focus{
-    border-color:rgba(255,179,71,.6);
-    box-shadow:0 0 0 3px rgba(255,179,71,.08);
+width:100%;border:1px solid var(--border);outline:0;
+border-radius:17px;background:rgba(255,255,255,.055);
+color:var(--text);padding:14px 15px
 }
 
 .primary{
-    padding:14px 17px;
-    border-radius:17px;
-    color:#16100a;
-    font-weight:900;
-    background:linear-gradient(135deg,var(--accent),var(--accent2));
-    box-shadow:0 10px 30px rgba(255,140,50,.18);
+padding:14px 17px;border-radius:17px;color:#16100a;
+font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2))
 }
 
 .secondary{
-    padding:12px 14px;
-    border-radius:15px;
-    color:var(--text);
-    background:rgba(255,255,255,.07);
-    border:1px solid var(--border);
-    font-weight:800;
+padding:12px 14px;border-radius:15px;color:var(--text);
+background:rgba(255,255,255,.07);border:1px solid var(--border);
+font-weight:800
 }
 
-.success{
-    background:rgba(53,213,138,.12);
-    color:#5ce5a0;
-    border:1px solid rgba(53,213,138,.2);
-}
-
-.danger{
-    background:rgba(255,92,108,.12);
-    color:#ff7180;
-    border:1px solid rgba(255,92,108,.2);
-}
-
-.blue{
-    background:rgba(77,163,255,.12);
-    color:#68b2ff;
-    border:1px solid rgba(77,163,255,.2);
-}
+.success{background:rgba(53,213,138,.12);color:#5ce5a0;padding:12px 14px;border-radius:15px}
+.danger{background:rgba(255,92,108,.12);color:#ff7180;padding:12px 14px;border-radius:15px}
+.blue{background:rgba(77,163,255,.12);color:#68b2ff;padding:12px 14px;border-radius:15px}
 
 .item{
-    padding:16px;
-    border-radius:20px;
-    background:rgba(255,255,255,.035);
-    border:1px solid var(--border);
-    margin-bottom:10px;
+padding:16px;border-radius:20px;background:rgba(255,255,255,.035);
+border:1px solid var(--border);margin-bottom:10px
 }
 
-.item:last-child{
-    margin-bottom:0;
-}
-
-.itemTop{
-    display:flex;
-    justify-content:space-between;
-    gap:12px;
-    align-items:flex-start;
-}
-
-.itemTitle{
-    font-size:16px;
-    font-weight:900;
-}
-
-.itemSub{
-    color:var(--muted);
-    font-size:13px;
-    line-height:1.55;
-    margin-top:6px;
-}
-
-.itemActions{
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
-    margin-top:12px;
-}
+.itemTop{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.itemTitle{font-size:16px;font-weight:900}
+.itemSub{color:var(--muted);font-size:13px;line-height:1.55;margin-top:6px}
+.itemActions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 
 .badge{
-    display:inline-flex;
-    align-items:center;
-    gap:5px;
-    padding:6px 9px;
-    border-radius:999px;
-    font-size:11px;
-    font-weight:900;
-    background:rgba(255,255,255,.07);
-    color:#dce2eb;
+display:inline-flex;align-items:center;gap:5px;padding:6px 9px;
+border-radius:999px;font-size:11px;font-weight:900;
+background:rgba(255,255,255,.07)
 }
 
-.badge.green{
-    color:#63e9a4;
-    background:rgba(53,213,138,.1);
-}
+.badge.green{color:#63e9a4;background:rgba(53,213,138,.1)}
+.badge.orange{color:#ffc267;background:rgba(255,179,71,.1)}
+.badge.red{color:#ff7583;background:rgba(255,92,108,.1)}
+.badge.blue{color:#6ab5ff;background:rgba(77,163,255,.1)}
 
-.badge.orange{
-    color:#ffc267;
-    background:rgba(255,179,71,.1);
-}
+.empty{padding:25px;border-radius:18px;text-align:center;color:var(--muted)}
 
-.badge.red{
-    color:#ff7583;
-    background:rgba(255,92,108,.1);
-}
-
-.badge.blue{
-    color:#6ab5ff;
-    background:rgba(77,163,255,.1);
-}
-
-.empty{
-    padding:25px;
-    border-radius:18px;
-    text-align:center;
-    color:var(--muted);
-}
-
-.login{
-    min-height:90vh;
-    display:grid;
-    place-items:center;
-}
-
-.loginCard{
-    width:min(430px,100%);
-    padding:25px;
-    border-radius:30px;
-}
-
+.login{min-height:90vh;display:grid;place-items:center}
+.loginCard{width:min(430px,100%);padding:25px;border-radius:30px}
 .loginLogo{
-    width:65px;
-    height:65px;
-    border-radius:22px;
-    display:grid;
-    place-items:center;
-    font-size:30px;
-    background:linear-gradient(135deg,var(--accent),var(--accent2));
-    margin-bottom:18px;
+width:65px;height:65px;border-radius:22px;display:grid;
+place-items:center;font-size:30px;
+background:linear-gradient(135deg,var(--accent),var(--accent2));
+margin-bottom:18px
 }
+.loginCard h1{margin:0;font-size:28px}
+.loginCard p{color:var(--muted);line-height:1.5}
 
-.loginCard h1{
-    margin:0;
-    font-size:28px;
-}
-
-.loginCard p{
-    color:var(--muted);
-    line-height:1.5;
-}
-
-.hidden{
-    display:none!important;
-}
+.hidden{display:none!important}
 
 .tabs{
-    display:flex;
-    gap:7px;
-    overflow-x:auto;
-    padding:4px;
-    margin-bottom:15px;
+display:flex;gap:7px;overflow-x:auto;padding:4px;margin-bottom:15px
 }
 
 .tab{
-    white-space:nowrap;
-    padding:11px 14px;
-    border-radius:14px;
-    color:var(--muted);
-    background:rgba(255,255,255,.04);
-    border:1px solid transparent;
-    font-weight:800;
+white-space:nowrap;padding:11px 14px;border-radius:14px;
+color:var(--muted);background:rgba(255,255,255,.04);
+border:1px solid transparent;font-weight:800
 }
 
 .tab.active{
-    color:var(--text);
-    border-color:var(--border);
-    background:rgba(255,255,255,.09);
+color:var(--text);border-color:var(--border);
+background:rgba(255,255,255,.09)
 }
 
-.map{
-    width:100%;
-    height:220px;
-    border:0;
-    border-radius:18px;
-    margin-top:12px;
-}
+.map{width:100%;height:220px;border:0;border-radius:18px;margin-top:12px}
 
 .toast{
-    position:fixed;
-    left:50%;
-    bottom:25px;
-    transform:translateX(-50%) translateY(20px);
-    z-index:100;
-    min-width:240px;
-    max-width:90%;
-    padding:13px 16px;
-    border-radius:16px;
-    background:#202632;
-    border:1px solid var(--border);
-    box-shadow:var(--shadow);
-    opacity:0;
-    pointer-events:none;
-    transition:.25s;
-    text-align:center;
-    font-weight:700;
+position:fixed;left:50%;bottom:25px;
+transform:translateX(-50%) translateY(20px);
+z-index:100;min-width:240px;max-width:90%;
+padding:13px 16px;border-radius:16px;background:#202632;
+border:1px solid var(--border);box-shadow:var(--shadow);
+opacity:0;pointer-events:none;transition:.25s;
+text-align:center;font-weight:700
 }
 
-.toast.show{
-    opacity:1;
-    transform:translateX(-50%) translateY(0);
-}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-.switch{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:15px;
-}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:15px}
+.switchBtn{min-width:100px;padding:11px 14px;border-radius:15px;font-weight:900}
 
-.switchBtn{
-    min-width:100px;
-    padding:11px 14px;
-    border-radius:15px;
-    font-weight:900;
-}
-
-.game{
-    text-align:center;
-}
-
-.gameScore{
-    font-size:35px;
-    font-weight:900;
-    margin:15px 0;
-}
+.game{text-align:center}
+.gameScore{font-size:35px;font-weight:900;margin:15px 0}
 
 .tap{
-    width:130px;
-    height:130px;
-    border-radius:50%;
-    background:linear-gradient(135deg,var(--accent),var(--accent2));
-    font-size:42px;
-    box-shadow:0 20px 50px rgba(255,140,50,.25);
-    transition:.1s;
-}
-
-.tap:active{
-    transform:scale(.92);
+width:130px;height:130px;border-radius:50%;
+background:linear-gradient(135deg,var(--accent),var(--accent2));
+font-size:42px
 }
 </style>
 </head>
@@ -455,330 +177,316 @@ input:focus{
 
 <div id="toast" class="toast"></div>
 
+<!--
+  ВАЖНО:
+  Для Telegram-админов этот экран НИКОГДА не показывается.
+-->
 <div id="loginScreen" class="app login">
-    <div class="loginCard glass">
 
-        <div class="loginLogo">🍽</div>
+<div class="loginCard glass">
 
-        <h1>RESTARAN</h1>
+<div class="loginLogo">🍽</div>
 
-        <p>
-            Введите номер телефона и PIN,
-            чтобы открыть личный кабинет.
-        </p>
+<h1>RESTARAN</h1>
 
-        <div class="form">
+<p>
+Введите номер телефона и PIN,
+чтобы открыть личный кабинет.
+</p>
 
-            <input
-                id="loginPhone"
-                type="tel"
-                placeholder="+374 XX XX XX XX"
-            >
+<div class="form">
 
-            <input
-                id="loginPin"
-                type="password"
-                inputmode="numeric"
-                maxlength="8"
-                placeholder="PIN"
-            >
+<input id="loginPhone" type="tel" placeholder="+374 XX XX XX XX">
 
-            <button
-                class="primary"
-                onclick="login()"
-            >
-                Войти
-            </button>
+<input id="loginPin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN">
 
-        </div>
-    </div>
+<button class="primary" onclick="login()">
+Войти
+</button>
+
+</div>
+
+</div>
 </div>
 
 
 <div id="app" class="app hidden">
 
-    <div class="topbar glass">
+<div class="topbar glass">
 
-        <div class="logo">
-            <div class="logoIcon">🍽</div>
-            RESTARAN
-        </div>
+<div class="logo">
+<div class="logoIcon">🍽</div>
+RESTARAN
+</div>
 
-        <div
-            id="userPill"
-            class="userPill"
-        ></div>
+<div id="userPill" class="userPill"></div>
 
-    </div>
+</div>
 
 
-    <!-- ADMIN -->
+<!-- ADMIN -->
 
-    <div id="adminView" class="hidden">
+<div id="adminView" class="hidden">
 
-        <div class="hero glass">
-            <h1>Админ-панель</h1>
-            <p>
-                Управление клиентами, курьерами и заказами.
-            </p>
-        </div>
+<div class="hero glass">
 
-        <div class="grid">
+<h1>Админ-панель</h1>
 
-            <div class="stat glass">
-                <div class="statLabel">Клиенты</div>
-                <div id="statCustomers" class="statValue">0</div>
-            </div>
+<p>
+Управление клиентами, курьерами и заказами.
+</p>
 
-            <div class="stat glass">
-                <div class="statLabel">Курьеры</div>
-                <div id="statCouriers" class="statValue">0</div>
-            </div>
-
-            <div class="stat glass">
-                <div class="statLabel">Активные заказы</div>
-                <div id="statOrders" class="statValue">0</div>
-            </div>
-
-            <div class="stat glass">
-                <div class="statLabel">Выручка</div>
-                <div id="statRevenue" class="statValue">$0</div>
-            </div>
-
-        </div>
+</div>
 
 
-        <div class="section glass">
+<div class="grid">
 
-            <div class="tabs">
+<div class="stat glass">
+<div class="statLabel">Клиенты</div>
+<div id="statCustomers" class="statValue">0</div>
+</div>
 
-                <button
-                    class="tab active"
-                    onclick="adminTab('orders',this)"
-                >
-                    📦 Заказы
-                </button>
+<div class="stat glass">
+<div class="statLabel">Курьеры</div>
+<div id="statCouriers" class="statValue">0</div>
+</div>
 
-                <button
-                    class="tab"
-                    onclick="adminTab('customers',this)"
-                >
-                    👤 Клиенты
-                </button>
+<div class="stat glass">
+<div class="statLabel">Активные заказы</div>
+<div id="statOrders" class="statValue">0</div>
+</div>
 
-                <button
-                    class="tab"
-                    onclick="adminTab('couriers',this)"
-                >
-                    🛵 Курьеры
-                </button>
+<div class="stat glass">
+<div class="statLabel">Выручка</div>
+<div id="statRevenue" class="statValue">$0</div>
+</div>
 
-                <button
-                    class="tab"
-                    onclick="adminTab('stats',this)"
-                >
-                    📊 Статистика
-                </button>
-
-            </div>
+</div>
 
 
-            <div id="adminOrdersArea"></div>
+<div class="section glass">
 
-            <div
-                id="adminCustomersArea"
-                class="hidden"
-            ></div>
+<div class="tabs">
 
-            <div
-                id="adminCouriersArea"
-                class="hidden"
-            ></div>
+<button class="tab active" onclick="adminTab('orders',this)">
+📦 Заказы
+</button>
 
-            <div
-                id="adminStatsArea"
-                class="hidden"
-            ></div>
+<button class="tab" onclick="adminTab('customers',this)">
+👤 Клиенты
+</button>
 
-        </div>
+<button class="tab" onclick="adminTab('couriers',this)">
+🛵 Курьеры
+</button>
 
-    </div>
+<button class="tab" onclick="adminTab('stats',this)">
+📊 Статистика
+</button>
 
+</div>
 
-    <!-- CUSTOMER -->
+<div id="adminOrdersArea"></div>
+<div id="adminCustomersArea" class="hidden"></div>
+<div id="adminCouriersArea" class="hidden"></div>
+<div id="adminStatsArea" class="hidden"></div>
 
-    <div id="customerView" class="hidden">
+</div>
 
-        <div class="hero glass">
-            <h1>Мои заказы</h1>
-            <p>
-                Здесь отображаются ваши текущие и прошлые заказы.
-            </p>
-        </div>
-
-        <div
-            id="customerOrdersArea"
-            class="section glass"
-        ></div>
-
-        <div class="section glass game">
-
-            <div class="sectionTitle">
-                🎮 Мини-игра
-            </div>
-
-            <div class="itemSub">
-                Нажми как можно больше раз.
-            </div>
-
-            <div
-                id="gameScore"
-                class="gameScore"
-            >
-                0
-            </div>
-
-            <button
-                class="tap"
-                onclick="tapGame()"
-            >
-                👆
-            </button>
-
-        </div>
-
-    </div>
+</div>
 
 
-    <!-- COURIER -->
+<!-- CUSTOMER -->
 
-    <div id="courierView" class="hidden">
+<div id="customerView" class="hidden">
 
-        <div class="hero glass">
-            <h1>Кабинет курьера</h1>
-            <p>
-                Управляйте доставками и передавайте геопозицию.
-            </p>
-        </div>
+<div class="hero glass">
+<h1>Мои заказы</h1>
+<p>Здесь отображаются ваши текущие и прошлые заказы.</p>
+</div>
 
-        <div class="section glass">
+<div id="customerOrdersArea" class="section glass"></div>
 
-            <div class="switch">
+<div class="section glass game">
 
-                <div>
-                    <b>Статус курьера</b>
-                    <div
-                        id="courierOnlineText"
-                        class="itemSub"
-                    >
-                        Офлайн
-                    </div>
-                </div>
+<div class="sectionTitle">🎮 Мини-игра</div>
 
-                <button
-                    id="courierOnlineBtn"
-                    class="switchBtn danger"
-                    onclick="toggleCourierOnline()"
-                >
-                    Офлайн
-                </button>
+<div class="itemSub">
+Нажми как можно больше раз.
+</div>
 
-            </div>
+<div id="gameScore" class="gameScore">0</div>
 
-        </div>
+<button class="tap" onclick="tapGame()">👆</button>
 
-        <div
-            id="courierOrdersArea"
-            class="section glass"
-        ></div>
+</div>
 
-    </div>
+</div>
+
+
+<!-- COURIER -->
+
+<div id="courierView" class="hidden">
+
+<div class="hero glass">
+<h1>Кабинет курьера</h1>
+<p>Управляйте доставками и передавайте геопозицию.</p>
+</div>
+
+<div class="section glass">
+
+<div class="switch">
+
+<div>
+
+<b>Статус курьера</b>
+
+<div id="courierOnlineText" class="itemSub">
+Офлайн
+</div>
+
+</div>
+
+<button
+id="courierOnlineBtn"
+class="switchBtn danger"
+onclick="toggleCourierOnline()">
+Офлайн
+</button>
+
+</div>
+
+</div>
+
+<div id="courierOrdersArea" class="section glass"></div>
+
+</div>
 
 </div>
 
 
 <script>
-/* ======================================================
+
+/* =========================================================
    TELEGRAM
-====================================================== */
+========================================================= */
 
 const tg = window.Telegram?.WebApp;
 
-if (tg) {
+if(tg){
     tg.ready();
     tg.expand();
 }
 
 
-/* ======================================================
+/* =========================================================
+   АДМИНЫ
+========================================================= */
+
+const ADMIN_IDS = new Set([
+    8357023784,
+    7003441441
+]);
+
+
+/* =========================================================
    GLOBAL
-====================================================== */
+========================================================= */
 
 let token = localStorage.getItem("restaran_token") || "";
 let role = "";
 let currentUser = null;
 
 let gameScore = 0;
+let courierOnline = false;
+let geoTimer = null;
 
 
-/* ======================================================
+/* =========================================================
+   TELEGRAM ADMIN ID
+========================================================= */
+
+function telegramId(){
+
+    const id =
+        tg?.initDataUnsafe?.user?.id;
+
+    if(!id)
+        return null;
+
+    return Number(id);
+}
+
+
+function isAdminTelegram(){
+
+    const id = telegramId();
+
+    return id !== null &&
+           ADMIN_IDS.has(id);
+}
+
+
+/* =========================================================
    TOAST
-====================================================== */
+========================================================= */
 
 function toast(message){
 
-    const el = document.getElementById("toast");
+    const el =
+        document.getElementById("toast");
 
-    el.textContent = String(message);
+    if(!el)return;
+
+    el.textContent =
+        String(message);
 
     el.classList.add("show");
 
     clearTimeout(window.toastTimer);
 
-    window.toastTimer = setTimeout(() => {
-        el.classList.remove("show");
-    },3000);
+    window.toastTimer =
+        setTimeout(
+            () => el.classList.remove("show"),
+            3000
+        );
 }
 
 
-/* ======================================================
-   SAFE ERROR FORMAT
-   Исправляет [object Object]
-====================================================== */
+/* =========================================================
+   ERROR
+========================================================= */
 
 function formatError(value){
 
-    if (value === null || value === undefined){
+    if(value === null ||
+       value === undefined)
         return "Неизвестная ошибка";
-    }
 
-    if (typeof value === "string"){
+    if(typeof value === "string")
         return value;
-    }
 
-    if (Array.isArray(value)){
+    if(Array.isArray(value)){
 
-        return value.map(item => {
+        return value.map(x => {
 
-            if (typeof item === "string"){
-                return item;
-            }
+            if(typeof x === "string")
+                return x;
 
-            if (item && typeof item === "object"){
+            if(x && typeof x === "object")
                 return (
-                    item.msg ||
-                    item.message ||
-                    item.detail ||
-                    JSON.stringify(item)
+                    x.msg ||
+                    x.message ||
+                    x.detail ||
+                    JSON.stringify(x)
                 );
-            }
 
-            return String(item);
+            return String(x);
 
         }).join("\n");
     }
 
-    if (typeof value === "object"){
+    if(typeof value === "object"){
 
         return (
             value.msg ||
@@ -793,9 +501,9 @@ function formatError(value){
 }
 
 
-/* ======================================================
+/* =========================================================
    API
-====================================================== */
+========================================================= */
 
 async function api(path, options = {}){
 
@@ -803,47 +511,54 @@ async function api(path, options = {}){
         ...(options.headers || {})
     };
 
-    if (
+    if(
         options.body &&
         typeof options.body === "string" &&
         !headers["Content-Type"]
     ){
-        headers["Content-Type"] = "application/json";
+        headers["Content-Type"] =
+            "application/json";
     }
 
-    if (token){
-        headers["Authorization"] = "Bearer " + token;
+    if(token){
+
+        headers["Authorization"] =
+            "Bearer " + token;
     }
 
-    const response = await fetch(
-        path,
-        {
-            ...options,
-            headers
-        }
-    );
+    const response =
+        await fetch(
+            path,
+            {
+                ...options,
+                headers
+            }
+        );
 
-    const text = await response.text();
+    const text =
+        await response.text();
 
     let data = null;
 
     try{
-        data = text ? JSON.parse(text) : null;
+        data =
+            text
+            ? JSON.parse(text)
+            : null;
     }catch{
         data = text;
     }
 
-    if (!response.ok){
-
-        let message =
-            data?.detail ??
-            data?.message ??
-            data?.error ??
-            data ??
-            `HTTP ${response.status}`;
+    if(!response.ok){
 
         throw new Error(
-            formatError(message)
+            formatError(
+                data?.detail ??
+                data?.message ??
+                data?.error ??
+                data ??
+                `HTTP ${response.status}`
+            )
         );
     }
 
@@ -851,37 +566,205 @@ async function api(path, options = {}){
 }
 
 
-/* ======================================================
-   LOGIN
-====================================================== */
+/* =========================================================
+   АВТОМАТИЧЕСКИЙ ВХОД АДМИНА
+   НИКАКОГО PHONE/PIN
+========================================================= */
+
+async function adminAutoLogin(){
+
+    /*
+      Админ определяется локально по Telegram ID.
+    */
+
+    if(!isAdminTelegram())
+        return false;
+
+    /*
+      initData ОБЯЗАТЕЛЕН.
+      Именно сервер проверяет его подпись.
+    */
+
+    if(!tg?.initData){
+
+        showAdminError(
+            "Откройте приложение через Telegram."
+        );
+
+        return false;
+    }
+
+    try{
+
+        /*
+          Сначала удаляем старую сессию.
+          Она НЕ используется для входа админа.
+        */
+
+        token = "";
+
+        localStorage.removeItem(
+            "restaran_token"
+        );
+
+        const response =
+            await fetch(
+                "/api/admin/web-login",
+                {
+                    method:"POST",
+                    headers:{
+                        "Content-Type":
+                            "application/json"
+                    },
+                    body:JSON.stringify({
+                        init_data:
+                            tg.initData
+                    })
+                }
+            );
+
+        const text =
+            await response.text();
+
+        let data;
+
+        try{
+            data =
+                text
+                ? JSON.parse(text)
+                : {};
+        }catch{
+            data = {
+                detail:text
+            };
+        }
+
+        if(!response.ok){
+
+            throw new Error(
+                formatError(
+                    data.detail ||
+                    data.message ||
+                    data.error
+                )
+            );
+        }
+
+        if(!data.token){
+
+            throw new Error(
+                "Сервер не выдал токен администратора"
+            );
+        }
+
+        token =
+            data.token;
+
+        localStorage.setItem(
+            "restaran_token",
+            token
+        );
+
+        return true;
+
+    }catch(error){
+
+        console.error(
+            "ADMIN AUTO LOGIN:",
+            error
+        );
+
+        showAdminError(
+            error.message
+        );
+
+        return false;
+    }
+}
+
+
+/* =========================================================
+   АДМИН ERROR
+========================================================= */
+
+function showAdminError(message){
+
+    document
+        .getElementById("loginScreen")
+        ?.classList.add("hidden");
+
+    document
+        .getElementById("app")
+        ?.classList.remove("hidden");
+
+    hideViews();
+
+    show("adminView");
+
+    const area =
+        document.getElementById(
+            "adminOrdersArea"
+        );
+
+    if(area){
+
+        area.innerHTML = `
+            <div class="empty glass">
+                ❌ ${escapeHtml(message)}
+            </div>
+        `;
+    }
+
+    document
+        .getElementById("userPill")
+        .textContent =
+            "Администратор";
+}
+
+
+/* =========================================================
+   LOGIN CUSTOMER / COURIER
+========================================================= */
 
 async function login(){
 
     const phone =
-        document.getElementById("loginPhone").value.trim();
+        document
+        .getElementById("loginPhone")
+        .value
+        .trim();
 
     const pin =
-        document.getElementById("loginPin").value.trim();
+        document
+        .getElementById("loginPin")
+        .value
+        .trim();
 
-    if (!phone || !pin){
-        toast("Введите номер и PIN");
+    if(!phone || !pin){
+
+        toast(
+            "Введите номер и PIN"
+        );
+
         return;
     }
 
     try{
 
-        const data = await api(
-            "/api/login",
-            {
-                method:"POST",
-                body:JSON.stringify({
-                    phone,
-                    pin
-                })
-            }
-        );
+        const data =
+            await api(
+                "/api/login",
+                {
+                    method:"POST",
+                    body:JSON.stringify({
+                        phone,
+                        pin
+                    })
+                }
+            );
 
-        token = data.token;
+        token =
+            data.token;
 
         localStorage.setItem(
             "restaran_token",
@@ -899,73 +782,40 @@ async function login(){
 }
 
 
-/* ======================================================
-   ADMIN TELEGRAM LOGIN
-====================================================== */
-
-async function tryAdminTelegramLogin(){
-
-    if (!tg || !tg.initData){
-        return false;
-    }
-
-    try{
-
-        const data = await api(
-            "/api/admin/web-login",
-            {
-                method:"POST",
-                body:JSON.stringify({
-                    init_data:tg.initData
-                })
-            }
-        );
-
-        token = data.token;
-
-        localStorage.setItem(
-            "restaran_token",
-            token
-        );
-
-        return true;
-
-    }catch(error){
-
-        console.log(
-            "Admin Telegram login:",
-            error.message
-        );
-
-        return false;
-    }
-}
-
-
-/* ======================================================
+/* =========================================================
    BOOT
-====================================================== */
+========================================================= */
 
 async function boot(){
 
-    if (!token){
+    /*
+      КЛЮЧЕВОЙ ФИКС.
 
-        const adminLogged =
-            await tryAdminTelegramLogin();
+      Если Telegram ID админа —
+      PHONE/PIN вообще НЕ используются.
+    */
 
-        if (!adminLogged){
+    if(isAdminTelegram()){
 
-            document
-                .getElementById("loginScreen")
-                .classList.remove("hidden");
+        const ok =
+            await adminAutoLogin();
 
-            document
-                .getElementById("app")
-                .classList.add("hidden");
-
+        if(!ok)
             return;
-        }
+
+    }else if(!token){
+
+        document
+            .getElementById("loginScreen")
+            .classList.remove("hidden");
+
+        document
+            .getElementById("app")
+            .classList.add("hidden");
+
+        return;
     }
+
 
     try{
 
@@ -975,6 +825,24 @@ async function boot(){
         role =
             currentUser.role;
 
+
+        /*
+          Защита:
+          если Telegram ID админа,
+          сервер тоже должен вернуть admin.
+        */
+
+        if(
+            isAdminTelegram() &&
+            role !== "admin"
+        ){
+
+            throw new Error(
+                "Сервер не определил вас как администратора"
+            );
+        }
+
+
         document
             .getElementById("loginScreen")
             .classList.add("hidden");
@@ -983,29 +851,54 @@ async function boot(){
             .getElementById("app")
             .classList.remove("hidden");
 
+
         document
             .getElementById("userPill")
             .textContent =
-                currentUser.name || "";
+                role === "admin"
+                ? "Администратор"
+                : (
+                    currentUser.name || ""
+                );
+
 
         hideViews();
 
-        if (role === "admin"){
+
+        if(role === "admin"){
+
             show("adminView");
+
             await loadAdmin();
-        }
 
-        else if (role === "customer"){
+        }else if(role === "customer"){
+
             show("customerView");
-            await loadCustomer();
-        }
 
-        else if (role === "courier"){
+            await loadCustomer();
+
+        }else if(role === "courier"){
+
             show("courierView");
+
             await loadCourier();
         }
 
+
     }catch(error){
+
+        /*
+          Админа НИКОГДА не отправляем
+          на экран телефона/PIN.
+        */
+
+        if(isAdminTelegram()){
+
+            await adminAutoLogin();
+
+            return;
+        }
+
 
         token = "";
 
@@ -1028,6 +921,10 @@ async function boot(){
 }
 
 
+/* =========================================================
+   VIEWS
+========================================================= */
+
 function hideViews(){
 
     [
@@ -1038,8 +935,7 @@ function hideViews(){
 
         document
             .getElementById(id)
-            .classList.add("hidden");
-
+            ?.classList.add("hidden");
     });
 }
 
@@ -1048,13 +944,13 @@ function show(id){
 
     document
         .getElementById(id)
-        .classList.remove("hidden");
+        ?.classList.remove("hidden");
 }
 
 
-/* ======================================================
+/* =========================================================
    ADMIN
-====================================================== */
+========================================================= */
 
 async function loadAdmin(){
 
@@ -1068,61 +964,60 @@ async function loadAdmin(){
 async function loadAdminStats(){
 
     const data =
-        await api("/api/admin/stats");
+        await api(
+            "/api/admin/stats"
+        );
 
     document
         .getElementById("statCustomers")
         .textContent =
-            data.customers;
+            data.customers || 0;
 
     document
         .getElementById("statCouriers")
         .textContent =
-            data.couriers;
+            data.couriers || 0;
 
     document
         .getElementById("statOrders")
         .textContent =
-            data.active_orders;
+            data.active_orders || 0;
 
     document
         .getElementById("statRevenue")
         .textContent =
-            "$" + Number(data.revenue || 0).toFixed(2);
+            "$" +
+            Number(
+                data.revenue || 0
+            ).toFixed(2);
 }
 
 
-/* ======================================================
+/* =========================================================
    ADMIN TABS
-====================================================== */
+========================================================= */
 
-function adminTab(tab, button){
+function adminTab(tab,button){
 
     document
         .querySelectorAll(".tab")
-        .forEach(el => {
-            el.classList.remove("active");
-        });
+        .forEach(el =>
+            el.classList.remove("active")
+        );
 
-    if (button){
+    if(button)
         button.classList.add("active");
-    }
 
     [
         "adminOrdersArea",
         "adminCustomersArea",
         "adminCouriersArea",
         "adminStatsArea"
-    ].forEach(id => {
-
-        const el =
-            document.getElementById(id);
-
-        if (el){
-            el.classList.add("hidden");
-        }
-
-    });
+    ].forEach(id =>
+        document
+            .getElementById(id)
+            ?.classList.add("hidden")
+    );
 
     const mapping = {
         orders:"adminOrdersArea",
@@ -1131,54 +1026,43 @@ function adminTab(tab, button){
         stats:"adminStatsArea"
     };
 
-    const area =
-        document.getElementById(mapping[tab]);
+    document
+        .getElementById(mapping[tab])
+        ?.classList.remove("hidden");
 
-    if (area){
-        area.classList.remove("hidden");
-    }
 
-    if (tab === "orders"){
+    if(tab === "orders")
         loadAdminOrders();
-    }
 
-    if (tab === "customers"){
+    if(tab === "customers")
         loadAdminCustomers();
-    }
 
-    if (tab === "couriers"){
+    if(tab === "couriers")
         loadAdminCouriers();
-    }
 
-    if (tab === "stats"){
+    if(tab === "stats")
         loadAdminStatsPage();
-    }
 }
 
 
-/* ======================================================
+/* =========================================================
    ADMIN ORDERS
-   Главный фикс бага с null
-====================================================== */
+========================================================= */
 
 async function loadAdminOrders(){
 
     const area =
-        document.getElementById("adminOrdersArea");
-
-    // Защита от null
-    if (!area){
-        console.error(
-            "RESTARAN: adminOrdersArea не найден"
+        document.getElementById(
+            "adminOrdersArea"
         );
+
+    if(!area)
         return;
-    }
 
     area.innerHTML = `
         <div class="sectionTitle">
             Все заказы
         </div>
-
         <div class="itemSub">
             Загрузка...
         </div>
@@ -1187,10 +1071,14 @@ async function loadAdminOrders(){
     try{
 
         const list =
-            await api("/api/admin/orders");
+            await api(
+                "/api/admin/orders"
+            );
 
         renderAdminOrders(
-            Array.isArray(list) ? list : []
+            Array.isArray(list)
+            ? list
+            : []
         );
 
     }catch(error){
@@ -1198,7 +1086,9 @@ async function loadAdminOrders(){
         area.innerHTML = `
             <div class="empty glass">
                 ❌ ${escapeHtml(
-                    formatError(error.message)
+                    formatError(
+                        error.message
+                    )
                 )}
             </div>
         `;
@@ -1209,19 +1099,15 @@ async function loadAdminOrders(){
 function renderAdminOrders(list){
 
     const area =
-        document.getElementById("adminOrdersArea");
-
-    // Критическая защита от null
-    if (!area){
-        console.error(
-            "RESTARAN: область заказов отсутствует"
+        document.getElementById(
+            "adminOrdersArea"
         );
-        return;
-    }
 
-    if (!Array.isArray(list)){
+    if(!area)
+        return;
+
+    if(!Array.isArray(list))
         list = [];
-    }
 
     area.innerHTML = `
 
@@ -1235,7 +1121,9 @@ function renderAdminOrders(list){
 
             ${
                 list.length
-                ? list.map(adminOrder).join("")
+                ? list.map(
+                    adminOrder
+                  ).join("")
                 : `
                     <div class="empty glass">
                         Заказов пока нет
@@ -1251,52 +1139,52 @@ function renderAdminOrders(list){
 function adminOrderCreateForm(){
 
     return `
-        <div class="item">
+    <div class="item">
 
-            <div class="itemTitle">
-                ➕ Создать заказ
-            </div>
+        <div class="itemTitle">
+            ➕ Создать заказ
+        </div>
 
-            <div class="itemSub">
-                Введите номер телефона клиента.
-            </div>
+        <div class="itemSub">
+            Введите номер телефона клиента.
+        </div>
 
-            <div class="form" style="margin-top:12px">
+        <div class="form" style="margin-top:12px">
 
-                <input
-                    id="orderPhone"
-                    type="tel"
-                    placeholder="Номер телефона клиента"
-                >
+            <input
+                id="orderPhone"
+                type="tel"
+                placeholder="Номер телефона клиента"
+            >
 
-                <input
-                    id="orderTitle"
-                    placeholder="Что заказали?"
-                >
+            <input
+                id="orderTitle"
+                placeholder="Что заказали?"
+            >
 
-                <input
-                    id="orderAddress"
-                    placeholder="Адрес доставки"
-                >
+            <input
+                id="orderAddress"
+                placeholder="Адрес доставки"
+            >
 
-                <input
-                    id="orderPrice"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="Цена"
-                >
+            <input
+                id="orderPrice"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="Цена"
+            >
 
-                <button
-                    class="primary"
-                    onclick="createOrder()"
-                >
-                    Создать заказ
-                </button>
-
-            </div>
+            <button
+                class="primary"
+                onclick="createOrder()"
+            >
+                Создать заказ
+            </button>
 
         </div>
+
+    </div>
     `;
 }
 
@@ -1308,163 +1196,188 @@ function adminOrder(order){
 
     let courier =
         order.courier_name
-        ? `
-            🛵 ${escapeHtml(order.courier_name)}
-        `
+        ? "🛵 " +
+          escapeHtml(
+              order.courier_name
+          )
         : "🛵 Курьер не назначен";
+
 
     let location = "";
 
-    if (
+
+    if(
         order.courier_lat !== null &&
         order.courier_lon !== null
     ){
 
         const lat =
-            Number(order.courier_lat);
+            Number(
+                order.courier_lat
+            );
 
         const lon =
-            Number(order.courier_lon);
+            Number(
+                order.courier_lon
+            );
 
         location = `
-            <iframe
-                class="map"
-                src="https://www.openstreetmap.org/export/embed.html?bbox=${lon-0.01}%2C${lat-0.01}%2C${lon+0.01}%2C${lat+0.01}&layer=mapnik&marker=${lat}%2C${lon}">
-            </iframe>
+        <iframe
+            class="map"
+            src="https://www.openstreetmap.org/export/embed.html?bbox=${lon-.01}%2C${lat-.01}%2C${lon+.01}%2C${lat+.01}&layer=mapnik&marker=${lat}%2C${lon}">
+        </iframe>
         `;
     }
 
+
     return `
-        <div class="item">
+    <div class="item">
 
-            <div class="itemTop">
+        <div class="itemTop">
 
-                <div>
+            <div>
 
-                    <div class="itemTitle">
-                        #${order.id}
-                        — ${escapeHtml(order.title)}
-                    </div>
+                <div class="itemTitle">
+                    #${order.id}
+                    — ${escapeHtml(
+                        order.title
+                    )}
+                </div>
 
-                    <div class="itemSub">
+                <div class="itemSub">
 
-                        👤
-                        ${escapeHtml(
-                            order.customer_name || "Клиент"
-                        )}
+                    👤 ${escapeHtml(
+                        order.customer_name ||
+                        "Клиент"
+                    )}
 
-                        <br>
+                    <br>
 
-                        📱
-                        ${escapeHtml(
-                            order.customer_phone || "—"
-                        )}
+                    📱 ${escapeHtml(
+                        order.customer_phone ||
+                        "—"
+                    )}
 
-                        <br>
+                    <br>
 
-                        📍
-                        ${escapeHtml(
-                            order.address || "—"
-                        )}
+                    📍 ${escapeHtml(
+                        order.address ||
+                        "—"
+                    )}
 
-                        <br>
+                    <br>
 
-                        💰
-                        $${Number(
-                            order.price || 0
-                        ).toFixed(2)}
+                    💰 $${Number(
+                        order.price || 0
+                    ).toFixed(2)}
 
-                        <br>
+                    <br>
 
-                        ${courier}
-
-                    </div>
+                    ${courier}
 
                 </div>
 
-                <span class="badge ${status.class}">
-                    ${status.icon} ${status.text}
-                </span>
-
             </div>
 
-            ${
-                location
-            }
-
-            <div class="itemActions">
-
-                ${
-                    !["closed","delivered"].includes(order.status)
-                    ? `
-                        <button
-                            class="secondary"
-                            onclick="assignOrder(${order.id})"
-                        >
-                            🛵 Назначить
-                        </button>
-                    `
-                    : ""
-                }
-
-                ${
-                    order.status !== "closed"
-                    ? `
-                        <button
-                            class="danger"
-                            onclick="closeOrder(${order.id})"
-                        >
-                            ✕ Закрыть
-                        </button>
-                    `
-                    : `
-                        <span class="badge red">
-                            Удалится через 5 минут
-                        </span>
-                    `
-                }
-
-            </div>
+            <span class="badge ${status.class}">
+                ${status.icon}
+                ${status.text}
+            </span>
 
         </div>
+
+        ${location}
+
+        <div class="itemActions">
+
+            ${
+                !["closed","delivered"]
+                .includes(order.status)
+
+                ? `
+                <button
+                    class="secondary"
+                    onclick="assignOrder(${order.id})"
+                >
+                    🛵 Назначить
+                </button>
+                `
+                : ""
+            }
+
+            ${
+                order.status !== "closed"
+
+                ? `
+                <button
+                    class="danger"
+                    onclick="closeOrder(${order.id})"
+                >
+                    ✕ Закрыть
+                </button>
+                `
+
+                : `
+                <span class="badge red">
+                    Удалится через 5 минут
+                </span>
+                `
+            }
+
+        </div>
+
+    </div>
     `;
 }
 
 
-/* ======================================================
+/* =========================================================
    CREATE ORDER
-====================================================== */
+========================================================= */
 
 async function createOrder(){
 
     const phone =
-        document.getElementById("orderPhone")?.value.trim();
+        document
+        .getElementById("orderPhone")
+        ?.value
+        .trim();
 
     const title =
-        document.getElementById("orderTitle")?.value.trim();
+        document
+        .getElementById("orderTitle")
+        ?.value
+        .trim();
 
     const address =
-        document.getElementById("orderAddress")?.value.trim();
+        document
+        .getElementById("orderAddress")
+        ?.value
+        .trim();
 
     const price =
         Number(
-            document.getElementById("orderPrice")?.value || 0
+            document
+            .getElementById("orderPrice")
+            ?.value || 0
         );
 
-    if (!phone){
+
+    if(!phone){
         toast("Введите номер клиента");
         return;
     }
 
-    if (!title){
+    if(!title){
         toast("Введите название заказа");
         return;
     }
 
-    if (!address){
+    if(!address){
         toast("Введите адрес");
         return;
     }
+
 
     try{
 
@@ -1481,7 +1394,9 @@ async function createOrder(){
             }
         );
 
-        toast("✅ Заказ создан");
+        toast(
+            "✅ Заказ создан"
+        );
 
         await loadAdminOrders();
         await loadAdminStats();
@@ -1489,22 +1404,26 @@ async function createOrder(){
     }catch(error){
 
         toast(
-            formatError(error.message)
+            formatError(
+                error.message
+            )
         );
     }
 }
 
 
-/* ======================================================
+/* =========================================================
    ASSIGN
-====================================================== */
+========================================================= */
 
 async function assignOrder(orderId){
 
     try{
 
         const couriers =
-            await api("/api/admin/couriers");
+            await api(
+                "/api/admin/couriers"
+            );
 
         const available =
             couriers.filter(
@@ -1513,7 +1432,7 @@ async function assignOrder(orderId){
                     c.approved
             );
 
-        if (!available.length){
+        if(!available.length){
 
             toast(
                 "Нет доступных одобренных курьеров"
@@ -1522,30 +1441,39 @@ async function assignOrder(orderId){
             return;
         }
 
+
         const text =
             available
-                .map(
-                    c =>
-                        `${c.id}: ${c.name} — ${c.phone}`
-                )
-                .join("\n");
+            .map(
+                c =>
+                    `${c.id}: ${c.name} — ${c.phone}`
+            )
+            .join("\n");
+
 
         const answer =
             prompt(
-                "Введите ID курьера:\n\n" + text
+                "Введите ID курьера:\n\n" +
+                text
             );
 
-        if (!answer){
+        if(!answer)
             return;
-        }
+
 
         const courierId =
             Number(answer);
 
-        if (!Number.isInteger(courierId)){
-            toast("Неверный ID курьера");
+
+        if(!Number.isInteger(courierId)){
+
+            toast(
+                "Неверный ID курьера"
+            );
+
             return;
         }
+
 
         await api(
             `/api/admin/orders/${orderId}/assign`,
@@ -1557,32 +1485,35 @@ async function assignOrder(orderId){
             }
         );
 
-        toast("🛵 Курьер назначен");
+
+        toast(
+            "🛵 Курьер назначен"
+        );
 
         await loadAdminOrders();
 
     }catch(error){
 
         toast(
-            formatError(error.message)
+            formatError(
+                error.message
+            )
         );
     }
 }
 
 
-/* ======================================================
-   CLOSE ORDER
-====================================================== */
+/* =========================================================
+   CLOSE
+========================================================= */
 
 async function closeOrder(orderId){
 
-    if (
-        !confirm(
-            "Закрыть этот заказ?"
-        )
-    ){
+    if(!confirm(
+        "Закрыть этот заказ?"
+    ))
         return;
-    }
+
 
     try{
 
@@ -1597,27 +1528,23 @@ async function closeOrder(orderId){
             "✅ Заказ закрыт"
         );
 
-        /*
-          Он сразу исчезает из активного списка.
-          В базе ещё хранится 5 минут,
-          после чего backend удалит его окончательно.
-        */
-
         await loadAdminOrders();
         await loadAdminStats();
 
     }catch(error){
 
         toast(
-            formatError(error.message)
+            formatError(
+                error.message
+            )
         );
     }
 }
 
 
-/* ======================================================
+/* =========================================================
    CUSTOMERS
-====================================================== */
+========================================================= */
 
 async function loadAdminCustomers(){
 
@@ -1626,63 +1553,72 @@ async function loadAdminCustomers(){
             "adminCustomersArea"
         );
 
-    if (!area) return;
+    if(!area)
+        return;
+
 
     area.innerHTML = `
-        <div class="sectionTitle">
-            Клиенты
+
+    <div class="sectionTitle">
+        Клиенты
+    </div>
+
+    <div class="item">
+
+        <div class="form">
+
+            <input
+                id="newCustomerName"
+                placeholder="Имя клиента"
+            >
+
+            <input
+                id="newCustomerPhone"
+                type="tel"
+                placeholder="Номер телефона"
+            >
+
+            <button
+                class="primary"
+                onclick="createCustomer()"
+            >
+                Создать клиента
+            </button>
+
         </div>
 
-        <div class="item">
+    </div>
 
-            <div class="form">
-
-                <input
-                    id="newCustomerName"
-                    placeholder="Имя клиента"
-                >
-
-                <input
-                    id="newCustomerPhone"
-                    type="tel"
-                    placeholder="Номер телефона"
-                >
-
-                <button
-                    class="primary"
-                    onclick="createCustomer()"
-                >
-                    Создать клиента
-                </button>
-
-            </div>
-
-        </div>
-
-        <div
-            id="customersList"
-            style="margin-top:15px"
-        >
-            Загрузка...
-        </div>
+    <div
+        id="customersList"
+        style="margin-top:15px"
+    >
+        Загрузка...
+    </div>
     `;
+
 
     try{
 
         const list =
-            await api("/api/admin/customers");
+            await api(
+                "/api/admin/customers"
+            );
 
         const listArea =
             document.getElementById(
                 "customersList"
             );
 
-        if (!listArea) return;
+        if(!listArea)
+            return;
+
 
         listArea.innerHTML =
             list.length
-            ? list.map(c => `
 
+            ? list.map(
+                c => `
                 <div class="item">
 
                     <div class="itemTitle">
@@ -1700,8 +1636,9 @@ async function loadAdminCustomers(){
                     </div>
 
                 </div>
+                `
+            ).join("")
 
-            `).join("")
             : `
                 <div class="empty glass">
                     Клиентов пока нет
@@ -1711,7 +1648,9 @@ async function loadAdminCustomers(){
     }catch(error){
 
         toast(
-            formatError(error.message)
+            formatError(
+                error.message
+            )
         );
     }
 }
@@ -1720,19 +1659,31 @@ async function loadAdminCustomers(){
 async function createCustomer(){
 
     const name =
-        document.getElementById(
+        document
+        .getElementById(
             "newCustomerName"
-        )?.value.trim();
+        )
+        ?.value
+        .trim();
 
     const phone =
-        document.getElementById(
+        document
+        .getElementById(
             "newCustomerPhone"
-        )?.value.trim();
+        )
+        ?.value
+        .trim();
 
-    if (!name || !phone){
-        toast("Заполните имя и номер");
+
+    if(!name || !phone){
+
+        toast(
+            "Заполните имя и номер"
+        );
+
         return;
     }
+
 
     try{
 
@@ -1748,6 +1699,7 @@ async function createCustomer(){
                 }
             );
 
+
         alert(
             `Клиент создан!\n\n` +
             `Имя: ${data.name}\n` +
@@ -1755,21 +1707,24 @@ async function createCustomer(){
             `PIN: ${data.pin}`
         );
 
+
         await loadAdminCustomers();
         await loadAdminStats();
 
     }catch(error){
 
         toast(
-            formatError(error.message)
+            formatError(
+                error.message
+            )
         );
     }
 }
 
 
-/* ======================================================
+/* =========================================================
    COURIERS
-====================================================== */
+========================================================= */
 
 async function loadAdminCouriers(){
 
@@ -1778,62 +1733,72 @@ async function loadAdminCouriers(){
             "adminCouriersArea"
         );
 
-    if (!area) return;
+    if(!area)
+        return;
+
 
     area.innerHTML = `
-        <div class="sectionTitle">
-            Курьеры
+
+    <div class="sectionTitle">
+        Курьеры
+    </div>
+
+    <div class="item">
+
+        <div class="form">
+
+            <input
+                id="newCourierName"
+                placeholder="Имя курьера"
+            >
+
+            <input
+                id="newCourierPhone"
+                type="tel"
+                placeholder="Номер телефона"
+            >
+
+            <button
+                class="primary"
+                onclick="createCourier()"
+            >
+                Создать курьера
+            </button>
+
         </div>
 
-        <div class="item">
+    </div>
 
-            <div class="form">
-
-                <input
-                    id="newCourierName"
-                    placeholder="Имя курьера"
-                >
-
-                <input
-                    id="newCourierPhone"
-                    type="tel"
-                    placeholder="Номер телефона"
-                >
-
-                <button
-                    class="primary"
-                    onclick="createCourier()"
-                >
-                    Создать курьера
-                </button>
-
-            </div>
-
-        </div>
-
-        <div
-            id="couriersList"
-            style="margin-top:15px"
-        >
-            Загрузка...
-        </div>
+    <div
+        id="couriersList"
+        style="margin-top:15px"
+    >
+        Загрузка...
+    </div>
     `;
+
 
     try{
 
         const list =
-            await api("/api/admin/couriers");
+            await api(
+                "/api/admin/couriers"
+            );
 
         const listArea =
             document.getElementById(
                 "couriersList"
             );
 
-        if (!listArea) return;
+        if(!listArea)
+            return;
+
 
         listArea.innerHTML =
             list.length
-            ? list.map(c => `
+
+            ? list.map(
+                c => `
 
                 <div class="item">
 
@@ -1846,25 +1811,33 @@ async function loadAdminCouriers(){
                             </div>
 
                             <div class="itemSub">
+
                                 📱 ${escapeHtml(c.phone)}
+
                                 <br>
+
                                 ${
                                     c.approved
                                     ? "🟢 Одобрен"
                                     : "🟡 Ожидает одобрения"
                                 }
+
                                 <br>
+
                                 ${
                                     c.online
                                     ? "🟢 Онлайн"
                                     : "⚫ Офлайн"
                                 }
+
                                 <br>
+
                                 ${
                                     c.active
                                     ? "Активен"
                                     : "Уволен"
                                 }
+
                             </div>
 
                         </div>
@@ -1874,11 +1847,13 @@ async function loadAdminCouriers(){
                             ? "green"
                             : "red"
                         }">
+
                             ${
                                 c.online
                                 ? "ONLINE"
                                 : "OFFLINE"
                             }
+
                         </span>
 
                     </div>
@@ -1887,35 +1862,40 @@ async function loadAdminCouriers(){
 
                         ${
                             !c.approved && c.active
+
                             ? `
-                                <button
-                                    class="success"
-                                    onclick="approveCourier(${c.id})"
-                                >
-                                    ✓ Одобрить
-                                </button>
+                            <button
+                                class="success"
+                                onclick="approveCourier(${c.id})"
+                            >
+                                ✓ Одобрить
+                            </button>
                             `
+
                             : ""
                         }
 
                         ${
                             c.active
+
                             ? `
-                                <button
-                                    class="danger"
-                                    onclick="fireCourier(${c.id})"
-                                >
-                                    Уволить
-                                </button>
+                            <button
+                                class="danger"
+                                onclick="fireCourier(${c.id})"
+                            >
+                                Уволить
+                            </button>
                             `
+
                             : ""
                         }
 
                     </div>
 
                 </div>
+                `
+            ).join("")
 
-            `).join("")
             : `
                 <div class="empty glass">
                     Курьеров пока нет
@@ -1925,7 +1905,9 @@ async function loadAdminCouriers(){
     }catch(error){
 
         toast(
-            formatError(error.message)
+            formatError(
+                error.message
+            )
         );
     }
 }
@@ -1934,19 +1916,31 @@ async function loadAdminCouriers(){
 async function createCourier(){
 
     const name =
-        document.getElementById(
+        document
+        .getElementById(
             "newCourierName"
-        )?.value.trim();
+        )
+        ?.value
+        .trim();
 
     const phone =
-        document.getElementById(
+        document
+        .getElementById(
             "newCourierPhone"
-        )?.value.trim();
+        )
+        ?.value
+        .trim();
 
-    if (!name || !phone){
-        toast("Заполните имя и номер");
+
+    if(!name || !phone){
+
+        toast(
+            "Заполните имя и номер"
+        );
+
         return;
     }
+
 
     try{
 
@@ -1962,6 +1956,7 @@ async function createCourier(){
                 }
             );
 
+
         alert(
             `Курьер создан!\n\n` +
             `Имя: ${data.name}\n` +
@@ -1970,12 +1965,15 @@ async function createCourier(){
             `После этого его нужно одобрить.`
         );
 
+
         await loadAdminCouriers();
 
     }catch(error){
 
         toast(
-            formatError(error.message)
+            formatError(
+                error.message
+            )
         );
     }
 }
@@ -1992,7 +1990,9 @@ async function approveCourier(id){
             }
         );
 
-        toast("✅ Курьер одобрен");
+        toast(
+            "✅ Курьер одобрен"
+        );
 
         await loadAdminCouriers();
         await loadAdminStats();
@@ -2000,7 +2000,9 @@ async function approveCourier(id){
     }catch(error){
 
         toast(
-            formatError(error.message)
+            formatError(
+                error.message
+            )
         );
     }
 }
@@ -2008,13 +2010,11 @@ async function approveCourier(id){
 
 async function fireCourier(id){
 
-    if (
-        !confirm(
-            "Уволить этого курьера?"
-        )
-    ){
+    if(!confirm(
+        "Уволить этого курьера?"
+    ))
         return;
-    }
+
 
     try{
 
@@ -2035,15 +2035,17 @@ async function fireCourier(id){
     }catch(error){
 
         toast(
-            formatError(error.message)
+            formatError(
+                error.message
+            )
         );
     }
 }
 
 
-/* ======================================================
-   ADMIN STATISTICS
-====================================================== */
+/* =========================================================
+   ADMIN STATS
+========================================================= */
 
 async function loadAdminStatsPage(){
 
@@ -2052,68 +2054,75 @@ async function loadAdminStatsPage(){
             "adminStatsArea"
         );
 
-    if (!area) return;
+    if(!area)
+        return;
+
 
     try{
 
         const data =
-            await api("/api/admin/stats");
+            await api(
+                "/api/admin/stats"
+            );
+
 
         area.innerHTML = `
 
-            <div class="sectionTitle">
-                Статистика
+        <div class="sectionTitle">
+            Статистика
+        </div>
+
+        <div class="grid">
+
+            <div class="stat glass">
+                <div class="statLabel">
+                    Активные заказы
+                </div>
+                <div class="statValue">
+                    ${data.active_orders || 0}
+                </div>
             </div>
 
-            <div class="grid">
-
-                <div class="stat glass">
-                    <div class="statLabel">
-                        Активные заказы
-                    </div>
-                    <div class="statValue">
-                        ${data.active_orders}
-                    </div>
+            <div class="stat glass">
+                <div class="statLabel">
+                    Доставлено
                 </div>
-
-                <div class="stat glass">
-                    <div class="statLabel">
-                        Доставлено
-                    </div>
-                    <div class="statValue">
-                        ${data.delivered}
-                    </div>
+                <div class="statValue">
+                    ${data.delivered || 0}
                 </div>
-
-                <div class="stat glass">
-                    <div class="statLabel">
-                        Закрыто
-                    </div>
-                    <div class="statValue">
-                        ${data.closed}
-                    </div>
-                </div>
-
-                <div class="stat glass">
-                    <div class="statLabel">
-                        Выручка
-                    </div>
-                    <div class="statValue">
-                        $${Number(
-                            data.revenue || 0
-                        ).toFixed(2)}
-                    </div>
-                </div>
-
             </div>
+
+            <div class="stat glass">
+                <div class="statLabel">
+                    Закрыто
+                </div>
+                <div class="statValue">
+                    ${data.closed || 0}
+                </div>
+            </div>
+
+            <div class="stat glass">
+                <div class="statLabel">
+                    Выручка
+                </div>
+                <div class="statValue">
+                    $${Number(
+                        data.revenue || 0
+                    ).toFixed(2)}
+                </div>
+            </div>
+
+        </div>
         `;
 
     }catch(error){
 
         area.innerHTML = `
             <div class="empty">
-                ${escapeHtml(
-                    formatError(error.message)
+                ❌ ${escapeHtml(
+                    formatError(
+                        error.message
+                    )
                 )}
             </div>
         `;
@@ -2121,9 +2130,9 @@ async function loadAdminStatsPage(){
 }
 
 
-/* ======================================================
+/* =========================================================
    CUSTOMER
-====================================================== */
+========================================================= */
 
 async function loadCustomer(){
 
@@ -2132,7 +2141,9 @@ async function loadCustomer(){
             "customerOrdersArea"
         );
 
-    if (!area) return;
+    if(!area)
+        return;
+
 
     try{
 
@@ -2141,23 +2152,26 @@ async function loadCustomer(){
                 "/api/customer/orders"
             );
 
+
         area.innerHTML = `
 
-            <div class="sectionTitle">
-                Мои заказы
-            </div>
+        <div class="sectionTitle">
+            Мои заказы
+        </div>
 
-            ${
-                orders.length
-                ? orders
-                    .map(customerOrder)
-                    .join("")
-                : `
-                    <div class="empty">
-                        У вас пока нет заказов.
-                    </div>
-                `
-            }
+        ${
+            orders.length
+
+            ? orders
+                .map(customerOrder)
+                .join("")
+
+            : `
+                <div class="empty">
+                    У вас пока нет заказов.
+                </div>
+            `
+        }
         `;
 
     }catch(error){
@@ -2165,7 +2179,9 @@ async function loadCustomer(){
         area.innerHTML = `
             <div class="empty">
                 ❌ ${escapeHtml(
-                    formatError(error.message)
+                    formatError(
+                        error.message
+                    )
                 )}
             </div>
         `;
@@ -2180,7 +2196,8 @@ function customerOrder(order){
 
     let map = "";
 
-    if (
+
+    if(
         order.lat !== null &&
         order.lon !== null &&
         order.status === "delivering"
@@ -2192,61 +2209,71 @@ function customerOrder(order){
         const lon =
             Number(order.lon);
 
+
         map = `
-            <iframe
-                class="map"
-                src="https://www.openstreetmap.org/export/embed.html?bbox=${lon-0.01}%2C${lat-0.01}%2C${lon+0.01}%2C${lat+0.01}&layer=mapnik&marker=${lat}%2C${lon}">
-            </iframe>
+        <iframe
+            class="map"
+            src="https://www.openstreetmap.org/export/embed.html?bbox=${lon-.01}%2C${lat-.01}%2C${lon+.01}%2C${lat+.01}&layer=mapnik&marker=${lat}%2C${lon}">
+        </iframe>
         `;
     }
 
+
     return `
-        <div class="item">
+    <div class="item">
 
-            <div class="itemTop">
+        <div class="itemTop">
 
-                <div>
-                    <div class="itemTitle">
-                        #${order.id}
-                        — ${escapeHtml(order.title)}
-                    </div>
+            <div>
 
-                    <div class="itemSub">
-                        📍 ${escapeHtml(order.address)}
-                        <br>
-                        💰 $${Number(
-                            order.price || 0
-                        ).toFixed(2)}
-                    </div>
+                <div class="itemTitle">
+                    #${order.id}
+                    — ${escapeHtml(
+                        order.title
+                    )}
                 </div>
 
-                <span class="badge ${status.class}">
-                    ${status.icon}
-                    ${status.text}
-                </span>
+                <div class="itemSub">
+                    📍 ${escapeHtml(
+                        order.address || ""
+                    )}
+                    <br>
+                    💰 $${Number(
+                        order.price || 0
+                    ).toFixed(2)}
+                </div>
 
             </div>
 
-            ${map}
-
-            ${
-                order.status === "delivered"
-                ? `
-                    <div class="itemActions">
-
-                        <button
-                            class="primary"
-                            onclick="confirmReceipt(${order.id})"
-                        >
-                            ✅ Подтвердить получение
-                        </button>
-
-                    </div>
-                `
-                : ""
-            }
+            <span class="badge ${status.class}">
+                ${status.icon}
+                ${status.text}
+            </span>
 
         </div>
+
+        ${map}
+
+        ${
+            order.status === "delivered"
+
+            ? `
+            <div class="itemActions">
+
+                <button
+                    class="primary"
+                    onclick="confirmReceipt(${order.id})"
+                >
+                    ✅ Подтвердить получение
+                </button>
+
+            </div>
+            `
+
+            : ""
+        }
+
+    </div>
     `;
 }
 
@@ -2271,17 +2298,17 @@ async function confirmReceipt(id){
     }catch(error){
 
         toast(
-            formatError(error.message)
+            formatError(
+                error.message
+            )
         );
     }
 }
 
 
-/* ======================================================
+/* =========================================================
    COURIER
-====================================================== */
-
-let courierOnline = false;
+========================================================= */
 
 async function loadCourier(){
 
@@ -2301,7 +2328,7 @@ async function loadCourier(){
         : []
     );
 
-    if (
+    if(
         courierOnline &&
         navigator.geolocation
     ){
@@ -2317,23 +2344,30 @@ function renderCourierOrders(list){
             "courierOrdersArea"
         );
 
-    if (!area) return;
+    if(!area)
+        return;
+
 
     area.innerHTML = `
 
-        <div class="sectionTitle">
-            Мои доставки
-        </div>
+    <div class="sectionTitle">
+        Мои доставки
+    </div>
 
-        ${
-            list.length
-            ? list.map(courierOrder).join("")
-            : `
-                <div class="empty">
-                    Назначенных заказов пока нет.
-                </div>
-            `
-        }
+    ${
+        list.length
+
+        ? list
+            .map(courierOrder)
+            .join("")
+
+        : `
+            <div class="empty">
+                Назначенных заказов пока нет.
+            </div>
+        `
+    }
+
     `;
 }
 
@@ -2343,89 +2377,109 @@ function courierOrder(order){
     const status =
         statusInfo(order.status);
 
+
     return `
-        <div class="item">
+    <div class="item">
 
-            <div class="itemTop">
+        <div class="itemTop">
 
-                <div>
+            <div>
 
-                    <div class="itemTitle">
-                        #${order.id}
-                        — ${escapeHtml(order.title)}
-                    </div>
+                <div class="itemTitle">
+                    #${order.id}
+                    — ${escapeHtml(
+                        order.title
+                    )}
+                </div>
 
-                    <div class="itemSub">
-                        👤 ${escapeHtml(
-                            order.customer_name
-                        )}
-                        <br>
-                        📱 ${escapeHtml(
-                            order.customer_phone
-                        )}
-                        <br>
-                        📍 ${escapeHtml(
-                            order.address
-                        )}
-                        <br>
-                        💰 $${Number(
-                            order.price || 0
-                        ).toFixed(2)}
-                    </div>
+                <div class="itemSub">
+
+                    👤 ${escapeHtml(
+                        order.customer_name || ""
+                    )}
+
+                    <br>
+
+                    📱 ${escapeHtml(
+                        order.customer_phone || ""
+                    )}
+
+                    <br>
+
+                    📍 ${escapeHtml(
+                        order.address || ""
+                    )}
+
+                    <br>
+
+                    💰 $${Number(
+                        order.price || 0
+                    ).toFixed(2)}
 
                 </div>
 
-                <span class="badge ${status.class}">
-                    ${status.icon}
-                    ${status.text}
-                </span>
-
             </div>
 
-            <div class="itemActions">
-
-                ${
-                    order.status === "assigned"
-                    ? `
-                        <button
-                            class="success"
-                            onclick="courierAccept(${order.id})"
-                        >
-                            ✓ Принять
-                        </button>
-                    `
-                    : ""
-                }
-
-                ${
-                    order.status === "accepted"
-                    ? `
-                        <button
-                            class="blue"
-                            onclick="courierStart(${order.id})"
-                        >
-                            🚚 Начать доставку
-                        </button>
-                    `
-                    : ""
-                }
-
-                ${
-                    order.status === "delivering"
-                    ? `
-                        <button
-                            class="primary"
-                            onclick="courierComplete(${order.id})"
-                        >
-                            ✅ Доставлено
-                        </button>
-                    `
-                    : ""
-                }
-
-            </div>
+            <span class="badge ${status.class}">
+                ${status.icon}
+                ${status.text}
+            </span>
 
         </div>
+
+
+        <div class="itemActions">
+
+            ${
+                order.status === "assigned"
+
+                ? `
+                <button
+                    class="success"
+                    onclick="courierAccept(${order.id})"
+                >
+                    ✓ Принять
+                </button>
+                `
+
+                : ""
+            }
+
+
+            ${
+                order.status === "accepted"
+
+                ? `
+                <button
+                    class="blue"
+                    onclick="courierStart(${order.id})"
+                >
+                    🚚 Начать доставку
+                </button>
+                `
+
+                : ""
+            }
+
+
+            ${
+                order.status === "delivering"
+
+                ? `
+                <button
+                    class="primary"
+                    onclick="courierComplete(${order.id})"
+                >
+                    ✅ Доставлено
+                </button>
+                `
+
+                : ""
+            }
+
+        </div>
+
+    </div>
     `;
 }
 
@@ -2439,7 +2493,8 @@ async function toggleCourierOnline(){
             {
                 method:"POST",
                 body:JSON.stringify({
-                    online:!courierOnline
+                    online:
+                        !courierOnline
                 })
             }
         );
@@ -2449,7 +2504,7 @@ async function toggleCourierOnline(){
 
         updateCourierOnlineUI();
 
-        if (
+        if(
             courierOnline &&
             navigator.geolocation
         ){
@@ -2459,7 +2514,9 @@ async function toggleCourierOnline(){
     }catch(error){
 
         toast(
-            formatError(error.message)
+            formatError(
+                error.message
+            )
         );
     }
 }
@@ -2477,11 +2534,15 @@ function updateCourierOnlineUI(){
             "courierOnlineText"
         );
 
-    if (!btn || !text) return;
+    if(!btn || !text)
+        return;
 
-    if (courierOnline){
 
-        btn.textContent = "Онлайн";
+    if(courierOnline){
+
+        btn.textContent =
+            "Онлайн";
+
         btn.className =
             "switchBtn success";
 
@@ -2490,7 +2551,9 @@ function updateCourierOnlineUI(){
 
     }else{
 
-        btn.textContent = "Офлайн";
+        btn.textContent =
+            "Офлайн";
+
         btn.className =
             "switchBtn danger";
 
@@ -2499,10 +2562,6 @@ function updateCourierOnlineUI(){
     }
 }
 
-
-/* ======================================================
-   COURIER ACTIONS
-====================================================== */
 
 async function courierAccept(id){
 
@@ -2515,14 +2574,18 @@ async function courierAccept(id){
             }
         );
 
-        toast("Заказ принят");
+        toast(
+            "Заказ принят"
+        );
 
         await loadCourier();
 
     }catch(error){
 
         toast(
-            formatError(error.message)
+            formatError(
+                error.message
+            )
         );
     }
 }
@@ -2539,14 +2602,18 @@ async function courierStart(id){
             }
         );
 
-        toast("🚚 Доставка начата");
+        toast(
+            "🚚 Доставка начата"
+        );
 
         await loadCourier();
 
     }catch(error){
 
         toast(
-            formatError(error.message)
+            formatError(
+                error.message
+            )
         );
     }
 }
@@ -2572,31 +2639,31 @@ async function courierComplete(id){
     }catch(error){
 
         toast(
-            formatError(error.message)
+            formatError(
+                error.message
+            )
         );
     }
 }
 
 
-/* ======================================================
+/* =========================================================
    GEOLOCATION
-====================================================== */
-
-let geoTimer = null;
+========================================================= */
 
 function startLocationUpdates(){
 
-    if (!navigator.geolocation){
+    if(!navigator.geolocation)
         return;
-    }
 
-    if (geoTimer){
+    if(geoTimer)
         clearInterval(geoTimer);
-    }
+
 
     const sendLocation = () => {
 
         navigator.geolocation.getCurrentPosition(
+
             async position => {
 
                 try{
@@ -2615,13 +2682,16 @@ function startLocationUpdates(){
                     );
 
                 }catch(error){
+
                     console.log(
                         "Location:",
                         error.message
                     );
                 }
             },
+
             () => {},
+
             {
                 enableHighAccuracy:true,
                 timeout:10000,
@@ -2629,6 +2699,7 @@ function startLocationUpdates(){
             }
         );
     };
+
 
     sendLocation();
 
@@ -2640,9 +2711,9 @@ function startLocationUpdates(){
 }
 
 
-/* ======================================================
+/* =========================================================
    STATUS
-====================================================== */
+========================================================= */
 
 function statusInfo(status){
 
@@ -2686,17 +2757,23 @@ function statusInfo(status){
 
     };
 
-    return map[status] || {
-        text:status || "Неизвестно",
-        icon:"•",
-        class:""
-    };
+
+    return (
+        map[status] ||
+        {
+            text:
+                status ||
+                "Неизвестно",
+            icon:"•",
+            class:""
+        }
+    );
 }
 
 
-/* ======================================================
-   HTML ESCAPE
-====================================================== */
+/* =========================================================
+   ESCAPE
+========================================================= */
 
 function escapeHtml(value){
 
@@ -2711,56 +2788,60 @@ function escapeHtml(value){
 }
 
 
-/* ======================================================
+/* =========================================================
    GAME
-====================================================== */
+========================================================= */
 
 function tapGame(){
 
     gameScore++;
 
     document
-        .getElementById("gameScore")
+        .getElementById(
+            "gameScore"
+        )
         .textContent =
             gameScore;
 }
 
 
-/* ======================================================
+/* =========================================================
    AUTO REFRESH
-====================================================== */
+========================================================= */
 
 setInterval(
     async () => {
 
-        if (!token){
+        if(!token)
             return;
-        }
 
         try{
 
-            if (role === "admin"){
+            if(role === "admin"){
 
                 await loadAdminStats();
 
-                const ordersArea =
+                const area =
                     document.getElementById(
                         "adminOrdersArea"
                     );
 
-                if (
-                    ordersArea &&
-                    !ordersArea.classList.contains("hidden")
+                if(
+                    area &&
+                    !area.classList.contains(
+                        "hidden"
+                    )
                 ){
+
                     await loadAdminOrders();
                 }
-            }
 
-            else if (role === "customer"){
+            }else if(role === "customer"){
+
                 await loadCustomer();
-            }
 
-            else if (role === "courier"){
+            }else if(role === "courier"){
+
                 await loadCourier();
             }
 
@@ -2777,13 +2858,13 @@ setInterval(
 );
 
 
-/* ======================================================
+/* =========================================================
    START
-====================================================== */
+========================================================= */
 
 boot();
 
 </script>
 
 </body>
-    </html>
+      </html>
