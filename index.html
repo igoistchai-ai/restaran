@@ -2,60 +2,174 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+
 <title>RESTARAN</title>
+
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
 :root{
---bg:#0b0d12;--panel:#131720;--text:#f7f8fb;--muted:#8f98a8;
---accent:#ffb347;--accent2:#ff7a45;--green:#35d58a;--red:#ff5c6c;
---blue:#4da3ff;--border:rgba(255,255,255,.08);--shadow:0 20px 60px rgba(0,0,0,.35)
+--bg:#0b0d12;--text:#f7f8fb;--muted:#8f98a8;
+--accent:#ffb347;--accent2:#ff7a45;--green:#35d58a;
+--red:#ff5c6c;--blue:#4da3ff;--border:rgba(255,255,255,.08);
+--shadow:0 20px 60px rgba(0,0,0,.35)
 }
+
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;min-height:100%;background:radial-gradient(circle at 10% 0%,rgba(255,179,71,.11),transparent 30%),radial-gradient(circle at 90% 10%,rgba(255,122,69,.08),transparent 30%),var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+
+html,body{
+margin:0;min-height:100%;
+background:
+radial-gradient(circle at 10% 0%,rgba(255,179,71,.11),transparent 30%),
+radial-gradient(circle at 90% 10%,rgba(255,122,69,.08),transparent 30%),
+var(--bg);
+color:var(--text);
+font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+}
+
 body{padding-bottom:30px}
-button,input{font:inherit}button{border:0;cursor:pointer}
+button,input{font:inherit}
+button{border:0;cursor:pointer}
+
 .app{width:min(1100px,100%);margin:auto;padding:16px}
-.glass{background:linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.025));border:1px solid var(--border);box-shadow:var(--shadow);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}
-.topbar{position:sticky;top:8px;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:15px 17px;border-radius:24px;margin-bottom:16px}
+
+.glass{
+background:linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.025));
+border:1px solid var(--border);
+box-shadow:var(--shadow);
+backdrop-filter:blur(22px);
+-webkit-backdrop-filter:blur(22px)
+}
+
+.topbar{
+position:sticky;top:8px;z-index:20;
+display:flex;justify-content:space-between;align-items:center;
+padding:15px 17px;border-radius:24px;margin-bottom:16px
+}
+
 .logo{display:flex;align-items:center;gap:11px;font-size:20px;font-weight:900}
-.logoIcon{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 10px 30px rgba(255,140,50,.25)}
+
+.logoIcon{
+width:40px;height:40px;border-radius:14px;
+display:grid;place-items:center;
+background:linear-gradient(135deg,var(--accent),var(--accent2))
+}
+
 .userPill{color:var(--muted);font-size:13px;text-align:right}
+
 .hero{padding:24px;border-radius:30px;margin-bottom:16px;position:relative;overflow:hidden}
-.hero:after{content:"";position:absolute;width:220px;height:220px;right:-80px;top:-90px;border-radius:50%;background:rgba(255,179,71,.13);filter:blur(10px)}
-.hero h1{margin:0 0 7px;font-size:30px;letter-spacing:-1px}.hero p{margin:0;color:var(--muted)}
+.hero h1{margin:0 0 7px;font-size:30px}
+.hero p{margin:0;color:var(--muted)}
+
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 @media(max-width:650px){.grid{grid-template-columns:1fr}}
-.stat{padding:18px;border-radius:22px}.statLabel{color:var(--muted);font-size:13px}.statValue{margin-top:7px;font-size:28px;font-weight:900}
-.section{margin-top:16px;padding:18px;border-radius:26px}.sectionTitle{font-size:18px;font-weight:900;margin-bottom:14px}
+
+.stat{padding:18px;border-radius:22px}
+.statLabel{color:var(--muted);font-size:13px}
+.statValue{margin-top:7px;font-size:28px;font-weight:900}
+
+.section{margin-top:16px;padding:18px;border-radius:26px}
+.sectionTitle{font-size:18px;font-weight:900;margin-bottom:14px}
 .form{display:grid;gap:10px}
-input{width:100%;border:1px solid var(--border);outline:0;border-radius:17px;background:rgba(255,255,255,.055);color:var(--text);padding:14px 15px}
-input:focus{border-color:rgba(255,179,71,.6);box-shadow:0 0 0 3px rgba(255,179,71,.08)}
-.primary{padding:14px 17px;border-radius:17px;color:#16100a;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 10px 30px rgba(255,140,50,.18)}
-.secondary{padding:12px 14px;border-radius:15px;color:var(--text);background:rgba(255,255,255,.07);border:1px solid var(--border);font-weight:800}
-.success{background:rgba(53,213,138,.12);color:#5ce5a0;border:1px solid rgba(53,213,138,.2)}
-.danger{background:rgba(255,92,108,.12);color:#ff7180;border:1px solid rgba(255,92,108,.2)}
-.blue{background:rgba(77,163,255,.12);color:#68b2ff;border:1px solid rgba(77,163,255,.2)}
-.item{padding:16px;border-radius:20px;background:rgba(255,255,255,.035);border:1px solid var(--border);margin-bottom:10px}
-.item:last-child{margin-bottom:0}.itemTop{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
-.itemTitle{font-size:16px;font-weight:900}.itemSub{color:var(--muted);font-size:13px;line-height:1.55;margin-top:6px}
+
+input{
+width:100%;border:1px solid var(--border);outline:0;
+border-radius:17px;background:rgba(255,255,255,.055);
+color:var(--text);padding:14px 15px
+}
+
+.primary{
+padding:14px 17px;border-radius:17px;color:#16100a;
+font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2))
+}
+
+.secondary{
+padding:12px 14px;border-radius:15px;color:var(--text);
+background:rgba(255,255,255,.07);border:1px solid var(--border);
+font-weight:800
+}
+
+.success{background:rgba(53,213,138,.12);color:#5ce5a0;padding:12px 14px;border-radius:15px}
+.danger{background:rgba(255,92,108,.12);color:#ff7180;padding:12px 14px;border-radius:15px}
+.blue{background:rgba(77,163,255,.12);color:#68b2ff;padding:12px 14px;border-radius:15px}
+
+.item{
+padding:16px;border-radius:20px;background:rgba(255,255,255,.035);
+border:1px solid var(--border);margin-bottom:10px
+}
+
+.itemTop{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.itemTitle{font-size:16px;font-weight:900}
+.itemSub{color:var(--muted);font-size:13px;line-height:1.55;margin-top:6px}
 .itemActions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.badge{display:inline-flex;align-items:center;gap:5px;padding:6px 9px;border-radius:999px;font-size:11px;font-weight:900;background:rgba(255,255,255,.07);color:#dce2eb}
-.badge.green{color:#63e9a4;background:rgba(53,213,138,.1)}.badge.orange{color:#ffc267;background:rgba(255,179,71,.1)}
-.badge.red{color:#ff7583;background:rgba(255,92,108,.1)}.badge.blue{color:#6ab5ff;background:rgba(77,163,255,.1)}
+
+.badge{
+display:inline-flex;align-items:center;gap:5px;padding:6px 9px;
+border-radius:999px;font-size:11px;font-weight:900;
+background:rgba(255,255,255,.07)
+}
+
+.badge.green{color:#63e9a4;background:rgba(53,213,138,.1)}
+.badge.orange{color:#ffc267;background:rgba(255,179,71,.1)}
+.badge.red{color:#ff7583;background:rgba(255,92,108,.1)}
+.badge.blue{color:#6ab5ff;background:rgba(77,163,255,.1)}
+
 .empty{padding:25px;border-radius:18px;text-align:center;color:var(--muted)}
-.login{min-height:90vh;display:grid;place-items:center}.loginCard{width:min(430px,100%);padding:25px;border-radius:30px}
-.loginLogo{width:65px;height:65px;border-radius:22px;display:grid;place-items:center;font-size:30px;background:linear-gradient(135deg,var(--accent),var(--accent2));margin-bottom:18px}
-.loginCard h1{margin:0;font-size:28px}.loginCard p{color:var(--muted);line-height:1.5}
-.hidden{display:none!important}.tabs{display:flex;gap:7px;overflow-x:auto;padding:4px;margin-bottom:15px}
-.tab{white-space:nowrap;padding:11px 14px;border-radius:14px;color:var(--muted);background:rgba(255,255,255,.04);border:1px solid transparent;font-weight:800}
-.tab.active{color:var(--text);border-color:var(--border);background:rgba(255,255,255,.09)}
+
+.login{min-height:90vh;display:grid;place-items:center}
+.loginCard{width:min(430px,100%);padding:25px;border-radius:30px}
+.loginLogo{
+width:65px;height:65px;border-radius:22px;display:grid;
+place-items:center;font-size:30px;
+background:linear-gradient(135deg,var(--accent),var(--accent2));
+margin-bottom:18px
+}
+.loginCard h1{margin:0;font-size:28px}
+.loginCard p{color:var(--muted);line-height:1.5}
+
+.hidden{display:none!important}
+
+.tabs{
+display:flex;gap:7px;overflow-x:auto;padding:4px;margin-bottom:15px
+}
+
+.tab{
+white-space:nowrap;padding:11px 14px;border-radius:14px;
+color:var(--muted);background:rgba(255,255,255,.04);
+border:1px solid transparent;font-weight:800
+}
+
+.tab.active{
+color:var(--text);border-color:var(--border);
+background:rgba(255,255,255,.09)
+}
+
 .map{width:100%;height:220px;border:0;border-radius:18px;margin-top:12px}
-.toast{position:fixed;left:50%;bottom:25px;transform:translateX(-50%) translateY(20px);z-index:100;min-width:240px;max-width:90%;padding:13px 16px;border-radius:16px;background:#202632;border:1px solid var(--border);box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s;text-align:center;font-weight:700}
+
+.toast{
+position:fixed;left:50%;bottom:25px;
+transform:translateX(-50%) translateY(20px);
+z-index:100;min-width:240px;max-width:90%;
+padding:13px 16px;border-radius:16px;background:#202632;
+border:1px solid var(--border);box-shadow:var(--shadow);
+opacity:0;pointer-events:none;transition:.25s;
+text-align:center;font-weight:700
+}
+
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-.switch{display:flex;align-items:center;justify-content:space-between;gap:15px}.switchBtn{min-width:100px;padding:11px 14px;border-radius:15px;font-weight:900}
-.game{text-align:center}.gameScore{font-size:35px;font-weight:900;margin:15px 0}.tap{width:130px;height:130px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));font-size:42px;box-shadow:0 20px 50px rgba(255,140,50,.25);transition:.1s}.tap:active{transform:scale(.92)}
+
+.switch{display:flex;align-items:center;justify-content:space-between;gap:15px}
+.switchBtn{min-width:100px;padding:11px 14px;border-radius:15px;font-weight:900}
+
+.game{text-align:center}
+.gameScore{font-size:35px;font-weight:900;margin:15px 0}
+
+.tap{
+width:130px;height:130px;border-radius:50%;
+background:linear-gradient(135deg,var(--accent),var(--accent2));
+font-size:42px
+}
 </style>
 </head>
 
@@ -63,47 +177,113 @@ input:focus{border-color:rgba(255,179,71,.6);box-shadow:0 0 0 3px rgba(255,179,7
 
 <div id="toast" class="toast"></div>
 
+<!--
+  ВАЖНО:
+  Для Telegram-админов этот экран НИКОГДА не показывается.
+-->
 <div id="loginScreen" class="app login">
+
 <div class="loginCard glass">
+
 <div class="loginLogo">🍽</div>
+
 <h1>RESTARAN</h1>
-<p>Введите номер телефона и PIN, чтобы открыть личный кабинет.</p>
+
+<p>
+Введите номер телефона и PIN,
+чтобы открыть личный кабинет.
+</p>
+
 <div class="form">
+
 <input id="loginPhone" type="tel" placeholder="+374 XX XX XX XX">
+
 <input id="loginPin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN">
-<button class="primary" onclick="login()">Войти</button>
+
+<button class="primary" onclick="login()">
+Войти
+</button>
+
+</div>
+
 </div>
 </div>
-</div>
+
 
 <div id="app" class="app hidden">
 
 <div class="topbar glass">
-<div class="logo"><div class="logoIcon">🍽</div>RESTARAN</div>
-<div id="userPill" class="userPill"></div>
+
+<div class="logo">
+<div class="logoIcon">🍽</div>
+RESTARAN
 </div>
+
+<div id="userPill" class="userPill"></div>
+
+</div>
+
+
+<!-- ADMIN -->
 
 <div id="adminView" class="hidden">
 
 <div class="hero glass">
+
 <h1>Админ-панель</h1>
-<p>Управление клиентами, курьерами и заказами.</p>
+
+<p>
+Управление клиентами, курьерами и заказами.
+</p>
+
 </div>
 
+
 <div class="grid">
-<div class="stat glass"><div class="statLabel">Клиенты</div><div id="statCustomers" class="statValue">0</div></div>
-<div class="stat glass"><div class="statLabel">Курьеры</div><div id="statCouriers" class="statValue">0</div></div>
-<div class="stat glass"><div class="statLabel">Активные заказы</div><div id="statOrders" class="statValue">0</div></div>
-<div class="stat glass"><div class="statLabel">Выручка</div><div id="statRevenue" class="statValue">$0</div></div>
+
+<div class="stat glass">
+<div class="statLabel">Клиенты</div>
+<div id="statCustomers" class="statValue">0</div>
 </div>
+
+<div class="stat glass">
+<div class="statLabel">Курьеры</div>
+<div id="statCouriers" class="statValue">0</div>
+</div>
+
+<div class="stat glass">
+<div class="statLabel">Активные заказы</div>
+<div id="statOrders" class="statValue">0</div>
+</div>
+
+<div class="stat glass">
+<div class="statLabel">Выручка</div>
+<div id="statRevenue" class="statValue">$0</div>
+</div>
+
+</div>
+
 
 <div class="section glass">
 
 <div class="tabs">
-<button class="tab active" onclick="adminTab('orders',this)">📦 Заказы</button>
-<button class="tab" onclick="adminTab('customers',this)">👤 Клиенты</button>
-<button class="tab" onclick="adminTab('couriers',this)">🛵 Курьеры</button>
-<button class="tab" onclick="adminTab('stats',this)">📊 Статистика</button>
+
+<button class="tab active" onclick="adminTab('orders',this)">
+📦 Заказы
+</button>
+
+<button class="tab" onclick="adminTab('customers',this)">
+👤 Клиенты
+</button>
+
+<button class="tab" onclick="adminTab('couriers',this)">
+🛵 Курьеры
+</button>
+
+<button class="tab" onclick="adminTab('stats',this)">
+📊 Статистика
+</button>
+
 </div>
 
 <div id="adminOrdersArea"></div>
@@ -112,36 +292,84 @@ input:focus{border-color:rgba(255,179,71,.6);box-shadow:0 0 0 3px rgba(255,179,7
 <div id="adminStatsArea" class="hidden"></div>
 
 </div>
+
 </div>
+
+
+<!-- CUSTOMER -->
 
 <div id="customerView" class="hidden">
-<div class="hero glass"><h1>Мои заказы</h1><p>Здесь отображаются ваши текущие и прошлые заказы.</p></div>
+
+<div class="hero glass">
+<h1>Мои заказы</h1>
+<p>Здесь отображаются ваши текущие и прошлые заказы.</p>
+</div>
+
 <div id="customerOrdersArea" class="section glass"></div>
+
 <div class="section glass game">
+
 <div class="sectionTitle">🎮 Мини-игра</div>
-<div class="itemSub">Нажми как можно больше раз.</div>
+
+<div class="itemSub">
+Нажми как можно больше раз.
+</div>
+
 <div id="gameScore" class="gameScore">0</div>
+
 <button class="tap" onclick="tapGame()">👆</button>
+
 </div>
+
 </div>
+
+
+<!-- COURIER -->
 
 <div id="courierView" class="hidden">
-<div class="hero glass"><h1>Кабинет курьера</h1><p>Управляйте доставками и передавайте геопозицию.</p></div>
+
+<div class="hero glass">
+<h1>Кабинет курьера</h1>
+<p>Управляйте доставками и передавайте геопозицию.</p>
+</div>
+
 <div class="section glass">
+
 <div class="switch">
-<div><b>Статус курьера</b><div id="courierOnlineText" class="itemSub">Офлайн</div></div>
-<button id="courierOnlineBtn" class="switchBtn danger" onclick="toggleCourierOnline()">Офлайн</button>
-</div>
-</div>
-<div id="courierOrdersArea" class="section glass"></div>
+
+<div>
+
+<b>Статус курьера</b>
+
+<div id="courierOnlineText" class="itemSub">
+Офлайн
 </div>
 
 </div>
+
+<button
+id="courierOnlineBtn"
+class="switchBtn danger"
+onclick="toggleCourierOnline()">
+Офлайн
+</button>
+
+</div>
+
+</div>
+
+<div id="courierOrdersArea" class="section glass"></div>
+
+</div>
+
+</div>
+
 
 <script>
-/* =========================
+
+/* =========================================================
    TELEGRAM
-========================= */
+========================================================= */
 
 const tg = window.Telegram?.WebApp;
 
@@ -150,171 +378,287 @@ if(tg){
     tg.expand();
 }
 
-/* =========================
-   АДМИНЫ
-   ЭТИ ID НЕ МЕНЯТЬ
-========================= */
 
-const ADMIN_IDS = [
+/* =========================================================
+   АДМИНЫ
+========================================================= */
+
+const ADMIN_IDS = new Set([
     8357023784,
     7003441441
-];
+]);
 
-/* =========================
+
+/* =========================================================
    GLOBAL
-========================= */
+========================================================= */
 
 let token = localStorage.getItem("restaran_token") || "";
 let role = "";
 let currentUser = null;
+
 let gameScore = 0;
 let courierOnline = false;
 let geoTimer = null;
 
-/* =========================
-   TOAST
-========================= */
 
-function toast(message){
-    const el=document.getElementById("toast");
-    el.textContent=String(message);
-    el.classList.add("show");
-    clearTimeout(window.toastTimer);
-    window.toastTimer=setTimeout(()=>el.classList.remove("show"),3000);
+/* =========================================================
+   TELEGRAM ADMIN ID
+========================================================= */
+
+function telegramId(){
+
+    const id =
+        tg?.initDataUnsafe?.user?.id;
+
+    if(!id)
+        return null;
+
+    return Number(id);
 }
 
-/* =========================
+
+function isAdminTelegram(){
+
+    const id = telegramId();
+
+    return id !== null &&
+           ADMIN_IDS.has(id);
+}
+
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+function toast(message){
+
+    const el =
+        document.getElementById("toast");
+
+    if(!el)return;
+
+    el.textContent =
+        String(message);
+
+    el.classList.add("show");
+
+    clearTimeout(window.toastTimer);
+
+    window.toastTimer =
+        setTimeout(
+            () => el.classList.remove("show"),
+            3000
+        );
+}
+
+
+/* =========================================================
    ERROR
-========================= */
+========================================================= */
 
 function formatError(value){
 
-    if(value===null||value===undefined)
+    if(value === null ||
+       value === undefined)
         return "Неизвестная ошибка";
 
-    if(typeof value==="string")
+    if(typeof value === "string")
         return value;
 
-    if(Array.isArray(value))
-        return value.map(x=>{
-            if(typeof x==="string") return x;
-            if(x&&typeof x==="object")
-                return x.msg||x.message||x.detail||JSON.stringify(x);
-            return String(x);
-        }).join("\n");
+    if(Array.isArray(value)){
 
-    if(typeof value==="object")
-        return value.msg||value.message||value.detail||value.error||JSON.stringify(value);
+        return value.map(x => {
+
+            if(typeof x === "string")
+                return x;
+
+            if(x && typeof x === "object")
+                return (
+                    x.msg ||
+                    x.message ||
+                    x.detail ||
+                    JSON.stringify(x)
+                );
+
+            return String(x);
+
+        }).join("\n");
+    }
+
+    if(typeof value === "object"){
+
+        return (
+            value.msg ||
+            value.message ||
+            value.detail ||
+            value.error ||
+            JSON.stringify(value)
+        );
+    }
 
     return String(value);
 }
 
-/* =========================
+
+/* =========================================================
    API
-========================= */
+========================================================= */
 
-async function api(path,options={}){
+async function api(path, options = {}){
 
-    const headers={...(options.headers||{})};
+    const headers = {
+        ...(options.headers || {})
+    };
 
-    if(options.body && typeof options.body==="string" && !headers["Content-Type"])
-        headers["Content-Type"]="application/json";
+    if(
+        options.body &&
+        typeof options.body === "string" &&
+        !headers["Content-Type"]
+    ){
+        headers["Content-Type"] =
+            "application/json";
+    }
 
-    if(token)
-        headers["Authorization"]="Bearer "+token;
+    if(token){
 
-    const response=await fetch(path,{...options,headers});
-    const text=await response.text();
+        headers["Authorization"] =
+            "Bearer " + token;
+    }
 
-    let data=null;
+    const response =
+        await fetch(
+            path,
+            {
+                ...options,
+                headers
+            }
+        );
+
+    const text =
+        await response.text();
+
+    let data = null;
 
     try{
-        data=text?JSON.parse(text):null;
+        data =
+            text
+            ? JSON.parse(text)
+            : null;
     }catch{
-        data=text;
+        data = text;
     }
 
     if(!response.ok){
 
-        let message=
-            data?.detail ??
-            data?.message ??
-            data?.error ??
-            data ??
-            `HTTP ${response.status}`;
-
-        throw new Error(formatError(message));
+        throw new Error(
+            formatError(
+                data?.detail ??
+                data?.message ??
+                data?.error ??
+                data ??
+                `HTTP ${response.status}`
+            )
+        );
     }
 
     return data;
 }
 
-/* =========================
-   ВАЖНО:
-   АВТОВХОД АДМИНА ЧЕРЕЗ TELEGRAM
-========================= */
 
-function getTelegramUserId(){
+/* =========================================================
+   АВТОМАТИЧЕСКИЙ ВХОД АДМИНА
+   НИКАКОГО PHONE/PIN
+========================================================= */
 
-    const id=tg?.initDataUnsafe?.user?.id;
+async function adminAutoLogin(){
 
-    return id ? Number(id) : null;
-}
+    /*
+      Админ определяется локально по Telegram ID.
+    */
 
-function isTelegramAdmin(){
-
-    const id=getTelegramUserId();
-
-    return id!==null && ADMIN_IDS.includes(id);
-}
-
-async function tryAdminTelegramLogin(){
-
-    if(!tg || !tg.initData)
+    if(!isAdminTelegram())
         return false;
 
     /*
-      Если Telegram ID не админ —
-      не пытаемся делать админский вход.
+      initData ОБЯЗАТЕЛЕН.
+      Именно сервер проверяет его подпись.
     */
 
-    if(!isTelegramAdmin())
+    if(!tg?.initData){
+
+        showAdminError(
+            "Откройте приложение через Telegram."
+        );
+
         return false;
+    }
 
     try{
 
-        const response=await fetch(
-            "/api/admin/web-login",
-            {
-                method:"POST",
-                headers:{
-                    "Content-Type":"application/json"
-                },
-                body:JSON.stringify({
-                    init_data:tg.initData
-                })
-            }
+        /*
+          Сначала удаляем старую сессию.
+          Она НЕ используется для входа админа.
+        */
+
+        token = "";
+
+        localStorage.removeItem(
+            "restaran_token"
         );
 
-        const text=await response.text();
+        const response =
+            await fetch(
+                "/api/admin/web-login",
+                {
+                    method:"POST",
+                    headers:{
+                        "Content-Type":
+                            "application/json"
+                    },
+                    body:JSON.stringify({
+                        init_data:
+                            tg.initData
+                    })
+                }
+            );
 
-        let data=null;
+        const text =
+            await response.text();
+
+        let data;
 
         try{
-            data=text?JSON.parse(text):null;
+            data =
+                text
+                ? JSON.parse(text)
+                : {};
         }catch{
-            data=text;
+            data = {
+                detail:text
+            };
         }
 
         if(!response.ok){
-            throw new Error(formatError(data?.detail||data));
+
+            throw new Error(
+                formatError(
+                    data.detail ||
+                    data.message ||
+                    data.error
+                )
+            );
         }
 
-        if(!data?.token){
-            throw new Error("Сервер не вернул токен администратора");
+        if(!data.token){
+
+            throw new Error(
+                "Сервер не выдал токен администратора"
+            );
         }
 
-        token=data.token;
+        token =
+            data.token;
 
         localStorage.setItem(
             "restaran_token",
@@ -326,69 +670,101 @@ async function tryAdminTelegramLogin(){
     }catch(error){
 
         console.error(
-            "ADMIN AUTO LOGIN ERROR:",
+            "ADMIN AUTO LOGIN:",
             error
         );
 
-        /*
-          Админу НЕ показываем форму
-          телефона/PIN.
-        */
-
-        document
-            .getElementById("loginScreen")
-            .classList.add("hidden");
-
-        document
-            .getElementById("app")
-            .classList.remove("hidden");
-
-        document
-            .getElementById("userPill")
-            .textContent="Администратор";
-
-        hideViews();
-
-        show("adminView");
-
-        document
-            .getElementById("adminOrdersArea")
-            .innerHTML=`
-                <div class="empty glass">
-                    ❌ Не удалось выполнить вход администратора.<br><br>
-                    ${escapeHtml(formatError(error.message))}
-                </div>
-            `;
+        showAdminError(
+            error.message
+        );
 
         return false;
     }
 }
 
-/* =========================
-   LOGIN CUSTOMER/COURIER
-========================= */
+
+/* =========================================================
+   АДМИН ERROR
+========================================================= */
+
+function showAdminError(message){
+
+    document
+        .getElementById("loginScreen")
+        ?.classList.add("hidden");
+
+    document
+        .getElementById("app")
+        ?.classList.remove("hidden");
+
+    hideViews();
+
+    show("adminView");
+
+    const area =
+        document.getElementById(
+            "adminOrdersArea"
+        );
+
+    if(area){
+
+        area.innerHTML = `
+            <div class="empty glass">
+                ❌ ${escapeHtml(message)}
+            </div>
+        `;
+    }
+
+    document
+        .getElementById("userPill")
+        .textContent =
+            "Администратор";
+}
+
+
+/* =========================================================
+   LOGIN CUSTOMER / COURIER
+========================================================= */
 
 async function login(){
 
-    const phone=document.getElementById("loginPhone").value.trim();
-    const pin=document.getElementById("loginPin").value.trim();
+    const phone =
+        document
+        .getElementById("loginPhone")
+        .value
+        .trim();
 
-    if(!phone||!pin){
-        toast("Введите номер и PIN");
+    const pin =
+        document
+        .getElementById("loginPin")
+        .value
+        .trim();
+
+    if(!phone || !pin){
+
+        toast(
+            "Введите номер и PIN"
+        );
+
         return;
     }
 
     try{
 
-        const data=await api(
-            "/api/login",
-            {
-                method:"POST",
-                body:JSON.stringify({phone,pin})
-            }
-        );
+        const data =
+            await api(
+                "/api/login",
+                {
+                    method:"POST",
+                    body:JSON.stringify({
+                        phone,
+                        pin
+                    })
+                }
+            );
 
-        token=data.token;
+        token =
+            data.token;
 
         localStorage.setItem(
             "restaran_token",
@@ -399,36 +775,35 @@ async function login(){
 
     }catch(error){
 
-        toast(formatError(error.message));
+        toast(
+            formatError(error.message)
+        );
     }
 }
 
-/* =========================
+
+/* =========================================================
    BOOT
-========================= */
+========================================================= */
 
 async function boot(){
 
     /*
-      ГЛАВНЫЙ ФИКС:
+      КЛЮЧЕВОЙ ФИКС.
 
-      Админ всегда сначала проходит
-      Telegram WebApp авторизацию.
-
-      Старый token больше НЕ мешает
-      автоматическому входу админа.
+      Если Telegram ID админа —
+      PHONE/PIN вообще НЕ используются.
     */
 
-    if(isTelegramAdmin()){
+    if(isAdminTelegram()){
 
-        const adminLogged=
-            await tryAdminTelegramLogin();
+        const ok =
+            await adminAutoLogin();
 
-        if(!adminLogged)
+        if(!ok)
             return;
-    }
 
-    if(!token){
+    }else if(!token){
 
         document
             .getElementById("loginScreen")
@@ -441,10 +816,32 @@ async function boot(){
         return;
     }
 
+
     try{
 
-        currentUser=await api("/api/me");
-        role=currentUser.role;
+        currentUser =
+            await api("/api/me");
+
+        role =
+            currentUser.role;
+
+
+        /*
+          Защита:
+          если Telegram ID админа,
+          сервер тоже должен вернуть admin.
+        */
+
+        if(
+            isAdminTelegram() &&
+            role !== "admin"
+        ){
+
+            throw new Error(
+                "Сервер не определил вас как администратора"
+            );
+        }
+
 
         document
             .getElementById("loginScreen")
@@ -454,48 +851,56 @@ async function boot(){
             .getElementById("app")
             .classList.remove("hidden");
 
+
         document
             .getElementById("userPill")
-            .textContent=currentUser.name||"";
+            .textContent =
+                role === "admin"
+                ? "Администратор"
+                : (
+                    currentUser.name || ""
+                );
+
 
         hideViews();
 
-        if(role==="admin"){
+
+        if(role === "admin"){
+
             show("adminView");
+
             await loadAdmin();
-        }
 
-        else if(role==="customer"){
+        }else if(role === "customer"){
+
             show("customerView");
-            await loadCustomer();
-        }
 
-        else if(role==="courier"){
+            await loadCustomer();
+
+        }else if(role === "courier"){
+
             show("courierView");
+
             await loadCourier();
         }
+
 
     }catch(error){
 
         /*
-          Если это админ Telegram —
-          НЕ отправляем его на телефон/PIN.
+          Админа НИКОГДА не отправляем
+          на экран телефона/PIN.
         */
 
-        if(isTelegramAdmin()){
+        if(isAdminTelegram()){
 
-            token="";
-
-            localStorage.removeItem(
-                "restaran_token"
-            );
-
-            await tryAdminTelegramLogin();
+            await adminAutoLogin();
 
             return;
         }
 
-        token="";
+
+        token = "";
 
         localStorage.removeItem(
             "restaran_token"
@@ -509,9 +914,16 @@ async function boot(){
             .getElementById("app")
             .classList.add("hidden");
 
-        toast(formatError(error.message));
+        toast(
+            formatError(error.message)
+        );
     }
 }
+
+
+/* =========================================================
+   VIEWS
+========================================================= */
 
 function hideViews(){
 
@@ -519,18 +931,26 @@ function hideViews(){
         "adminView",
         "customerView",
         "courierView"
-    ].forEach(id=>{
-        document.getElementById(id)?.classList.add("hidden");
+    ].forEach(id => {
+
+        document
+            .getElementById(id)
+            ?.classList.add("hidden");
     });
 }
 
+
 function show(id){
-    document.getElementById(id)?.classList.remove("hidden");
+
+    document
+        .getElementById(id)
+        ?.classList.remove("hidden");
 }
 
-/* =========================
+
+/* =========================================================
    ADMIN
-========================= */
+========================================================= */
 
 async function loadAdmin(){
 
@@ -540,152 +960,277 @@ async function loadAdmin(){
     ]);
 }
 
+
 async function loadAdminStats(){
 
-    const data=await api("/api/admin/stats");
+    const data =
+        await api(
+            "/api/admin/stats"
+        );
 
-    document.getElementById("statCustomers").textContent=data.customers||0;
-    document.getElementById("statCouriers").textContent=data.couriers||0;
-    document.getElementById("statOrders").textContent=data.active_orders||0;
-    document.getElementById("statRevenue").textContent="$"+Number(data.revenue||0).toFixed(2);
+    document
+        .getElementById("statCustomers")
+        .textContent =
+            data.customers || 0;
+
+    document
+        .getElementById("statCouriers")
+        .textContent =
+            data.couriers || 0;
+
+    document
+        .getElementById("statOrders")
+        .textContent =
+            data.active_orders || 0;
+
+    document
+        .getElementById("statRevenue")
+        .textContent =
+            "$" +
+            Number(
+                data.revenue || 0
+            ).toFixed(2);
 }
+
+
+/* =========================================================
+   ADMIN TABS
+========================================================= */
 
 function adminTab(tab,button){
 
-    document.querySelectorAll(".tab").forEach(el=>el.classList.remove("active"));
+    document
+        .querySelectorAll(".tab")
+        .forEach(el =>
+            el.classList.remove("active")
+        );
 
     if(button)
         button.classList.add("active");
 
-    const areas=[
+    [
         "adminOrdersArea",
         "adminCustomersArea",
         "adminCouriersArea",
         "adminStatsArea"
-    ];
+    ].forEach(id =>
+        document
+            .getElementById(id)
+            ?.classList.add("hidden")
+    );
 
-    areas.forEach(id=>{
-        document.getElementById(id)?.classList.add("hidden");
-    });
-
-    const mapping={
+    const mapping = {
         orders:"adminOrdersArea",
         customers:"adminCustomersArea",
         couriers:"adminCouriersArea",
         stats:"adminStatsArea"
     };
 
-    document.getElementById(mapping[tab])?.classList.remove("hidden");
+    document
+        .getElementById(mapping[tab])
+        ?.classList.remove("hidden");
 
-    if(tab==="orders")loadAdminOrders();
-    if(tab==="customers")loadAdminCustomers();
-    if(tab==="couriers")loadAdminCouriers();
-    if(tab==="stats")loadAdminStatsPage();
+
+    if(tab === "orders")
+        loadAdminOrders();
+
+    if(tab === "customers")
+        loadAdminCustomers();
+
+    if(tab === "couriers")
+        loadAdminCouriers();
+
+    if(tab === "stats")
+        loadAdminStatsPage();
 }
 
-/* =========================
-   ORDERS
-========================= */
+
+/* =========================================================
+   ADMIN ORDERS
+========================================================= */
 
 async function loadAdminOrders(){
 
-    const area=document.getElementById("adminOrdersArea");
+    const area =
+        document.getElementById(
+            "adminOrdersArea"
+        );
 
-    if(!area)return;
+    if(!area)
+        return;
 
-    area.innerHTML=`
-        <div class="sectionTitle">Все заказы</div>
-        <div class="itemSub">Загрузка...</div>
+    area.innerHTML = `
+        <div class="sectionTitle">
+            Все заказы
+        </div>
+        <div class="itemSub">
+            Загрузка...
+        </div>
     `;
 
     try{
 
-        const list=await api("/api/admin/orders");
+        const list =
+            await api(
+                "/api/admin/orders"
+            );
 
         renderAdminOrders(
-            Array.isArray(list)?list:[]
+            Array.isArray(list)
+            ? list
+            : []
         );
 
     }catch(error){
 
-        area.innerHTML=`
+        area.innerHTML = `
             <div class="empty glass">
-                ❌ ${escapeHtml(formatError(error.message))}
+                ❌ ${escapeHtml(
+                    formatError(
+                        error.message
+                    )
+                )}
             </div>
         `;
     }
 }
 
+
 function renderAdminOrders(list){
 
-    const area=document.getElementById("adminOrdersArea");
+    const area =
+        document.getElementById(
+            "adminOrdersArea"
+        );
 
-    if(!area)return;
+    if(!area)
+        return;
 
     if(!Array.isArray(list))
-        list=[];
+        list = [];
 
-    area.innerHTML=`
-        <div class="sectionTitle">Все заказы</div>
+    area.innerHTML = `
+
+        <div class="sectionTitle">
+            Все заказы
+        </div>
+
         ${adminOrderCreateForm()}
+
         <div style="margin-top:15px">
+
             ${
                 list.length
-                ?list.map(adminOrder).join("")
-                :`<div class="empty glass">Заказов пока нет</div>`
+                ? list.map(
+                    adminOrder
+                  ).join("")
+                : `
+                    <div class="empty glass">
+                        Заказов пока нет
+                    </div>
+                `
             }
+
         </div>
     `;
 }
 
+
 function adminOrderCreateForm(){
 
-    return`
+    return `
     <div class="item">
-        <div class="itemTitle">➕ Создать заказ</div>
-        <div class="itemSub">Введите номер телефона клиента.</div>
+
+        <div class="itemTitle">
+            ➕ Создать заказ
+        </div>
+
+        <div class="itemSub">
+            Введите номер телефона клиента.
+        </div>
 
         <div class="form" style="margin-top:12px">
 
-            <input id="orderPhone" type="tel" placeholder="Номер телефона клиента">
+            <input
+                id="orderPhone"
+                type="tel"
+                placeholder="Номер телефона клиента"
+            >
 
-            <input id="orderTitle" placeholder="Что заказали?">
+            <input
+                id="orderTitle"
+                placeholder="Что заказали?"
+            >
 
-            <input id="orderAddress" placeholder="Адрес доставки">
+            <input
+                id="orderAddress"
+                placeholder="Адрес доставки"
+            >
 
-            <input id="orderPrice" type="number" step="0.01" min="0" placeholder="Цена">
+            <input
+                id="orderPrice"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="Цена"
+            >
 
-            <button class="primary" onclick="createOrder()">
+            <button
+                class="primary"
+                onclick="createOrder()"
+            >
                 Создать заказ
             </button>
 
         </div>
-    </div>`;
+
+    </div>
+    `;
 }
+
 
 function adminOrder(order){
 
-    const status=statusInfo(order.status);
+    const status =
+        statusInfo(order.status);
 
-    let courier=order.courier_name
-        ?`🛵 ${escapeHtml(order.courier_name)}`
-        :"🛵 Курьер не назначен";
+    let courier =
+        order.courier_name
+        ? "🛵 " +
+          escapeHtml(
+              order.courier_name
+          )
+        : "🛵 Курьер не назначен";
 
-    let location="";
 
-    if(order.courier_lat!==null&&order.courier_lon!==null){
+    let location = "";
 
-        const lat=Number(order.courier_lat);
-        const lon=Number(order.courier_lon);
 
-        location=`
+    if(
+        order.courier_lat !== null &&
+        order.courier_lon !== null
+    ){
+
+        const lat =
+            Number(
+                order.courier_lat
+            );
+
+        const lon =
+            Number(
+                order.courier_lon
+            );
+
+        location = `
         <iframe
-        class="map"
-        src="https://www.openstreetmap.org/export/embed.html?bbox=${lon-.01}%2C${lat-.01}%2C${lon+.01}%2C${lat+.01}&layer=mapnik&marker=${lat}%2C${lon}">
-        </iframe>`;
+            class="map"
+            src="https://www.openstreetmap.org/export/embed.html?bbox=${lon-.01}%2C${lat-.01}%2C${lon+.01}%2C${lat+.01}&layer=mapnik&marker=${lat}%2C${lon}">
+        </iframe>
+        `;
     }
 
-    return`
+
+    return `
     <div class="item">
 
         <div class="itemTop">
@@ -693,21 +1238,50 @@ function adminOrder(order){
             <div>
 
                 <div class="itemTitle">
-                    #${order.id} — ${escapeHtml(order.title)}
+                    #${order.id}
+                    — ${escapeHtml(
+                        order.title
+                    )}
                 </div>
 
                 <div class="itemSub">
-                    👤 ${escapeHtml(order.customer_name||"Клиент")}<br>
-                    📱 ${escapeHtml(order.customer_phone||"—")}<br>
-                    📍 ${escapeHtml(order.address||"—")}<br>
-                    💰 $${Number(order.price||0).toFixed(2)}<br>
+
+                    👤 ${escapeHtml(
+                        order.customer_name ||
+                        "Клиент"
+                    )}
+
+                    <br>
+
+                    📱 ${escapeHtml(
+                        order.customer_phone ||
+                        "—"
+                    )}
+
+                    <br>
+
+                    📍 ${escapeHtml(
+                        order.address ||
+                        "—"
+                    )}
+
+                    <br>
+
+                    💰 $${Number(
+                        order.price || 0
+                    ).toFixed(2)}
+
+                    <br>
+
                     ${courier}
+
                 </div>
 
             </div>
 
             <span class="badge ${status.class}">
-                ${status.icon} ${status.text}
+                ${status.icon}
+                ${status.text}
             </span>
 
         </div>
@@ -717,41 +1291,77 @@ function adminOrder(order){
         <div class="itemActions">
 
             ${
-                !["closed","delivered"].includes(order.status)
-                ?`
-                <button class="secondary" onclick="assignOrder(${order.id})">
+                !["closed","delivered"]
+                .includes(order.status)
+
+                ? `
+                <button
+                    class="secondary"
+                    onclick="assignOrder(${order.id})"
+                >
                     🛵 Назначить
-                </button>`
-                :""
+                </button>
+                `
+                : ""
             }
 
             ${
-                order.status!=="closed"
-                ?`
-                <button class="danger" onclick="closeOrder(${order.id})">
+                order.status !== "closed"
+
+                ? `
+                <button
+                    class="danger"
+                    onclick="closeOrder(${order.id})"
+                >
                     ✕ Закрыть
-                </button>`
-                :`
+                </button>
+                `
+
+                : `
                 <span class="badge red">
                     Удалится через 5 минут
-                </span>`
+                </span>
+                `
             }
 
         </div>
 
-    </div>`;
+    </div>
+    `;
 }
 
-/* =========================
+
+/* =========================================================
    CREATE ORDER
-========================= */
+========================================================= */
 
 async function createOrder(){
 
-    const phone=document.getElementById("orderPhone")?.value.trim();
-    const title=document.getElementById("orderTitle")?.value.trim();
-    const address=document.getElementById("orderAddress")?.value.trim();
-    const price=Number(document.getElementById("orderPrice")?.value||0);
+    const phone =
+        document
+        .getElementById("orderPhone")
+        ?.value
+        .trim();
+
+    const title =
+        document
+        .getElementById("orderTitle")
+        ?.value
+        .trim();
+
+    const address =
+        document
+        .getElementById("orderAddress")
+        ?.value
+        .trim();
+
+    const price =
+        Number(
+            document
+            .getElementById("orderPrice")
+            ?.value || 0
+        );
+
 
     if(!phone){
         toast("Введите номер клиента");
@@ -768,6 +1378,7 @@ async function createOrder(){
         return;
     }
 
+
     try{
 
         await api(
@@ -783,52 +1394,86 @@ async function createOrder(){
             }
         );
 
-        toast("✅ Заказ создан");
+        toast(
+            "✅ Заказ создан"
+        );
 
         await loadAdminOrders();
         await loadAdminStats();
 
     }catch(error){
 
-        toast(formatError(error.message));
+        toast(
+            formatError(
+                error.message
+            )
+        );
     }
 }
 
-/* =========================
+
+/* =========================================================
    ASSIGN
-========================= */
+========================================================= */
 
 async function assignOrder(orderId){
 
     try{
 
-        const couriers=await api("/api/admin/couriers");
+        const couriers =
+            await api(
+                "/api/admin/couriers"
+            );
 
-        const available=couriers.filter(
-            c=>c.active&&c.approved
-        );
+        const available =
+            couriers.filter(
+                c =>
+                    c.active &&
+                    c.approved
+            );
 
         if(!available.length){
-            toast("Нет доступных одобренных курьеров");
+
+            toast(
+                "Нет доступных одобренных курьеров"
+            );
+
             return;
         }
 
-        const text=available
-            .map(c=>`${c.id}: ${c.name} — ${c.phone}`)
+
+        const text =
+            available
+            .map(
+                c =>
+                    `${c.id}: ${c.name} — ${c.phone}`
+            )
             .join("\n");
 
-        const answer=prompt(
-            "Введите ID курьера:\n\n"+text
-        );
 
-        if(!answer)return;
+        const answer =
+            prompt(
+                "Введите ID курьера:\n\n" +
+                text
+            );
 
-        const courierId=Number(answer);
+        if(!answer)
+            return;
+
+
+        const courierId =
+            Number(answer);
+
 
         if(!Number.isInteger(courierId)){
-            toast("Неверный ID курьера");
+
+            toast(
+                "Неверный ID курьера"
+            );
+
             return;
         }
+
 
         await api(
             `/api/admin/orders/${orderId}/assign`,
@@ -840,24 +1485,35 @@ async function assignOrder(orderId){
             }
         );
 
-        toast("🛵 Курьер назначен");
+
+        toast(
+            "🛵 Курьер назначен"
+        );
 
         await loadAdminOrders();
 
     }catch(error){
 
-        toast(formatError(error.message));
+        toast(
+            formatError(
+                error.message
+            )
+        );
     }
 }
 
-/* =========================
+
+/* =========================================================
    CLOSE
-========================= */
+========================================================= */
 
 async function closeOrder(orderId){
 
-    if(!confirm("Закрыть этот заказ?"))
+    if(!confirm(
+        "Закрыть этот заказ?"
+    ))
         return;
+
 
     try{
 
@@ -868,39 +1524,64 @@ async function closeOrder(orderId){
             }
         );
 
-        toast("✅ Заказ закрыт");
+        toast(
+            "✅ Заказ закрыт"
+        );
 
         await loadAdminOrders();
         await loadAdminStats();
 
     }catch(error){
 
-        toast(formatError(error.message));
+        toast(
+            formatError(
+                error.message
+            )
+        );
     }
 }
 
-/* =========================
+
+/* =========================================================
    CUSTOMERS
-========================= */
+========================================================= */
 
 async function loadAdminCustomers(){
 
-    const area=document.getElementById("adminCustomersArea");
+    const area =
+        document.getElementById(
+            "adminCustomersArea"
+        );
 
-    if(!area)return;
+    if(!area)
+        return;
 
-    area.innerHTML=`
-    <div class="sectionTitle">Клиенты</div>
+
+    area.innerHTML = `
+
+    <div class="sectionTitle">
+        Клиенты
+    </div>
 
     <div class="item">
 
         <div class="form">
 
-            <input id="newCustomerName" placeholder="Имя клиента">
+            <input
+                id="newCustomerName"
+                placeholder="Имя клиента"
+            >
 
-            <input id="newCustomerPhone" type="tel" placeholder="Номер телефона">
+            <input
+                id="newCustomerPhone"
+                type="tel"
+                placeholder="Номер телефона"
+            >
 
-            <button class="primary" onclick="createCustomer()">
+            <button
+                class="primary"
+                onclick="createCustomer()"
+            >
                 Создать клиента
             </button>
 
@@ -908,100 +1589,179 @@ async function loadAdminCustomers(){
 
     </div>
 
-    <div id="customersList" style="margin-top:15px">
+    <div
+        id="customersList"
+        style="margin-top:15px"
+    >
         Загрузка...
-    </div>`;
+    </div>
+    `;
+
 
     try{
 
-        const list=await api("/api/admin/customers");
+        const list =
+            await api(
+                "/api/admin/customers"
+            );
 
-        const listArea=document.getElementById("customersList");
+        const listArea =
+            document.getElementById(
+                "customersList"
+            );
 
-        if(!listArea)return;
+        if(!listArea)
+            return;
 
-        listArea.innerHTML=list.length
-        ?list.map(c=>`
-            <div class="item">
 
-                <div class="itemTitle">
-                    ${escapeHtml(c.name)}
+        listArea.innerHTML =
+            list.length
+
+            ? list.map(
+                c => `
+                <div class="item">
+
+                    <div class="itemTitle">
+                        ${escapeHtml(c.name)}
+                    </div>
+
+                    <div class="itemSub">
+                        📱 ${escapeHtml(c.phone)}
+                        <br>
+                        ${
+                            c.active
+                            ? "🟢 Активен"
+                            : "🔴 Неактивен"
+                        }
+                    </div>
+
                 </div>
+                `
+            ).join("")
 
-                <div class="itemSub">
-                    📱 ${escapeHtml(c.phone)}
-                    <br>
-                    ${c.active?"🟢 Активен":"🔴 Неактивен"}
+            : `
+                <div class="empty glass">
+                    Клиентов пока нет
                 </div>
-
-            </div>
-        `).join("")
-        :`<div class="empty glass">Клиентов пока нет</div>`;
+            `;
 
     }catch(error){
 
-        toast(formatError(error.message));
+        toast(
+            formatError(
+                error.message
+            )
+        );
     }
 }
 
+
 async function createCustomer(){
 
-    const name=document.getElementById("newCustomerName")?.value.trim();
-    const phone=document.getElementById("newCustomerPhone")?.value.trim();
+    const name =
+        document
+        .getElementById(
+            "newCustomerName"
+        )
+        ?.value
+        .trim();
 
-    if(!name||!phone){
-        toast("Заполните имя и номер");
+    const phone =
+        document
+        .getElementById(
+            "newCustomerPhone"
+        )
+        ?.value
+        .trim();
+
+
+    if(!name || !phone){
+
+        toast(
+            "Заполните имя и номер"
+        );
+
         return;
     }
 
+
     try{
 
-        const data=await api(
-            "/api/admin/customers",
-            {
-                method:"POST",
-                body:JSON.stringify({name,phone})
-            }
-        );
+        const data =
+            await api(
+                "/api/admin/customers",
+                {
+                    method:"POST",
+                    body:JSON.stringify({
+                        name,
+                        phone
+                    })
+                }
+            );
+
 
         alert(
-            `Клиент создан!\n\n`+
-            `Имя: ${data.name}\n`+
-            `Телефон: ${data.phone}\n`+
+            `Клиент создан!\n\n` +
+            `Имя: ${data.name}\n` +
+            `Телефон: ${data.phone}\n` +
             `PIN: ${data.pin}`
         );
+
 
         await loadAdminCustomers();
         await loadAdminStats();
 
     }catch(error){
 
-        toast(formatError(error.message));
+        toast(
+            formatError(
+                error.message
+            )
+        );
     }
 }
 
-/* =========================
+
+/* =========================================================
    COURIERS
-========================= */
+========================================================= */
 
 async function loadAdminCouriers(){
 
-    const area=document.getElementById("adminCouriersArea");
+    const area =
+        document.getElementById(
+            "adminCouriersArea"
+        );
 
-    if(!area)return;
+    if(!area)
+        return;
 
-    area.innerHTML=`
-    <div class="sectionTitle">Курьеры</div>
+
+    area.innerHTML = `
+
+    <div class="sectionTitle">
+        Курьеры
+    </div>
 
     <div class="item">
 
         <div class="form">
 
-            <input id="newCourierName" placeholder="Имя курьера">
+            <input
+                id="newCourierName"
+                placeholder="Имя курьера"
+            >
 
-            <input id="newCourierPhone" type="tel" placeholder="Номер телефона">
+            <input
+                id="newCourierPhone"
+                type="tel"
+                placeholder="Номер телефона"
+            >
 
-            <button class="primary" onclick="createCourier()">
+            <button
+                class="primary"
+                onclick="createCourier()"
+            >
                 Создать курьера
             </button>
 
@@ -1009,117 +1769,215 @@ async function loadAdminCouriers(){
 
     </div>
 
-    <div id="couriersList" style="margin-top:15px">
+    <div
+        id="couriersList"
+        style="margin-top:15px"
+    >
         Загрузка...
-    </div>`;
+    </div>
+    `;
+
 
     try{
 
-        const list=await api("/api/admin/couriers");
+        const list =
+            await api(
+                "/api/admin/couriers"
+            );
 
-        const listArea=document.getElementById("couriersList");
+        const listArea =
+            document.getElementById(
+                "couriersList"
+            );
 
-        if(!listArea)return;
+        if(!listArea)
+            return;
 
-        listArea.innerHTML=list.length
-        ?list.map(c=>`
 
-            <div class="item">
+        listArea.innerHTML =
+            list.length
 
-                <div class="itemTop">
+            ? list.map(
+                c => `
 
-                    <div>
+                <div class="item">
 
-                        <div class="itemTitle">
-                            ${escapeHtml(c.name)}
+                    <div class="itemTop">
+
+                        <div>
+
+                            <div class="itemTitle">
+                                ${escapeHtml(c.name)}
+                            </div>
+
+                            <div class="itemSub">
+
+                                📱 ${escapeHtml(c.phone)}
+
+                                <br>
+
+                                ${
+                                    c.approved
+                                    ? "🟢 Одобрен"
+                                    : "🟡 Ожидает одобрения"
+                                }
+
+                                <br>
+
+                                ${
+                                    c.online
+                                    ? "🟢 Онлайн"
+                                    : "⚫ Офлайн"
+                                }
+
+                                <br>
+
+                                ${
+                                    c.active
+                                    ? "Активен"
+                                    : "Уволен"
+                                }
+
+                            </div>
+
                         </div>
 
-                        <div class="itemSub">
-                            📱 ${escapeHtml(c.phone)}
-                            <br>
-                            ${c.approved?"🟢 Одобрен":"🟡 Ожидает одобрения"}
-                            <br>
-                            ${c.online?"🟢 Онлайн":"⚫ Офлайн"}
-                            <br>
-                            ${c.active?"Активен":"Уволен"}
-                        </div>
+                        <span class="badge ${
+                            c.online
+                            ? "green"
+                            : "red"
+                        }">
+
+                            ${
+                                c.online
+                                ? "ONLINE"
+                                : "OFFLINE"
+                            }
+
+                        </span>
 
                     </div>
 
-                    <span class="badge ${c.online?"green":"red"}">
-                        ${c.online?"ONLINE":"OFFLINE"}
-                    </span>
+                    <div class="itemActions">
+
+                        ${
+                            !c.approved && c.active
+
+                            ? `
+                            <button
+                                class="success"
+                                onclick="approveCourier(${c.id})"
+                            >
+                                ✓ Одобрить
+                            </button>
+                            `
+
+                            : ""
+                        }
+
+                        ${
+                            c.active
+
+                            ? `
+                            <button
+                                class="danger"
+                                onclick="fireCourier(${c.id})"
+                            >
+                                Уволить
+                            </button>
+                            `
+
+                            : ""
+                        }
+
+                    </div>
 
                 </div>
+                `
+            ).join("")
 
-                <div class="itemActions">
-
-                    ${
-                        !c.approved&&c.active
-                        ?`
-                        <button class="success" onclick="approveCourier(${c.id})">
-                            ✓ Одобрить
-                        </button>`
-                        :""
-                    }
-
-                    ${
-                        c.active
-                        ?`
-                        <button class="danger" onclick="fireCourier(${c.id})">
-                            Уволить
-                        </button>`
-                        :""
-                    }
-
+            : `
+                <div class="empty glass">
+                    Курьеров пока нет
                 </div>
-
-            </div>
-
-        `).join("")
-        :`<div class="empty glass">Курьеров пока нет</div>`;
+            `;
 
     }catch(error){
 
-        toast(formatError(error.message));
+        toast(
+            formatError(
+                error.message
+            )
+        );
     }
 }
 
+
 async function createCourier(){
 
-    const name=document.getElementById("newCourierName")?.value.trim();
-    const phone=document.getElementById("newCourierPhone")?.value.trim();
+    const name =
+        document
+        .getElementById(
+            "newCourierName"
+        )
+        ?.value
+        .trim();
 
-    if(!name||!phone){
-        toast("Заполните имя и номер");
+    const phone =
+        document
+        .getElementById(
+            "newCourierPhone"
+        )
+        ?.value
+        .trim();
+
+
+    if(!name || !phone){
+
+        toast(
+            "Заполните имя и номер"
+        );
+
         return;
     }
 
+
     try{
 
-        const data=await api(
-            "/api/admin/couriers",
-            {
-                method:"POST",
-                body:JSON.stringify({name,phone})
-            }
-        );
+        const data =
+            await api(
+                "/api/admin/couriers",
+                {
+                    method:"POST",
+                    body:JSON.stringify({
+                        name,
+                        phone
+                    })
+                }
+            );
+
 
         alert(
-            `Курьер создан!\n\n`+
-            `Имя: ${data.name}\n`+
-            `Телефон: ${data.phone}\n`+
-            `PIN: ${data.pin}\n\n`+
+            `Курьер создан!\n\n` +
+            `Имя: ${data.name}\n` +
+            `Телефон: ${data.phone}\n` +
+            `PIN: ${data.pin}\n\n` +
             `После этого его нужно одобрить.`
         );
+
 
         await loadAdminCouriers();
 
     }catch(error){
 
-        toast(formatError(error.message));
+        toast(
+            formatError(
+                error.message
+            )
+        );
     }
 }
+
 
 async function approveCourier(id){
 
@@ -1127,148 +1985,241 @@ async function approveCourier(id){
 
         await api(
             `/api/admin/couriers/${id}/approve`,
-            {method:"POST"}
+            {
+                method:"POST"
+            }
         );
 
-        toast("✅ Курьер одобрен");
+        toast(
+            "✅ Курьер одобрен"
+        );
 
         await loadAdminCouriers();
         await loadAdminStats();
 
     }catch(error){
 
-        toast(formatError(error.message));
+        toast(
+            formatError(
+                error.message
+            )
+        );
     }
 }
 
+
 async function fireCourier(id){
 
-    if(!confirm("Уволить этого курьера?"))
+    if(!confirm(
+        "Уволить этого курьера?"
+    ))
         return;
+
 
     try{
 
         await api(
             `/api/admin/couriers/${id}/fire`,
-            {method:"POST"}
+            {
+                method:"POST"
+            }
         );
 
-        toast("Курьер деактивирован");
+        toast(
+            "Курьер деактивирован"
+        );
 
         await loadAdminCouriers();
         await loadAdminOrders();
 
     }catch(error){
 
-        toast(formatError(error.message));
+        toast(
+            formatError(
+                error.message
+            )
+        );
     }
 }
 
-/* =========================
-   STATS
-========================= */
+
+/* =========================================================
+   ADMIN STATS
+========================================================= */
 
 async function loadAdminStatsPage(){
 
-    const area=document.getElementById("adminStatsArea");
+    const area =
+        document.getElementById(
+            "adminStatsArea"
+        );
 
-    if(!area)return;
+    if(!area)
+        return;
+
 
     try{
 
-        const data=await api("/api/admin/stats");
+        const data =
+            await api(
+                "/api/admin/stats"
+            );
 
-        area.innerHTML=`
-        <div class="sectionTitle">Статистика</div>
+
+        area.innerHTML = `
+
+        <div class="sectionTitle">
+            Статистика
+        </div>
 
         <div class="grid">
 
             <div class="stat glass">
-                <div class="statLabel">Активные заказы</div>
-                <div class="statValue">${data.active_orders||0}</div>
+                <div class="statLabel">
+                    Активные заказы
+                </div>
+                <div class="statValue">
+                    ${data.active_orders || 0}
+                </div>
             </div>
 
             <div class="stat glass">
-                <div class="statLabel">Доставлено</div>
-                <div class="statValue">${data.delivered||0}</div>
+                <div class="statLabel">
+                    Доставлено
+                </div>
+                <div class="statValue">
+                    ${data.delivered || 0}
+                </div>
             </div>
 
             <div class="stat glass">
-                <div class="statLabel">Закрыто</div>
-                <div class="statValue">${data.closed||0}</div>
+                <div class="statLabel">
+                    Закрыто
+                </div>
+                <div class="statValue">
+                    ${data.closed || 0}
+                </div>
             </div>
 
             <div class="stat glass">
-                <div class="statLabel">Выручка</div>
-                <div class="statValue">$${Number(data.revenue||0).toFixed(2)}</div>
+                <div class="statLabel">
+                    Выручка
+                </div>
+                <div class="statValue">
+                    $${Number(
+                        data.revenue || 0
+                    ).toFixed(2)}
+                </div>
             </div>
 
-        </div>`;
+        </div>
+        `;
 
     }catch(error){
 
-        area.innerHTML=`
-        <div class="empty">
-            ${escapeHtml(formatError(error.message))}
-        </div>`;
+        area.innerHTML = `
+            <div class="empty">
+                ❌ ${escapeHtml(
+                    formatError(
+                        error.message
+                    )
+                )}
+            </div>
+        `;
     }
 }
 
-/* =========================
+
+/* =========================================================
    CUSTOMER
-========================= */
+========================================================= */
 
 async function loadCustomer(){
 
-    const area=document.getElementById("customerOrdersArea");
+    const area =
+        document.getElementById(
+            "customerOrdersArea"
+        );
 
-    if(!area)return;
+    if(!area)
+        return;
+
 
     try{
 
-        const orders=await api("/api/customer/orders");
+        const orders =
+            await api(
+                "/api/customer/orders"
+            );
 
-        area.innerHTML=`
-        <div class="sectionTitle">Мои заказы</div>
+
+        area.innerHTML = `
+
+        <div class="sectionTitle">
+            Мои заказы
+        </div>
 
         ${
             orders.length
-            ?orders.map(customerOrder).join("")
-            :`<div class="empty">У вас пока нет заказов.</div>`
-        }`;
+
+            ? orders
+                .map(customerOrder)
+                .join("")
+
+            : `
+                <div class="empty">
+                    У вас пока нет заказов.
+                </div>
+            `
+        }
+        `;
 
     }catch(error){
 
-        area.innerHTML=`
-        <div class="empty">
-            ❌ ${escapeHtml(formatError(error.message))}
-        </div>`;
+        area.innerHTML = `
+            <div class="empty">
+                ❌ ${escapeHtml(
+                    formatError(
+                        error.message
+                    )
+                )}
+            </div>
+        `;
     }
 }
 
+
 function customerOrder(order){
 
-    const status=statusInfo(order.status);
+    const status =
+        statusInfo(order.status);
 
-    let map="";
+    let map = "";
+
 
     if(
-        order.lat!==null&&
-        order.lon!==null&&
-        order.status==="delivering"
+        order.lat !== null &&
+        order.lon !== null &&
+        order.status === "delivering"
     ){
 
-        const lat=Number(order.lat);
-        const lon=Number(order.lon);
+        const lat =
+            Number(order.lat);
 
-        map=`
+        const lon =
+            Number(order.lon);
+
+
+        map = `
         <iframe
-        class="map"
-        src="https://www.openstreetmap.org/export/embed.html?bbox=${lon-.01}%2C${lat-.01}%2C${lon+.01}%2C${lat+.01}&layer=mapnik&marker=${lat}%2C${lon}">
-        </iframe>`;
+            class="map"
+            src="https://www.openstreetmap.org/export/embed.html?bbox=${lon-.01}%2C${lat-.01}%2C${lon+.01}%2C${lat+.01}&layer=mapnik&marker=${lat}%2C${lon}">
+        </iframe>
+        `;
     }
 
-    return`
+
+    return `
     <div class="item">
 
         <div class="itemTop">
@@ -1276,18 +2227,27 @@ function customerOrder(order){
             <div>
 
                 <div class="itemTitle">
-                    #${order.id} — ${escapeHtml(order.title)}
+                    #${order.id}
+                    — ${escapeHtml(
+                        order.title
+                    )}
                 </div>
 
                 <div class="itemSub">
-                    📍 ${escapeHtml(order.address||"")}<br>
-                    💰 $${Number(order.price||0).toFixed(2)}
+                    📍 ${escapeHtml(
+                        order.address || ""
+                    )}
+                    <br>
+                    💰 $${Number(
+                        order.price || 0
+                    ).toFixed(2)}
                 </div>
 
             </div>
 
             <span class="badge ${status.class}">
-                ${status.icon} ${status.text}
+                ${status.icon}
+                ${status.text}
             </span>
 
         </div>
@@ -1295,18 +2255,28 @@ function customerOrder(order){
         ${map}
 
         ${
-            order.status==="delivered"
-            ?`
+            order.status === "delivered"
+
+            ? `
             <div class="itemActions">
-                <button class="primary" onclick="confirmReceipt(${order.id})">
+
+                <button
+                    class="primary"
+                    onclick="confirmReceipt(${order.id})"
+                >
                     ✅ Подтвердить получение
                 </button>
-            </div>`
-            :""
+
+            </div>
+            `
+
+            : ""
         }
 
-    </div>`;
+    </div>
+    `;
 }
+
 
 async function confirmReceipt(id){
 
@@ -1314,62 +2284,101 @@ async function confirmReceipt(id){
 
         await api(
             `/api/customer/orders/${id}/confirm`,
-            {method:"POST"}
+            {
+                method:"POST"
+            }
         );
 
-        toast("✅ Получение подтверждено");
+        toast(
+            "✅ Получение подтверждено"
+        );
 
         await loadCustomer();
 
     }catch(error){
 
-        toast(formatError(error.message));
+        toast(
+            formatError(
+                error.message
+            )
+        );
     }
 }
 
-/* =========================
+
+/* =========================================================
    COURIER
-========================= */
+========================================================= */
 
 async function loadCourier(){
 
-    const data=await api("/api/courier/orders");
+    const data =
+        await api(
+            "/api/courier/orders"
+        );
 
-    courierOnline=!!data.online;
+    courierOnline =
+        !!data.online;
 
     updateCourierOnlineUI();
 
     renderCourierOrders(
         Array.isArray(data.orders)
-        ?data.orders
-        :[]
+        ? data.orders
+        : []
     );
 
-    if(courierOnline&&navigator.geolocation)
+    if(
+        courierOnline &&
+        navigator.geolocation
+    ){
         startLocationUpdates();
+    }
 }
+
 
 function renderCourierOrders(list){
 
-    const area=document.getElementById("courierOrdersArea");
+    const area =
+        document.getElementById(
+            "courierOrdersArea"
+        );
 
-    if(!area)return;
+    if(!area)
+        return;
 
-    area.innerHTML=`
-    <div class="sectionTitle">Мои доставки</div>
+
+    area.innerHTML = `
+
+    <div class="sectionTitle">
+        Мои доставки
+    </div>
 
     ${
         list.length
-        ?list.map(courierOrder).join("")
-        :`<div class="empty">Назначенных заказов пока нет.</div>`
-    }`;
+
+        ? list
+            .map(courierOrder)
+            .join("")
+
+        : `
+            <div class="empty">
+                Назначенных заказов пока нет.
+            </div>
+        `
+    }
+
+    `;
 }
+
 
 function courierOrder(order){
 
-    const status=statusInfo(order.status);
+    const status =
+        statusInfo(order.status);
 
-    return`
+
+    return `
     <div class="item">
 
         <div class="itemTop">
@@ -1377,57 +2386,103 @@ function courierOrder(order){
             <div>
 
                 <div class="itemTitle">
-                    #${order.id} — ${escapeHtml(order.title)}
+                    #${order.id}
+                    — ${escapeHtml(
+                        order.title
+                    )}
                 </div>
 
                 <div class="itemSub">
-                    👤 ${escapeHtml(order.customer_name||"")}<br>
-                    📱 ${escapeHtml(order.customer_phone||"")}<br>
-                    📍 ${escapeHtml(order.address||"")}<br>
-                    💰 $${Number(order.price||0).toFixed(2)}
+
+                    👤 ${escapeHtml(
+                        order.customer_name || ""
+                    )}
+
+                    <br>
+
+                    📱 ${escapeHtml(
+                        order.customer_phone || ""
+                    )}
+
+                    <br>
+
+                    📍 ${escapeHtml(
+                        order.address || ""
+                    )}
+
+                    <br>
+
+                    💰 $${Number(
+                        order.price || 0
+                    ).toFixed(2)}
+
                 </div>
 
             </div>
 
             <span class="badge ${status.class}">
-                ${status.icon} ${status.text}
+                ${status.icon}
+                ${status.text}
             </span>
 
         </div>
 
+
         <div class="itemActions">
 
             ${
-                order.status==="assigned"
-                ?`
-                <button class="success" onclick="courierAccept(${order.id})">
+                order.status === "assigned"
+
+                ? `
+                <button
+                    class="success"
+                    onclick="courierAccept(${order.id})"
+                >
                     ✓ Принять
-                </button>`
-                :""
+                </button>
+                `
+
+                : ""
             }
 
+
             ${
-                order.status==="accepted"
-                ?`
-                <button class="blue" onclick="courierStart(${order.id})">
+                order.status === "accepted"
+
+                ? `
+                <button
+                    class="blue"
+                    onclick="courierStart(${order.id})"
+                >
                     🚚 Начать доставку
-                </button>`
-                :""
+                </button>
+                `
+
+                : ""
             }
 
+
             ${
-                order.status==="delivering"
-                ?`
-                <button class="primary" onclick="courierComplete(${order.id})">
+                order.status === "delivering"
+
+                ? `
+                <button
+                    class="primary"
+                    onclick="courierComplete(${order.id})"
+                >
                     ✅ Доставлено
-                </button>`
-                :""
+                </button>
+                `
+
+                : ""
             }
 
         </div>
 
-    </div>`;
+    </div>
+    `;
 }
+
 
 async function toggleCourierOnline(){
 
@@ -1438,44 +2493,75 @@ async function toggleCourierOnline(){
             {
                 method:"POST",
                 body:JSON.stringify({
-                    online:!courierOnline
+                    online:
+                        !courierOnline
                 })
             }
         );
 
-        courierOnline=!courierOnline;
+        courierOnline =
+            !courierOnline;
 
         updateCourierOnlineUI();
 
-        if(courierOnline&&navigator.geolocation)
+        if(
+            courierOnline &&
+            navigator.geolocation
+        ){
             startLocationUpdates();
+        }
 
     }catch(error){
 
-        toast(formatError(error.message));
+        toast(
+            formatError(
+                error.message
+            )
+        );
     }
 }
+
 
 function updateCourierOnlineUI(){
 
-    const btn=document.getElementById("courierOnlineBtn");
-    const text=document.getElementById("courierOnlineText");
+    const btn =
+        document.getElementById(
+            "courierOnlineBtn"
+        );
 
-    if(!btn||!text)return;
+    const text =
+        document.getElementById(
+            "courierOnlineText"
+        );
+
+    if(!btn || !text)
+        return;
+
 
     if(courierOnline){
 
-        btn.textContent="Онлайн";
-        btn.className="switchBtn success";
-        text.textContent="Вы онлайн и готовы к доставкам";
+        btn.textContent =
+            "Онлайн";
+
+        btn.className =
+            "switchBtn success";
+
+        text.textContent =
+            "Вы онлайн и готовы к доставкам";
 
     }else{
 
-        btn.textContent="Офлайн";
-        btn.className="switchBtn danger";
-        text.textContent="Вы сейчас офлайн";
+        btn.textContent =
+            "Офлайн";
+
+        btn.className =
+            "switchBtn danger";
+
+        text.textContent =
+            "Вы сейчас офлайн";
     }
 }
+
 
 async function courierAccept(id){
 
@@ -1483,18 +2569,27 @@ async function courierAccept(id){
 
         await api(
             `/api/courier/orders/${id}/accept`,
-            {method:"POST"}
+            {
+                method:"POST"
+            }
         );
 
-        toast("Заказ принят");
+        toast(
+            "Заказ принят"
+        );
 
         await loadCourier();
 
     }catch(error){
 
-        toast(formatError(error.message));
+        toast(
+            formatError(
+                error.message
+            )
+        );
     }
 }
+
 
 async function courierStart(id){
 
@@ -1502,18 +2597,27 @@ async function courierStart(id){
 
         await api(
             `/api/courier/orders/${id}/start`,
-            {method:"POST"}
+            {
+                method:"POST"
+            }
         );
 
-        toast("🚚 Доставка начата");
+        toast(
+            "🚚 Доставка начата"
+        );
 
         await loadCourier();
 
     }catch(error){
 
-        toast(formatError(error.message));
+        toast(
+            formatError(
+                error.message
+            )
+        );
     }
 }
+
 
 async function courierComplete(id){
 
@@ -1521,34 +2625,46 @@ async function courierComplete(id){
 
         await api(
             `/api/courier/orders/${id}/complete`,
-            {method:"POST"}
+            {
+                method:"POST"
+            }
         );
 
-        toast("✅ Заказ отмечен как доставленный");
+        toast(
+            "✅ Заказ отмечен как доставленный"
+        );
 
         await loadCourier();
 
     }catch(error){
 
-        toast(formatError(error.message));
+        toast(
+            formatError(
+                error.message
+            )
+        );
     }
 }
 
-/* =========================
+
+/* =========================================================
    GEOLOCATION
-========================= */
+========================================================= */
 
 function startLocationUpdates(){
 
-    if(!navigator.geolocation)return;
+    if(!navigator.geolocation)
+        return;
 
     if(geoTimer)
         clearInterval(geoTimer);
 
-    const sendLocation=()=>{
+
+    const sendLocation = () => {
 
         navigator.geolocation.getCurrentPosition(
-            async position=>{
+
+            async position => {
 
                 try{
 
@@ -1557,18 +2673,25 @@ function startLocationUpdates(){
                         {
                             method:"POST",
                             body:JSON.stringify({
-                                lat:position.coords.latitude,
-                                lon:position.coords.longitude
+                                lat:
+                                    position.coords.latitude,
+                                lon:
+                                    position.coords.longitude
                             })
                         }
                     );
 
                 }catch(error){
 
-                    console.log("Location:",error.message);
+                    console.log(
+                        "Location:",
+                        error.message
+                    );
                 }
             },
-            ()=>{},
+
+            () => {},
+
             {
                 enableHighAccuracy:true,
                 timeout:10000,
@@ -1577,110 +2700,171 @@ function startLocationUpdates(){
         );
     };
 
+
     sendLocation();
 
-    geoTimer=setInterval(
-        sendLocation,
-        15000
-    );
+    geoTimer =
+        setInterval(
+            sendLocation,
+            15000
+        );
 }
 
-/* =========================
+
+/* =========================================================
    STATUS
-========================= */
+========================================================= */
 
 function statusInfo(status){
 
-    const map={
-        new:{text:"Новый",icon:"🆕",class:"orange"},
-        assigned:{text:"Назначен",icon:"🛵",class:"orange"},
-        accepted:{text:"Принят",icon:"✓",class:"blue"},
-        delivering:{text:"Доставляется",icon:"🚚",class:"blue"},
-        delivered:{text:"Доставлен",icon:"✅",class:"green"},
-        closed:{text:"Закрыт",icon:"✕",class:"red"}
+    const map = {
+
+        new:{
+            text:"Новый",
+            icon:"🆕",
+            class:"orange"
+        },
+
+        assigned:{
+            text:"Назначен",
+            icon:"🛵",
+            class:"orange"
+        },
+
+        accepted:{
+            text:"Принят",
+            icon:"✓",
+            class:"blue"
+        },
+
+        delivering:{
+            text:"Доставляется",
+            icon:"🚚",
+            class:"blue"
+        },
+
+        delivered:{
+            text:"Доставлен",
+            icon:"✅",
+            class:"green"
+        },
+
+        closed:{
+            text:"Закрыт",
+            icon:"✕",
+            class:"red"
+        }
+
     };
 
-    return map[status]||{
-        text:status||"Неизвестно",
-        icon:"•",
-        class:""
-    };
+
+    return (
+        map[status] ||
+        {
+            text:
+                status ||
+                "Неизвестно",
+            icon:"•",
+            class:""
+        }
+    );
 }
 
-/* =========================
+
+/* =========================================================
    ESCAPE
-========================= */
+========================================================= */
 
 function escapeHtml(value){
 
-    return String(value??"")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
+    return String(
+        value ?? ""
+    )
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 }
 
-/* =========================
+
+/* =========================================================
    GAME
-========================= */
+========================================================= */
 
 function tapGame(){
 
     gameScore++;
 
-    document.getElementById("gameScore").textContent=gameScore;
+    document
+        .getElementById(
+            "gameScore"
+        )
+        .textContent =
+            gameScore;
 }
 
-/* =========================
+
+/* =========================================================
    AUTO REFRESH
-========================= */
+========================================================= */
 
-setInterval(async()=>{
+setInterval(
+    async () => {
 
-    if(!token)return;
+        if(!token)
+            return;
 
-    try{
+        try{
 
-        if(role==="admin"){
+            if(role === "admin"){
 
-            await loadAdminStats();
+                await loadAdminStats();
 
-            const area=document.getElementById("adminOrdersArea");
+                const area =
+                    document.getElementById(
+                        "adminOrdersArea"
+                    );
 
-            if(
-                area &&
-                !area.classList.contains("hidden")
-            ){
-                await loadAdminOrders();
+                if(
+                    area &&
+                    !area.classList.contains(
+                        "hidden"
+                    )
+                ){
+
+                    await loadAdminOrders();
+                }
+
+            }else if(role === "customer"){
+
+                await loadCustomer();
+
+            }else if(role === "courier"){
+
+                await loadCourier();
             }
 
-        }else if(role==="customer"){
+        }catch(error){
 
-            await loadCustomer();
-
-        }else if(role==="courier"){
-
-            await loadCourier();
+            console.log(
+                "Auto refresh:",
+                error.message
+            );
         }
 
-    }catch(error){
+    },
+    15000
+);
 
-        console.log(
-            "Auto refresh:",
-            error.message
-        );
-    }
 
-},15000);
-
-/* =========================
+/* =========================================================
    START
-========================= */
+========================================================= */
 
 boot();
 
 </script>
 
 </body>
-      </html>
+   </html>
