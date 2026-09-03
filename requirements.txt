@@ -1,4 +1,4 @@
 fastapi
-uvicorn[standard]
-python-telegram-bot>=22,<23
+uvicorn
+python-telegram-bot
 python-multipart
