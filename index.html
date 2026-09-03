@@ -1,2870 +1,836 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-
 <title>RESTARAN</title>
-
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
 <style>
-:root{
---bg:#0b0d12;--text:#f7f8fb;--muted:#8f98a8;
---accent:#ffb347;--accent2:#ff7a45;--green:#35d58a;
---red:#ff5c6c;--blue:#4da3ff;--border:rgba(255,255,255,.08);
---shadow:0 20px 60px rgba(0,0,0,.35)
+*{box-sizing:border-box}
+body{
+ margin:0;
+ background:#08090d;
+ color:#fff;
+ font-family:Inter,Arial,sans-serif;
+ min-height:100vh;
 }
-
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-
-html,body{
-margin:0;min-height:100%;
-background:
-radial-gradient(circle at 10% 0%,rgba(255,179,71,.11),transparent 30%),
-radial-gradient(circle at 90% 10%,rgba(255,122,69,.08),transparent 30%),
-var(--bg);
-color:var(--text);
-font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+button,input{
+ font:inherit;
 }
-
-body{padding-bottom:30px}
-button,input{font:inherit}
-button{border:0;cursor:pointer}
-
-.app{width:min(1100px,100%);margin:auto;padding:16px}
-
-.glass{
-background:linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.025));
-border:1px solid var(--border);
-box-shadow:var(--shadow);
-backdrop-filter:blur(22px);
--webkit-backdrop-filter:blur(22px)
+button{
+ border:0;
+ cursor:pointer;
 }
-
-.topbar{
-position:sticky;top:8px;z-index:20;
-display:flex;justify-content:space-between;align-items:center;
-padding:15px 17px;border-radius:24px;margin-bottom:16px
+#app{
+ max-width:650px;
+ margin:auto;
+ min-height:100vh;
+ padding:18px;
 }
-
-.logo{display:flex;align-items:center;gap:11px;font-size:20px;font-weight:900}
-
-.logoIcon{
-width:40px;height:40px;border-radius:14px;
-display:grid;place-items:center;
-background:linear-gradient(135deg,var(--accent),var(--accent2))
+.card{
+ background:#11131a;
+ border:1px solid #252936;
+ border-radius:20px;
+ padding:16px;
+ margin-bottom:12px;
+ box-shadow:0 12px 40px #0005;
 }
-
-.userPill{color:var(--muted);font-size:13px;text-align:right}
-
-.hero{padding:24px;border-radius:30px;margin-bottom:16px;position:relative;overflow:hidden}
-.hero h1{margin:0 0 7px;font-size:30px}
-.hero p{margin:0;color:var(--muted)}
-
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-@media(max-width:650px){.grid{grid-template-columns:1fr}}
-
-.stat{padding:18px;border-radius:22px}
-.statLabel{color:var(--muted);font-size:13px}
-.statValue{margin-top:7px;font-size:28px;font-weight:900}
-
-.section{margin-top:16px;padding:18px;border-radius:26px}
-.sectionTitle{font-size:18px;font-weight:900;margin-bottom:14px}
-.form{display:grid;gap:10px}
-
+h1,h2,h3,p{margin-top:0}
 input{
-width:100%;border:1px solid var(--border);outline:0;
-border-radius:17px;background:rgba(255,255,255,.055);
-color:var(--text);padding:14px 15px
+ width:100%;
+ background:#0b0d12;
+ color:#fff;
+ border:1px solid #292d38;
+ border-radius:14px;
+ padding:14px;
+ outline:none;
+ margin:6px 0;
 }
-
-.primary{
-padding:14px 17px;border-radius:17px;color:#16100a;
-font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2))
+input:focus{
+ border-color:#6d72ff;
 }
-
-.secondary{
-padding:12px 14px;border-radius:15px;color:var(--text);
-background:rgba(255,255,255,.07);border:1px solid var(--border);
-font-weight:800
+.btn{
+ width:100%;
+ padding:14px;
+ border-radius:14px;
+ background:#6366f1;
+ color:#fff;
+ font-weight:700;
+ margin-top:8px;
 }
-
-.success{background:rgba(53,213,138,.12);color:#5ce5a0;padding:12px 14px;border-radius:15px}
-.danger{background:rgba(255,92,108,.12);color:#ff7180;padding:12px 14px;border-radius:15px}
-.blue{background:rgba(77,163,255,.12);color:#68b2ff;padding:12px 14px;border-radius:15px}
-
-.item{
-padding:16px;border-radius:20px;background:rgba(255,255,255,.035);
-border:1px solid var(--border);margin-bottom:10px
+.btn.red{background:#dc3545}
+.btn.green{background:#19a974}
+.btn.gray{background:#252936}
+.row{
+ display:flex;
+ gap:8px;
 }
-
-.itemTop{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
-.itemTitle{font-size:16px;font-weight:900}
-.itemSub{color:var(--muted);font-size:13px;line-height:1.55;margin-top:6px}
-.itemActions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-
-.badge{
-display:inline-flex;align-items:center;gap:5px;padding:6px 9px;
-border-radius:999px;font-size:11px;font-weight:900;
-background:rgba(255,255,255,.07)
-}
-
-.badge.green{color:#63e9a4;background:rgba(53,213,138,.1)}
-.badge.orange{color:#ffc267;background:rgba(255,179,71,.1)}
-.badge.red{color:#ff7583;background:rgba(255,92,108,.1)}
-.badge.blue{color:#6ab5ff;background:rgba(77,163,255,.1)}
-
-.empty{padding:25px;border-radius:18px;text-align:center;color:var(--muted)}
-
-.login{min-height:90vh;display:grid;place-items:center}
-.loginCard{width:min(430px,100%);padding:25px;border-radius:30px}
-.loginLogo{
-width:65px;height:65px;border-radius:22px;display:grid;
-place-items:center;font-size:30px;
-background:linear-gradient(135deg,var(--accent),var(--accent2));
-margin-bottom:18px
-}
-.loginCard h1{margin:0;font-size:28px}
-.loginCard p{color:var(--muted);line-height:1.5}
-
+.row>*{flex:1}
 .hidden{display:none!important}
-
+.title{
+ font-size:28px;
+ font-weight:900;
+ margin-bottom:18px;
+}
+.small{
+ color:#9ca3af;
+ font-size:13px;
+}
+.stat{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:8px;
+}
+.statBox{
+ background:#181b24;
+ border-radius:16px;
+ padding:15px;
+}
+.statBox b{
+ display:block;
+ font-size:25px;
+ margin-top:5px;
+}
 .tabs{
-display:flex;gap:7px;overflow-x:auto;padding:4px;margin-bottom:15px
+ display:flex;
+ gap:6px;
+ overflow:auto;
+ margin-bottom:12px;
 }
-
 .tab{
-white-space:nowrap;padding:11px 14px;border-radius:14px;
-color:var(--muted);background:rgba(255,255,255,.04);
-border:1px solid transparent;font-weight:800
+ white-space:nowrap;
+ background:#181b24;
+ color:#aaa;
+ padding:11px 14px;
+ border-radius:12px;
 }
-
 .tab.active{
-color:var(--text);border-color:var(--border);
-background:rgba(255,255,255,.09)
+ background:#6366f1;
+ color:#fff;
 }
-
-.map{width:100%;height:220px;border:0;border-radius:18px;margin-top:12px}
-
-.toast{
-position:fixed;left:50%;bottom:25px;
-transform:translateX(-50%) translateY(20px);
-z-index:100;min-width:240px;max-width:90%;
-padding:13px 16px;border-radius:16px;background:#202632;
-border:1px solid var(--border);box-shadow:var(--shadow);
-opacity:0;pointer-events:none;transition:.25s;
-text-align:center;font-weight:700
+.item{
+ background:#181b24;
+ border-radius:16px;
+ padding:14px;
+ margin:8px 0;
 }
-
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-.switch{display:flex;align-items:center;justify-content:space-between;gap:15px}
-.switchBtn{min-width:100px;padding:11px 14px;border-radius:15px;font-weight:900}
-
-.game{text-align:center}
-.gameScore{font-size:35px;font-weight:900;margin:15px 0}
-
-.tap{
-width:130px;height:130px;border-radius:50%;
-background:linear-gradient(135deg,var(--accent),var(--accent2));
-font-size:42px
+.item b{
+ font-size:16px;
+}
+.badge{
+ display:inline-block;
+ padding:5px 9px;
+ border-radius:9px;
+ background:#292d3a;
+ font-size:12px;
+ margin-top:6px;
+}
+.pin{
+ color:#8bffbd;
+ font-weight:900;
+ letter-spacing:2px;
+}
+#fatal{
+ position:fixed;
+ inset:0;
+ background:#08090d;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ padding:25px;
+ text-align:center;
+ z-index:9999;
 }
 </style>
 </head>
-
 <body>
 
-<div id="toast" class="toast"></div>
-
-<!--
-  ВАЖНО:
-  Для Telegram-админов этот экран НИКОГДА не показывается.
--->
-<div id="loginScreen" class="app login">
-
-<div class="loginCard glass">
-
-<div class="loginLogo">🍽</div>
-
-<h1>RESTARAN</h1>
-
-<p>
-Введите номер телефона и PIN,
-чтобы открыть личный кабинет.
-</p>
-
-<div class="form">
-
-<input id="loginPhone" type="tel" placeholder="+374 XX XX XX XX">
-
-<input id="loginPin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN">
-
-<button class="primary" onclick="login()">
-Войти
-</button>
-
+<div id="fatal" class="hidden">
+ <div class="card">
+  <h2>Ошибка доступа</h2>
+  <p id="fatalText"></p>
+ </div>
 </div>
 
-</div>
-</div>
-
-
-<div id="app" class="app hidden">
-
-<div class="topbar glass">
-
-<div class="logo">
-<div class="logoIcon">🍽</div>
-RESTARAN
-</div>
-
-<div id="userPill" class="userPill"></div>
-
-</div>
-
-
-<!-- ADMIN -->
-
-<div id="adminView" class="hidden">
-
-<div class="hero glass">
-
-<h1>Админ-панель</h1>
-
-<p>
-Управление клиентами, курьерами и заказами.
-</p>
-
-</div>
-
-
-<div class="grid">
-
-<div class="stat glass">
-<div class="statLabel">Клиенты</div>
-<div id="statCustomers" class="statValue">0</div>
-</div>
-
-<div class="stat glass">
-<div class="statLabel">Курьеры</div>
-<div id="statCouriers" class="statValue">0</div>
-</div>
-
-<div class="stat glass">
-<div class="statLabel">Активные заказы</div>
-<div id="statOrders" class="statValue">0</div>
-</div>
-
-<div class="stat glass">
-<div class="statLabel">Выручка</div>
-<div id="statRevenue" class="statValue">$0</div>
-</div>
-
-</div>
-
-
-<div class="section glass">
-
-<div class="tabs">
-
-<button class="tab active" onclick="adminTab('orders',this)">
-📦 Заказы
-</button>
-
-<button class="tab" onclick="adminTab('customers',this)">
-👤 Клиенты
-</button>
-
-<button class="tab" onclick="adminTab('couriers',this)">
-🛵 Курьеры
-</button>
-
-<button class="tab" onclick="adminTab('stats',this)">
-📊 Статистика
-</button>
-
-</div>
-
-<div id="adminOrdersArea"></div>
-<div id="adminCustomersArea" class="hidden"></div>
-<div id="adminCouriersArea" class="hidden"></div>
-<div id="adminStatsArea" class="hidden"></div>
-
-</div>
-
-</div>
-
-
-<!-- CUSTOMER -->
-
-<div id="customerView" class="hidden">
-
-<div class="hero glass">
-<h1>Мои заказы</h1>
-<p>Здесь отображаются ваши текущие и прошлые заказы.</p>
-</div>
-
-<div id="customerOrdersArea" class="section glass"></div>
-
-<div class="section glass game">
-
-<div class="sectionTitle">🎮 Мини-игра</div>
-
-<div class="itemSub">
-Нажми как можно больше раз.
-</div>
-
-<div id="gameScore" class="gameScore">0</div>
-
-<button class="tap" onclick="tapGame()">👆</button>
-
-</div>
-
-</div>
-
-
-<!-- COURIER -->
-
-<div id="courierView" class="hidden">
-
-<div class="hero glass">
-<h1>Кабинет курьера</h1>
-<p>Управляйте доставками и передавайте геопозицию.</p>
-</div>
-
-<div class="section glass">
-
-<div class="switch">
-
-<div>
-
-<b>Статус курьера</b>
-
-<div id="courierOnlineText" class="itemSub">
-Офлайн
-</div>
-
-</div>
-
-<button
-id="courierOnlineBtn"
-class="switchBtn danger"
-onclick="toggleCourierOnline()">
-Офлайн
-</button>
-
-</div>
-
-</div>
-
-<div id="courierOrdersArea" class="section glass"></div>
-
-</div>
-
-</div>
-
+<div id="app"></div>
 
 <script>
-
-/* =========================================================
-   TELEGRAM
-========================================================= */
-
 const tg = window.Telegram?.WebApp;
-
 if(tg){
-    tg.ready();
-    tg.expand();
+ tg.ready();
+ tg.expand();
 }
 
+const ADMIN_IDS = new Set(["8357023784","7003441441"]);
+let token = localStorage.getItem("restaran_token");
+let me = null;
 
-/* =========================================================
-   АДМИНЫ
-========================================================= */
+const app = document.getElementById("app");
 
-const ADMIN_IDS = new Set([
-    8357023784,
-    7003441441
-]);
-
-
-/* =========================================================
-   GLOBAL
-========================================================= */
-
-let token = localStorage.getItem("restaran_token") || "";
-let role = "";
-let currentUser = null;
-
-let gameScore = 0;
-let courierOnline = false;
-let geoTimer = null;
-
-
-/* =========================================================
-   TELEGRAM ADMIN ID
-========================================================= */
-
-function telegramId(){
-
-    const id =
-        tg?.initDataUnsafe?.user?.id;
-
-    if(!id)
-        return null;
-
-    return Number(id);
+function formatError(x){
+ if(!x) return "Неизвестная ошибка";
+ if(typeof x === "string") return x;
+ if(x.detail) return typeof x.detail === "string" ? x.detail : JSON.stringify(x.detail);
+ if(x.message) return x.message;
+ try{return JSON.stringify(x)}catch{return String(x)}
 }
 
-
-function isAdminTelegram(){
-
-    const id = telegramId();
-
-    return id !== null &&
-           ADMIN_IDS.has(id);
+function fatal(text){
+ document.getElementById("fatalText").textContent = formatError(text);
+ document.getElementById("fatal").classList.remove("hidden");
 }
 
+async function api(url, options={}){
+ options.headers = options.headers || {};
+ options.headers["Content-Type"] = "application/json";
 
-/* =========================================================
-   TOAST
-========================================================= */
+ if(token){
+  options.headers["Authorization"] = "Bearer " + token;
+ }
 
-function toast(message){
+ const r = await fetch(url,options);
+ let data = {};
+ try{data = await r.json()}catch{}
 
-    const el =
-        document.getElementById("toast");
+ if(!r.ok){
+  throw new Error(formatError(data));
+ }
 
-    if(!el)return;
-
-    el.textContent =
-        String(message);
-
-    el.classList.add("show");
-
-    clearTimeout(window.toastTimer);
-
-    window.toastTimer =
-        setTimeout(
-            () => el.classList.remove("show"),
-            3000
-        );
+ return data;
 }
 
-
-/* =========================================================
-   ERROR
-========================================================= */
-
-function formatError(value){
-
-    if(value === null ||
-       value === undefined)
-        return "Неизвестная ошибка";
-
-    if(typeof value === "string")
-        return value;
-
-    if(Array.isArray(value)){
-
-        return value.map(x => {
-
-            if(typeof x === "string")
-                return x;
-
-            if(x && typeof x === "object")
-                return (
-                    x.msg ||
-                    x.message ||
-                    x.detail ||
-                    JSON.stringify(x)
-                );
-
-            return String(x);
-
-        }).join("\n");
-    }
-
-    if(typeof value === "object"){
-
-        return (
-            value.msg ||
-            value.message ||
-            value.detail ||
-            value.error ||
-            JSON.stringify(value)
-        );
-    }
-
-    return String(value);
+function logout(){
+ localStorage.removeItem("restaran_token");
+ token=null;
+ location.reload();
 }
 
-
-/* =========================================================
-   API
-========================================================= */
-
-async function api(path, options = {}){
-
-    const headers = {
-        ...(options.headers || {})
-    };
-
-    if(
-        options.body &&
-        typeof options.body === "string" &&
-        !headers["Content-Type"]
-    ){
-        headers["Content-Type"] =
-            "application/json";
-    }
-
-    if(token){
-
-        headers["Authorization"] =
-            "Bearer " + token;
-    }
-
-    const response =
-        await fetch(
-            path,
-            {
-                ...options,
-                headers
-            }
-        );
-
-    const text =
-        await response.text();
-
-    let data = null;
-
-    try{
-        data =
-            text
-            ? JSON.parse(text)
-            : null;
-    }catch{
-        data = text;
-    }
-
-    if(!response.ok){
-
-        throw new Error(
-            formatError(
-                data?.detail ??
-                data?.message ??
-                data?.error ??
-                data ??
-                `HTTP ${response.status}`
-            )
-        );
-    }
-
-    return data;
+function loginScreen(){
+ app.innerHTML = `
+ <div style="padding-top:60px">
+  <div class="title">🍽 RESTARAN</div>
+  <div class="card">
+   <h2>Вход</h2>
+   <input id="loginPhone" placeholder="Телефон">
+   <input id="loginPin" placeholder="PIN" type="password" inputmode="numeric">
+   <button class="btn" onclick="doLogin()">Войти</button>
+  </div>
+ </div>`;
 }
 
+async function doLogin(){
+ try{
+  const phone=document.getElementById("loginPhone").value;
+  const pin=document.getElementById("loginPin").value;
 
-/* =========================================================
-   АВТОМАТИЧЕСКИЙ ВХОД АДМИНА
-   НИКАКОГО PHONE/PIN
-========================================================= */
+  const x=await api("/api/login",{
+   method:"POST",
+   body:JSON.stringify({phone,pin})
+  });
 
-async function adminAutoLogin(){
-
-    /*
-      Админ определяется локально по Telegram ID.
-    */
-
-    if(!isAdminTelegram())
-        return false;
-
-    /*
-      initData ОБЯЗАТЕЛЕН.
-      Именно сервер проверяет его подпись.
-    */
-
-    if(!tg?.initData){
-
-        showAdminError(
-            "Откройте приложение через Telegram."
-        );
-
-        return false;
-    }
-
-    try{
-
-        /*
-          Сначала удаляем старую сессию.
-          Она НЕ используется для входа админа.
-        */
-
-        token = "";
-
-        localStorage.removeItem(
-            "restaran_token"
-        );
-
-        const response =
-            await fetch(
-                "/api/admin/web-login",
-                {
-                    method:"POST",
-                    headers:{
-                        "Content-Type":
-                            "application/json"
-                    },
-                    body:JSON.stringify({
-                        init_data:
-                            tg.initData
-                    })
-                }
-            );
-
-        const text =
-            await response.text();
-
-        let data;
-
-        try{
-            data =
-                text
-                ? JSON.parse(text)
-                : {};
-        }catch{
-            data = {
-                detail:text
-            };
-        }
-
-        if(!response.ok){
-
-            throw new Error(
-                formatError(
-                    data.detail ||
-                    data.message ||
-                    data.error
-                )
-            );
-        }
-
-        if(!data.token){
-
-            throw new Error(
-                "Сервер не выдал токен администратора"
-            );
-        }
-
-        token =
-            data.token;
-
-        localStorage.setItem(
-            "restaran_token",
-            token
-        );
-
-        return true;
-
-    }catch(error){
-
-        console.error(
-            "ADMIN AUTO LOGIN:",
-            error
-        );
-
-        showAdminError(
-            error.message
-        );
-
-        return false;
-    }
+  token=x.token;
+  localStorage.setItem("restaran_token",token);
+  await boot();
+ }catch(e){
+  alert(formatError(e.message));
+ }
 }
 
+async function adminTelegramLogin(){
+ const tgId=String(tg?.initDataUnsafe?.user?.id || "");
 
-/* =========================================================
-   АДМИН ERROR
-========================================================= */
+ if(!ADMIN_IDS.has(tgId)) return false;
 
-function showAdminError(message){
+ if(!tg?.initData){
+  fatal("Откройте RESTARAN через Telegram.");
+  return true;
+ }
 
-    document
-        .getElementById("loginScreen")
-        ?.classList.add("hidden");
+ try{
+  const x=await api("/api/admin/web-login",{
+   method:"POST",
+   body:JSON.stringify({init_data:tg.initData})
+  });
 
-    document
-        .getElementById("app")
-        ?.classList.remove("hidden");
-
-    hideViews();
-
-    show("adminView");
-
-    const area =
-        document.getElementById(
-            "adminOrdersArea"
-        );
-
-    if(area){
-
-        area.innerHTML = `
-            <div class="empty glass">
-                ❌ ${escapeHtml(message)}
-            </div>
-        `;
-    }
-
-    document
-        .getElementById("userPill")
-        .textContent =
-            "Администратор";
+  token=x.token;
+  localStorage.setItem("restaran_token",token);
+  return true;
+ }catch(e){
+  localStorage.removeItem("restaran_token");
+  token=null;
+  fatal("Не удалось подтвердить администратора:\n"+formatError(e.message));
+  return true;
+ }
 }
-
-
-/* =========================================================
-   LOGIN CUSTOMER / COURIER
-========================================================= */
-
-async function login(){
-
-    const phone =
-        document
-        .getElementById("loginPhone")
-        .value
-        .trim();
-
-    const pin =
-        document
-        .getElementById("loginPin")
-        .value
-        .trim();
-
-    if(!phone || !pin){
-
-        toast(
-            "Введите номер и PIN"
-        );
-
-        return;
-    }
-
-    try{
-
-        const data =
-            await api(
-                "/api/login",
-                {
-                    method:"POST",
-                    body:JSON.stringify({
-                        phone,
-                        pin
-                    })
-                }
-            );
-
-        token =
-            data.token;
-
-        localStorage.setItem(
-            "restaran_token",
-            token
-        );
-
-        await boot();
-
-    }catch(error){
-
-        toast(
-            formatError(error.message)
-        );
-    }
-}
-
-
-/* =========================================================
-   BOOT
-========================================================= */
 
 async function boot(){
+ const tgId=String(tg?.initDataUnsafe?.user?.id || "");
 
-    /*
-      КЛЮЧЕВОЙ ФИКС.
+ if(ADMIN_IDS.has(tgId)){
+  const handled=await adminTelegramLogin();
+  if(handled){
+   if(!token)return;
+  }
+ }else if(!token){
+  loginScreen();
+  return;
+ }
 
-      Если Telegram ID админа —
-      PHONE/PIN вообще НЕ используются.
-    */
+ try{
+  me=await api("/api/me");
 
-    if(isAdminTelegram()){
+  if(me.role==="admin"){
+   renderAdmin();
+  }else if(me.role==="customer"){
+   renderCustomer();
+  }else if(me.role==="courier"){
+   renderCourier();
+  }else{
+   logout();
+  }
+ }catch(e){
+  localStorage.removeItem("restaran_token");
+  token=null;
 
-        const ok =
-            await adminAutoLogin();
-
-        if(!ok)
-            return;
-
-    }else if(!token){
-
-        document
-            .getElementById("loginScreen")
-            .classList.remove("hidden");
-
-        document
-            .getElementById("app")
-            .classList.add("hidden");
-
-        return;
-    }
-
-
-    try{
-
-        currentUser =
-            await api("/api/me");
-
-        role =
-            currentUser.role;
-
-
-        /*
-          Защита:
-          если Telegram ID админа,
-          сервер тоже должен вернуть admin.
-        */
-
-        if(
-            isAdminTelegram() &&
-            role !== "admin"
-        ){
-
-            throw new Error(
-                "Сервер не определил вас как администратора"
-            );
-        }
-
-
-        document
-            .getElementById("loginScreen")
-            .classList.add("hidden");
-
-        document
-            .getElementById("app")
-            .classList.remove("hidden");
-
-
-        document
-            .getElementById("userPill")
-            .textContent =
-                role === "admin"
-                ? "Администратор"
-                : (
-                    currentUser.name || ""
-                );
-
-
-        hideViews();
-
-
-        if(role === "admin"){
-
-            show("adminView");
-
-            await loadAdmin();
-
-        }else if(role === "customer"){
-
-            show("customerView");
-
-            await loadCustomer();
-
-        }else if(role === "courier"){
-
-            show("courierView");
-
-            await loadCourier();
-        }
-
-
-    }catch(error){
-
-        /*
-          Админа НИКОГДА не отправляем
-          на экран телефона/PIN.
-        */
-
-        if(isAdminTelegram()){
-
-            await adminAutoLogin();
-
-            return;
-        }
-
-
-        token = "";
-
-        localStorage.removeItem(
-            "restaran_token"
-        );
-
-        document
-            .getElementById("loginScreen")
-            .classList.remove("hidden");
-
-        document
-            .getElementById("app")
-            .classList.add("hidden");
-
-        toast(
-            formatError(error.message)
-        );
-    }
+  if(ADMIN_IDS.has(tgId)){
+   fatal(formatError(e.message));
+  }else{
+   loginScreen();
+  }
+ }
 }
 
+async function renderAdmin(){
+ app.innerHTML=`
+ <div class="title">🍽 RESTARAN</div>
 
-/* =========================================================
-   VIEWS
-========================================================= */
+ <div class="card">
+  <div class="row">
+   <div>
+    <div class="small">Администратор</div>
+    <b>${escapeHtml(me.name)}</b>
+   </div>
+   <button class="btn gray" onclick="logout()">Выйти</button>
+  </div>
+ </div>
 
-function hideViews(){
+ <div id="stats"></div>
 
-    [
-        "adminView",
-        "customerView",
-        "courierView"
-    ].forEach(id => {
+ <div class="tabs">
+  <button class="tab active" onclick="adminTab('orders',this)">Заказы</button>
+  <button class="tab" onclick="adminTab('customers',this)">Клиенты</button>
+  <button class="tab" onclick="adminTab('couriers',this)">Курьеры</button>
+ </div>
 
-        document
-            .getElementById(id)
-            ?.classList.add("hidden");
-    });
+ <div id="adminContent"></div>
+ `;
+
+ await loadStats();
+ adminTab("orders",document.querySelector(".tab"));
 }
 
+function adminTab(type,el){
+ document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+ if(el)el.classList.add("active");
 
-function show(id){
-
-    document
-        .getElementById(id)
-        ?.classList.remove("hidden");
+ if(type==="orders")loadAdminOrders();
+ if(type==="customers")loadCustomers();
+ if(type==="couriers")loadCouriers();
 }
 
+async function loadStats(){
+ try{
+  const s=await api("/api/admin/stats");
 
-/* =========================================================
-   ADMIN
-========================================================= */
-
-async function loadAdmin(){
-
-    await Promise.all([
-        loadAdminStats(),
-        loadAdminOrders()
-    ]);
+  document.getElementById("stats").innerHTML=`
+  <div class="card">
+   <div class="stat">
+    <div class="statBox">Клиенты<b>${s.customers}</b></div>
+    <div class="statBox">Курьеры<b>${s.couriers}</b></div>
+    <div class="statBox">Заказы<b>${s.orders}</b></div>
+    <div class="statBox">Выручка<b>${Number(s.revenue).toFixed(2)}</b></div>
+   </div>
+  </div>`;
+ }catch(e){}
 }
-
-
-async function loadAdminStats(){
-
-    const data =
-        await api(
-            "/api/admin/stats"
-        );
-
-    document
-        .getElementById("statCustomers")
-        .textContent =
-            data.customers || 0;
-
-    document
-        .getElementById("statCouriers")
-        .textContent =
-            data.couriers || 0;
-
-    document
-        .getElementById("statOrders")
-        .textContent =
-            data.active_orders || 0;
-
-    document
-        .getElementById("statRevenue")
-        .textContent =
-            "$" +
-            Number(
-                data.revenue || 0
-            ).toFixed(2);
-}
-
-
-/* =========================================================
-   ADMIN TABS
-========================================================= */
-
-function adminTab(tab,button){
-
-    document
-        .querySelectorAll(".tab")
-        .forEach(el =>
-            el.classList.remove("active")
-        );
-
-    if(button)
-        button.classList.add("active");
-
-    [
-        "adminOrdersArea",
-        "adminCustomersArea",
-        "adminCouriersArea",
-        "adminStatsArea"
-    ].forEach(id =>
-        document
-            .getElementById(id)
-            ?.classList.add("hidden")
-    );
-
-    const mapping = {
-        orders:"adminOrdersArea",
-        customers:"adminCustomersArea",
-        couriers:"adminCouriersArea",
-        stats:"adminStatsArea"
-    };
-
-    document
-        .getElementById(mapping[tab])
-        ?.classList.remove("hidden");
-
-
-    if(tab === "orders")
-        loadAdminOrders();
-
-    if(tab === "customers")
-        loadAdminCustomers();
-
-    if(tab === "couriers")
-        loadAdminCouriers();
-
-    if(tab === "stats")
-        loadAdminStatsPage();
-}
-
-
-/* =========================================================
-   ADMIN ORDERS
-========================================================= */
 
 async function loadAdminOrders(){
+ const box=document.getElementById("adminContent");
 
-    const area =
-        document.getElementById(
-            "adminOrdersArea"
-        );
+ try{
+  const [orders,couriers]=await Promise.all([
+   api("/api/admin/orders"),
+   api("/api/admin/couriers")
+  ]);
 
-    if(!area)
-        return;
+  box.innerHTML=`
+  <div class="card">
+   <h3>Создать заказ</h3>
+   <input id="oPhone" placeholder="Телефон клиента">
+   <input id="oTitle" placeholder="Название заказа">
+   <input id="oAddress" placeholder="Адрес">
+   <input id="oPrice" placeholder="Цена" type="number">
+   <button class="btn green" onclick="createOrder()">Создать заказ</button>
+  </div>
 
-    area.innerHTML = `
-        <div class="sectionTitle">
-            Все заказы
-        </div>
-        <div class="itemSub">
-            Загрузка...
-        </div>
-    `;
+  <div class="card">
+   <h3>Заказы</h3>
+   <div id="adminOrdersArea"></div>
+  </div>`;
 
-    try{
+  const area=document.getElementById("adminOrdersArea");
 
-        const list =
-            await api(
-                "/api/admin/orders"
-            );
+  if(!orders.length){
+   area.innerHTML='<div class="small">Заказов нет</div>';
+   return;
+  }
 
-        renderAdminOrders(
-            Array.isArray(list)
-            ? list
-            : []
-        );
+  area.innerHTML=orders.map(o=>`
+   <div class="item">
+    <b>#${o.id} — ${escapeHtml(o.title)}</b>
+    <div class="small">Клиент: ${escapeHtml(o.customer_name)} · ${escapeHtml(o.customer_phone)}</div>
+    <div class="small">📍 ${escapeHtml(o.address)}</div>
+    <div>${Number(o.price).toFixed(2)}</div>
+    <span class="badge">${escapeHtml(o.status)}</span>
 
-    }catch(error){
-
-        area.innerHTML = `
-            <div class="empty glass">
-                ❌ ${escapeHtml(
-                    formatError(
-                        error.message
-                    )
-                )}
-            </div>
-        `;
-    }
-}
-
-
-function renderAdminOrders(list){
-
-    const area =
-        document.getElementById(
-            "adminOrdersArea"
-        );
-
-    if(!area)
-        return;
-
-    if(!Array.isArray(list))
-        list = [];
-
-    area.innerHTML = `
-
-        <div class="sectionTitle">
-            Все заказы
-        </div>
-
-        ${adminOrderCreateForm()}
-
-        <div style="margin-top:15px">
-
-            ${
-                list.length
-                ? list.map(
-                    adminOrder
-                  ).join("")
-                : `
-                    <div class="empty glass">
-                        Заказов пока нет
-                    </div>
-                `
-            }
-
-        </div>
-    `;
-}
-
-
-function adminOrderCreateForm(){
-
-    return `
-    <div class="item">
-
-        <div class="itemTitle">
-            ➕ Создать заказ
-        </div>
-
-        <div class="itemSub">
-            Введите номер телефона клиента.
-        </div>
-
-        <div class="form" style="margin-top:12px">
-
-            <input
-                id="orderPhone"
-                type="tel"
-                placeholder="Номер телефона клиента"
-            >
-
-            <input
-                id="orderTitle"
-                placeholder="Что заказали?"
-            >
-
-            <input
-                id="orderAddress"
-                placeholder="Адрес доставки"
-            >
-
-            <input
-                id="orderPrice"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="Цена"
-            >
-
-            <button
-                class="primary"
-                onclick="createOrder()"
-            >
-                Создать заказ
-            </button>
-
-        </div>
-
-    </div>
-    `;
-}
-
-
-function adminOrder(order){
-
-    const status =
-        statusInfo(order.status);
-
-    let courier =
-        order.courier_name
-        ? "🛵 " +
-          escapeHtml(
-              order.courier_name
-          )
-        : "🛵 Курьер не назначен";
-
-
-    let location = "";
-
-
-    if(
-        order.courier_lat !== null &&
-        order.courier_lon !== null
-    ){
-
-        const lat =
-            Number(
-                order.courier_lat
-            );
-
-        const lon =
-            Number(
-                order.courier_lon
-            );
-
-        location = `
-        <iframe
-            class="map"
-            src="https://www.openstreetmap.org/export/embed.html?bbox=${lon-.01}%2C${lat-.01}%2C${lon+.01}%2C${lat+.01}&layer=mapnik&marker=${lat}%2C${lon}">
-        </iframe>
-        `;
+    ${o.courier_name
+      ? `<div class="small">Курьер: ${escapeHtml(o.courier_name)}</div>`
+      : `
+      <select id="courier_${o.id}" style="width:100%;margin-top:8px;background:#0b0d12;color:#fff;border:1px solid #292d38;border-radius:12px;padding:12px">
+       <option value="">Выберите курьера</option>
+       ${couriers.filter(c=>c.active&&c.approved).map(c=>
+        `<option value="${c.id}">${escapeHtml(c.name)} · ${c.online?"онлайн":"оффлайн"}</option>`
+       ).join("")}
+      </select>
+      <button class="btn" onclick="assignOrder(${o.id})">Назначить</button>
+      `
     }
 
-
-    return `
-    <div class="item">
-
-        <div class="itemTop">
-
-            <div>
-
-                <div class="itemTitle">
-                    #${order.id}
-                    — ${escapeHtml(
-                        order.title
-                    )}
-                </div>
-
-                <div class="itemSub">
-
-                    👤 ${escapeHtml(
-                        order.customer_name ||
-                        "Клиент"
-                    )}
-
-                    <br>
-
-                    📱 ${escapeHtml(
-                        order.customer_phone ||
-                        "—"
-                    )}
-
-                    <br>
-
-                    📍 ${escapeHtml(
-                        order.address ||
-                        "—"
-                    )}
-
-                    <br>
-
-                    💰 $${Number(
-                        order.price || 0
-                    ).toFixed(2)}
-
-                    <br>
-
-                    ${courier}
-
-                </div>
-
-            </div>
-
-            <span class="badge ${status.class}">
-                ${status.icon}
-                ${status.text}
-            </span>
-
-        </div>
-
-        ${location}
-
-        <div class="itemActions">
-
-            ${
-                !["closed","delivered"]
-                .includes(order.status)
-
-                ? `
-                <button
-                    class="secondary"
-                    onclick="assignOrder(${order.id})"
-                >
-                    🛵 Назначить
-                </button>
-                `
-                : ""
-            }
-
-            ${
-                order.status !== "closed"
-
-                ? `
-                <button
-                    class="danger"
-                    onclick="closeOrder(${order.id})"
-                >
-                    ✕ Закрыть
-                </button>
-                `
-
-                : `
-                <span class="badge red">
-                    Удалится через 5 минут
-                </span>
-                `
-            }
-
-        </div>
-
-    </div>
-    `;
+    ${o.status!=="closed"
+      ? `<button class="btn red" onclick="closeOrder(${o.id})">Закрыть заказ</button>`
+      : ""}
+   </div>
+  `).join("");
+ }catch(e){
+  box.innerHTML=`<div class="card">${escapeHtml(formatError(e.message))}</div>`;
+ }
 }
-
-
-/* =========================================================
-   CREATE ORDER
-========================================================= */
 
 async function createOrder(){
+ try{
+  await api("/api/admin/orders",{
+   method:"POST",
+   body:JSON.stringify({
+    phone:document.getElementById("oPhone").value,
+    title:document.getElementById("oTitle").value,
+    address:document.getElementById("oAddress").value,
+    price:Number(document.getElementById("oPrice").value||0)
+   })
+  });
 
-    const phone =
-        document
-        .getElementById("orderPhone")
-        ?.value
-        .trim();
-
-    const title =
-        document
-        .getElementById("orderTitle")
-        ?.value
-        .trim();
-
-    const address =
-        document
-        .getElementById("orderAddress")
-        ?.value
-        .trim();
-
-    const price =
-        Number(
-            document
-            .getElementById("orderPrice")
-            ?.value || 0
-        );
-
-
-    if(!phone){
-        toast("Введите номер клиента");
-        return;
-    }
-
-    if(!title){
-        toast("Введите название заказа");
-        return;
-    }
-
-    if(!address){
-        toast("Введите адрес");
-        return;
-    }
-
-
-    try{
-
-        await api(
-            "/api/admin/orders",
-            {
-                method:"POST",
-                body:JSON.stringify({
-                    phone,
-                    title,
-                    address,
-                    price
-                })
-            }
-        );
-
-        toast(
-            "✅ Заказ создан"
-        );
-
-        await loadAdminOrders();
-        await loadAdminStats();
-
-    }catch(error){
-
-        toast(
-            formatError(
-                error.message
-            )
-        );
-    }
+  await loadStats();
+  await loadAdminOrders();
+ }catch(e){
+  alert(formatError(e.message));
+ }
 }
 
+async function assignOrder(id){
+ try{
+  const courier=document.getElementById("courier_"+id).value;
 
-/* =========================================================
-   ASSIGN
-========================================================= */
+  if(!courier){
+   alert("Выберите курьера");
+   return;
+  }
 
-async function assignOrder(orderId){
+  await api("/api/admin/orders/"+id+"/assign",{
+   method:"POST",
+   body:JSON.stringify({courier_id:Number(courier)})
+  });
 
-    try{
-
-        const couriers =
-            await api(
-                "/api/admin/couriers"
-            );
-
-        const available =
-            couriers.filter(
-                c =>
-                    c.active &&
-                    c.approved
-            );
-
-        if(!available.length){
-
-            toast(
-                "Нет доступных одобренных курьеров"
-            );
-
-            return;
-        }
-
-
-        const text =
-            available
-            .map(
-                c =>
-                    `${c.id}: ${c.name} — ${c.phone}`
-            )
-            .join("\n");
-
-
-        const answer =
-            prompt(
-                "Введите ID курьера:\n\n" +
-                text
-            );
-
-        if(!answer)
-            return;
-
-
-        const courierId =
-            Number(answer);
-
-
-        if(!Number.isInteger(courierId)){
-
-            toast(
-                "Неверный ID курьера"
-            );
-
-            return;
-        }
-
-
-        await api(
-            `/api/admin/orders/${orderId}/assign`,
-            {
-                method:"POST",
-                body:JSON.stringify({
-                    courier_id:courierId
-                })
-            }
-        );
-
-
-        toast(
-            "🛵 Курьер назначен"
-        );
-
-        await loadAdminOrders();
-
-    }catch(error){
-
-        toast(
-            formatError(
-                error.message
-            )
-        );
-    }
+  await loadAdminOrders();
+ }catch(e){
+  alert(formatError(e.message));
+ }
 }
 
+async function closeOrder(id){
+ if(!confirm("Закрыть заказ?"))return;
 
-/* =========================================================
-   CLOSE
-========================================================= */
-
-async function closeOrder(orderId){
-
-    if(!confirm(
-        "Закрыть этот заказ?"
-    ))
-        return;
-
-
-    try{
-
-        await api(
-            `/api/admin/orders/${orderId}/close`,
-            {
-                method:"POST"
-            }
-        );
-
-        toast(
-            "✅ Заказ закрыт"
-        );
-
-        await loadAdminOrders();
-        await loadAdminStats();
-
-    }catch(error){
-
-        toast(
-            formatError(
-                error.message
-            )
-        );
-    }
+ try{
+  await api("/api/admin/orders/"+id+"/close",{method:"POST"});
+  await loadStats();
+  await loadAdminOrders();
+ }catch(e){
+  alert(formatError(e.message));
+ }
 }
 
+async function loadCustomers(){
+ const box=document.getElementById("adminContent");
 
-/* =========================================================
-   CUSTOMERS
-========================================================= */
+ try{
+  const users=await api("/api/admin/customers");
 
-async function loadAdminCustomers(){
+  box.innerHTML=`
+  <div class="card">
+   <h3>Новый клиент</h3>
+   <input id="cName" placeholder="Имя клиента">
+   <input id="cPhone" placeholder="Телефон">
+   <input id="cPin" placeholder="PIN клиента" inputmode="numeric">
+   <div class="small">PIN задаёте вы сами. Он будет отображаться в списке клиентов.</div>
+   <button class="btn green" onclick="createCustomer()">Создать клиента</button>
+  </div>
 
-    const area =
-        document.getElementById(
-            "adminCustomersArea"
-        );
+  <div class="card">
+   <h3>Клиенты</h3>
+   <div id="adminCustomersArea"></div>
+  </div>`;
 
-    if(!area)
-        return;
+  const area=document.getElementById("adminCustomersArea");
 
+  area.innerHTML=users.length ? users.map(u=>`
+   <div class="item">
+    <b>${escapeHtml(u.name)}</b>
+    <div class="small">📱 ${escapeHtml(u.phone)}</div>
+    <div>PIN: <span class="pin">${escapeHtml(u.pin_plain||"—")}</span></div>
+    <span class="badge">${u.active?"Активен":"Удалён"}</span>
+    ${u.active
+      ? `<button class="btn red" onclick="deleteCustomer(${u.id})">🗑 Удалить аккаунт</button>`
+      : ""}
+   </div>
+  `).join("") : '<div class="small">Клиентов нет</div>';
 
-    area.innerHTML = `
-
-    <div class="sectionTitle">
-        Клиенты
-    </div>
-
-    <div class="item">
-
-        <div class="form">
-
-            <input
-                id="newCustomerName"
-                placeholder="Имя клиента"
-            >
-
-            <input
-                id="newCustomerPhone"
-                type="tel"
-                placeholder="Номер телефона"
-            >
-
-            <button
-                class="primary"
-                onclick="createCustomer()"
-            >
-                Создать клиента
-            </button>
-
-        </div>
-
-    </div>
-
-    <div
-        id="customersList"
-        style="margin-top:15px"
-    >
-        Загрузка...
-    </div>
-    `;
-
-
-    try{
-
-        const list =
-            await api(
-                "/api/admin/customers"
-            );
-
-        const listArea =
-            document.getElementById(
-                "customersList"
-            );
-
-        if(!listArea)
-            return;
-
-
-        listArea.innerHTML =
-            list.length
-
-            ? list.map(
-                c => `
-                <div class="item">
-
-                    <div class="itemTitle">
-                        ${escapeHtml(c.name)}
-                    </div>
-
-                    <div class="itemSub">
-                        📱 ${escapeHtml(c.phone)}
-                        <br>
-                        ${
-                            c.active
-                            ? "🟢 Активен"
-                            : "🔴 Неактивен"
-                        }
-                    </div>
-
-                </div>
-                `
-            ).join("")
-
-            : `
-                <div class="empty glass">
-                    Клиентов пока нет
-                </div>
-            `;
-
-    }catch(error){
-
-        toast(
-            formatError(
-                error.message
-            )
-        );
-    }
+ }catch(e){
+  box.innerHTML=`<div class="card">${escapeHtml(formatError(e.message))}</div>`;
+ }
 }
-
 
 async function createCustomer(){
+ try{
+  const name=document.getElementById("cName").value.trim();
+  const phone=document.getElementById("cPhone").value.trim();
+  const pin=document.getElementById("cPin").value.trim();
 
-    const name =
-        document
-        .getElementById(
-            "newCustomerName"
-        )
-        ?.value
-        .trim();
+  if(!name||!phone||!pin){
+   alert("Заполните имя, телефон и PIN");
+   return;
+  }
 
-    const phone =
-        document
-        .getElementById(
-            "newCustomerPhone"
-        )
-        ?.value
-        .trim();
+  await api("/api/admin/customers",{
+   method:"POST",
+   body:JSON.stringify({name,phone,pin})
+  });
 
-
-    if(!name || !phone){
-
-        toast(
-            "Заполните имя и номер"
-        );
-
-        return;
-    }
-
-
-    try{
-
-        const data =
-            await api(
-                "/api/admin/customers",
-                {
-                    method:"POST",
-                    body:JSON.stringify({
-                        name,
-                        phone
-                    })
-                }
-            );
-
-
-        alert(
-            `Клиент создан!\n\n` +
-            `Имя: ${data.name}\n` +
-            `Телефон: ${data.phone}\n` +
-            `PIN: ${data.pin}`
-        );
-
-
-        await loadAdminCustomers();
-        await loadAdminStats();
-
-    }catch(error){
-
-        toast(
-            formatError(
-                error.message
-            )
-        );
-    }
+  await loadStats();
+  await loadCustomers();
+ }catch(e){
+  alert(formatError(e.message));
+ }
 }
 
+async function deleteCustomer(id){
+ if(!confirm("Удалить аккаунт клиента?"))return;
 
-/* =========================================================
-   COURIERS
-========================================================= */
-
-async function loadAdminCouriers(){
-
-    const area =
-        document.getElementById(
-            "adminCouriersArea"
-        );
-
-    if(!area)
-        return;
-
-
-    area.innerHTML = `
-
-    <div class="sectionTitle">
-        Курьеры
-    </div>
-
-    <div class="item">
-
-        <div class="form">
-
-            <input
-                id="newCourierName"
-                placeholder="Имя курьера"
-            >
-
-            <input
-                id="newCourierPhone"
-                type="tel"
-                placeholder="Номер телефона"
-            >
-
-            <button
-                class="primary"
-                onclick="createCourier()"
-            >
-                Создать курьера
-            </button>
-
-        </div>
-
-    </div>
-
-    <div
-        id="couriersList"
-        style="margin-top:15px"
-    >
-        Загрузка...
-    </div>
-    `;
-
-
-    try{
-
-        const list =
-            await api(
-                "/api/admin/couriers"
-            );
-
-        const listArea =
-            document.getElementById(
-                "couriersList"
-            );
-
-        if(!listArea)
-            return;
-
-
-        listArea.innerHTML =
-            list.length
-
-            ? list.map(
-                c => `
-
-                <div class="item">
-
-                    <div class="itemTop">
-
-                        <div>
-
-                            <div class="itemTitle">
-                                ${escapeHtml(c.name)}
-                            </div>
-
-                            <div class="itemSub">
-
-                                📱 ${escapeHtml(c.phone)}
-
-                                <br>
-
-                                ${
-                                    c.approved
-                                    ? "🟢 Одобрен"
-                                    : "🟡 Ожидает одобрения"
-                                }
-
-                                <br>
-
-                                ${
-                                    c.online
-                                    ? "🟢 Онлайн"
-                                    : "⚫ Офлайн"
-                                }
-
-                                <br>
-
-                                ${
-                                    c.active
-                                    ? "Активен"
-                                    : "Уволен"
-                                }
-
-                            </div>
-
-                        </div>
-
-                        <span class="badge ${
-                            c.online
-                            ? "green"
-                            : "red"
-                        }">
-
-                            ${
-                                c.online
-                                ? "ONLINE"
-                                : "OFFLINE"
-                            }
-
-                        </span>
-
-                    </div>
-
-                    <div class="itemActions">
-
-                        ${
-                            !c.approved && c.active
-
-                            ? `
-                            <button
-                                class="success"
-                                onclick="approveCourier(${c.id})"
-                            >
-                                ✓ Одобрить
-                            </button>
-                            `
-
-                            : ""
-                        }
-
-                        ${
-                            c.active
-
-                            ? `
-                            <button
-                                class="danger"
-                                onclick="fireCourier(${c.id})"
-                            >
-                                Уволить
-                            </button>
-                            `
-
-                            : ""
-                        }
-
-                    </div>
-
-                </div>
-                `
-            ).join("")
-
-            : `
-                <div class="empty glass">
-                    Курьеров пока нет
-                </div>
-            `;
-
-    }catch(error){
-
-        toast(
-            formatError(
-                error.message
-            )
-        );
-    }
+ try{
+  await api("/api/admin/customers/"+id,{method:"DELETE"});
+  await loadStats();
+  await loadCustomers();
+ }catch(e){
+  alert(formatError(e.message));
+ }
 }
 
+async function loadCouriers(){
+ const box=document.getElementById("adminContent");
+
+ try{
+  const couriers=await api("/api/admin/couriers");
+
+  box.innerHTML=`
+  <div class="card">
+   <h3>Новый курьер</h3>
+   <input id="crName" placeholder="Имя курьера">
+   <input id="crPhone" placeholder="Телефон">
+   <input id="crPin" placeholder="PIN курьера" inputmode="numeric">
+   <button class="btn green" onclick="createCourier()">Создать курьера</button>
+  </div>
+
+  <div class="card">
+   <h3>Курьеры</h3>
+   <div id="adminCouriersArea"></div>
+  </div>`;
+
+  const area=document.getElementById("adminCouriersArea");
+
+  area.innerHTML=couriers.length ? couriers.map(c=>`
+   <div class="item">
+    <b>${escapeHtml(c.name)}</b>
+    <div class="small">📱 ${escapeHtml(c.phone)}</div>
+    <div>PIN: <span class="pin">${escapeHtml(c.pin_plain||"—")}</span></div>
+    <div>
+     <span class="badge">${c.approved?"Одобрен":"Ожидает"}</span>
+     <span class="badge">${c.online?"Онлайн":"Оффлайн"}</span>
+     <span class="badge">${c.active?"Активен":"Уволен"}</span>
+    </div>
+
+    ${c.active&&!c.approved
+      ? `<button class="btn green" onclick="approveCourier(${c.id})">Одобрить</button>`
+      : ""}
+
+    ${c.active
+      ? `<button class="btn red" onclick="fireCourier(${c.id})">Уволить</button>`
+      : ""}
+   </div>
+  `).join("") : '<div class="small">Курьеров нет</div>';
+
+ }catch(e){
+  box.innerHTML=`<div class="card">${escapeHtml(formatError(e.message))}</div>`;
+ }
+}
 
 async function createCourier(){
+ try{
+  await api("/api/admin/couriers",{
+   method:"POST",
+   body:JSON.stringify({
+    name:document.getElementById("crName").value,
+    phone:document.getElementById("crPhone").value,
+    pin:document.getElementById("crPin").value
+   })
+  });
 
-    const name =
-        document
-        .getElementById(
-            "newCourierName"
-        )
-        ?.value
-        .trim();
-
-    const phone =
-        document
-        .getElementById(
-            "newCourierPhone"
-        )
-        ?.value
-        .trim();
-
-
-    if(!name || !phone){
-
-        toast(
-            "Заполните имя и номер"
-        );
-
-        return;
-    }
-
-
-    try{
-
-        const data =
-            await api(
-                "/api/admin/couriers",
-                {
-                    method:"POST",
-                    body:JSON.stringify({
-                        name,
-                        phone
-                    })
-                }
-            );
-
-
-        alert(
-            `Курьер создан!\n\n` +
-            `Имя: ${data.name}\n` +
-            `Телефон: ${data.phone}\n` +
-            `PIN: ${data.pin}\n\n` +
-            `После этого его нужно одобрить.`
-        );
-
-
-        await loadAdminCouriers();
-
-    }catch(error){
-
-        toast(
-            formatError(
-                error.message
-            )
-        );
-    }
+  await loadStats();
+  await loadCouriers();
+ }catch(e){
+  alert(formatError(e.message));
+ }
 }
-
 
 async function approveCourier(id){
-
-    try{
-
-        await api(
-            `/api/admin/couriers/${id}/approve`,
-            {
-                method:"POST"
-            }
-        );
-
-        toast(
-            "✅ Курьер одобрен"
-        );
-
-        await loadAdminCouriers();
-        await loadAdminStats();
-
-    }catch(error){
-
-        toast(
-            formatError(
-                error.message
-            )
-        );
-    }
+ try{
+  await api("/api/admin/couriers/"+id+"/approve",{method:"POST"});
+  await loadStats();
+  await loadCouriers();
+ }catch(e){
+  alert(formatError(e.message));
+ }
 }
-
 
 async function fireCourier(id){
+ if(!confirm("Уволить курьера?"))return;
 
-    if(!confirm(
-        "Уволить этого курьера?"
-    ))
-        return;
-
-
-    try{
-
-        await api(
-            `/api/admin/couriers/${id}/fire`,
-            {
-                method:"POST"
-            }
-        );
-
-        toast(
-            "Курьер деактивирован"
-        );
-
-        await loadAdminCouriers();
-        await loadAdminOrders();
-
-    }catch(error){
-
-        toast(
-            formatError(
-                error.message
-            )
-        );
-    }
+ try{
+  await api("/api/admin/couriers/"+id+"/fire",{method:"POST"});
+  await loadStats();
+  await loadCouriers();
+ }catch(e){
+  alert(formatError(e.message));
+ }
 }
 
+async function renderCustomer(){
+ app.innerHTML=`
+ <div class="title">🍽 RESTARAN</div>
 
-/* =========================================================
-   ADMIN STATS
-========================================================= */
+ <div class="card">
+  <div class="small">Клиент</div>
+  <h2>${escapeHtml(me.name)}</h2>
+  <div>📱 ${escapeHtml(me.phone)}</div>
+  <button class="btn gray" onclick="logout()">Выйти</button>
+ </div>
 
-async function loadAdminStatsPage(){
+ <div class="card">
+  <h3>Мои заказы</h3>
+  <div id="customerOrders"></div>
+ </div>`;
 
-    const area =
-        document.getElementById(
-            "adminStatsArea"
-        );
-
-    if(!area)
-        return;
-
-
-    try{
-
-        const data =
-            await api(
-                "/api/admin/stats"
-            );
-
-
-        area.innerHTML = `
-
-        <div class="sectionTitle">
-            Статистика
-        </div>
-
-        <div class="grid">
-
-            <div class="stat glass">
-                <div class="statLabel">
-                    Активные заказы
-                </div>
-                <div class="statValue">
-                    ${data.active_orders || 0}
-                </div>
-            </div>
-
-            <div class="stat glass">
-                <div class="statLabel">
-                    Доставлено
-                </div>
-                <div class="statValue">
-                    ${data.delivered || 0}
-                </div>
-            </div>
-
-            <div class="stat glass">
-                <div class="statLabel">
-                    Закрыто
-                </div>
-                <div class="statValue">
-                    ${data.closed || 0}
-                </div>
-            </div>
-
-            <div class="stat glass">
-                <div class="statLabel">
-                    Выручка
-                </div>
-                <div class="statValue">
-                    $${Number(
-                        data.revenue || 0
-                    ).toFixed(2)}
-                </div>
-            </div>
-
-        </div>
-        `;
-
-    }catch(error){
-
-        area.innerHTML = `
-            <div class="empty">
-                ❌ ${escapeHtml(
-                    formatError(
-                        error.message
-                    )
-                )}
-            </div>
-        `;
-    }
+ await loadCustomerOrders();
 }
 
+async function loadCustomerOrders(){
+ try{
+  const orders=await api("/api/customer/orders");
+  const area=document.getElementById("customerOrders");
 
-/* =========================================================
-   CUSTOMER
-========================================================= */
+  if(!orders.length){
+   area.innerHTML='<div class="small">Заказов нет</div>';
+   return;
+  }
 
-async function loadCustomer(){
+  area.innerHTML=orders.map(o=>`
+   <div class="item">
+    <b>#${o.id} — ${escapeHtml(o.title)}</b>
+    <div class="small">📍 ${escapeHtml(o.address)}</div>
+    <div>💰 ${Number(o.price).toFixed(2)}</div>
+    <span class="badge">${escapeHtml(o.status)}</span>
 
-    const area =
-        document.getElementById(
-            "customerOrdersArea"
-        );
+    ${o.status==="delivered"
+      ? `<button class="btn green" onclick="confirmOrder(${o.id})">Получил заказ</button>`
+      : ""}
 
-    if(!area)
-        return;
-
-
-    try{
-
-        const orders =
-            await api(
-                "/api/customer/orders"
-            );
-
-
-        area.innerHTML = `
-
-        <div class="sectionTitle">
-            Мои заказы
-        </div>
-
-        ${
-            orders.length
-
-            ? orders
-                .map(customerOrder)
-                .join("")
-
-            : `
-                <div class="empty">
-                    У вас пока нет заказов.
-                </div>
-            `
-        }
-        `;
-
-    }catch(error){
-
-        area.innerHTML = `
-            <div class="empty">
-                ❌ ${escapeHtml(
-                    formatError(
-                        error.message
-                    )
-                )}
-            </div>
-        `;
-    }
+    ${o.status==="delivering"&&o.courier_lat&&o.courier_lon
+      ? `<div class="small" style="margin-top:8px">
+          📍 Курьер: ${o.courier_lat}, ${o.courier_lon}
+         </div>`
+      : ""}
+   </div>
+  `).join("");
+ }catch(e){}
 }
 
-
-function customerOrder(order){
-
-    const status =
-        statusInfo(order.status);
-
-    let map = "";
-
-
-    if(
-        order.lat !== null &&
-        order.lon !== null &&
-        order.status === "delivering"
-    ){
-
-        const lat =
-            Number(order.lat);
-
-        const lon =
-            Number(order.lon);
-
-
-        map = `
-        <iframe
-            class="map"
-            src="https://www.openstreetmap.org/export/embed.html?bbox=${lon-.01}%2C${lat-.01}%2C${lon+.01}%2C${lat+.01}&layer=mapnik&marker=${lat}%2C${lon}">
-        </iframe>
-        `;
-    }
-
-
-    return `
-    <div class="item">
-
-        <div class="itemTop">
-
-            <div>
-
-                <div class="itemTitle">
-                    #${order.id}
-                    — ${escapeHtml(
-                        order.title
-                    )}
-                </div>
-
-                <div class="itemSub">
-                    📍 ${escapeHtml(
-                        order.address || ""
-                    )}
-                    <br>
-                    💰 $${Number(
-                        order.price || 0
-                    ).toFixed(2)}
-                </div>
-
-            </div>
-
-            <span class="badge ${status.class}">
-                ${status.icon}
-                ${status.text}
-            </span>
-
-        </div>
-
-        ${map}
-
-        ${
-            order.status === "delivered"
-
-            ? `
-            <div class="itemActions">
-
-                <button
-                    class="primary"
-                    onclick="confirmReceipt(${order.id})"
-                >
-                    ✅ Подтвердить получение
-                </button>
-
-            </div>
-            `
-
-            : ""
-        }
-
-    </div>
-    `;
+async function confirmOrder(id){
+ try{
+  await api("/api/customer/orders/"+id+"/confirm",{method:"POST"});
+  await loadCustomerOrders();
+ }catch(e){
+  alert(formatError(e.message));
+ }
 }
 
+async function renderCourier(){
+ app.innerHTML=`
+ <div class="title">🚴 RESTARAN</div>
 
-async function confirmReceipt(id){
+ <div class="card">
+  <div class="small">Курьер</div>
+  <h2>${escapeHtml(me.name)}</h2>
+  <div>📱 ${escapeHtml(me.phone)}</div>
 
-    try{
+  <button id="onlineBtn" class="btn green" onclick="toggleOnline()">
+   Онлайн
+  </button>
 
-        await api(
-            `/api/customer/orders/${id}/confirm`,
-            {
-                method:"POST"
-            }
-        );
+  <button class="btn gray" onclick="sendLocation()">📍 Отправить геолокацию</button>
+  <button class="btn gray" onclick="logout()">Выйти</button>
+ </div>
 
-        toast(
-            "✅ Получение подтверждено"
-        );
+ <div class="card">
+  <h3>Мои заказы</h3>
+  <div id="courierOrders"></div>
+ </div>`;
 
-        await loadCustomer();
-
-    }catch(error){
-
-        toast(
-            formatError(
-                error.message
-            )
-        );
-    }
+ await loadCourierOrders();
 }
 
+let courierOnline=false;
 
-/* =========================================================
-   COURIER
-========================================================= */
+async function toggleOnline(){
+ courierOnline=!courierOnline;
 
-async function loadCourier(){
+ try{
+  await api("/api/courier/online",{
+   method:"POST",
+   body:JSON.stringify({online:courierOnline})
+  });
 
-    const data =
-        await api(
-            "/api/courier/orders"
-        );
+  document.getElementById("onlineBtn").textContent=
+   courierOnline?"Оффлайн":"Онлайн";
 
-    courierOnline =
-        !!data.online;
-
-    updateCourierOnlineUI();
-
-    renderCourierOrders(
-        Array.isArray(data.orders)
-        ? data.orders
-        : []
-    );
-
-    if(
-        courierOnline &&
-        navigator.geolocation
-    ){
-        startLocationUpdates();
-    }
+ }catch(e){
+  courierOnline=!courierOnline;
+ }
 }
 
+async function sendLocation(){
+ if(!navigator.geolocation){
+  alert("Геолокация недоступна");
+  return;
+ }
 
-function renderCourierOrders(list){
+ navigator.geolocation.getCurrentPosition(async pos=>{
+  try{
+   await api("/api/courier/location",{
+    method:"POST",
+    body:JSON.stringify({
+     lat:pos.coords.latitude,
+     lon:pos.coords.longitude
+    })
+   });
 
-    const area =
-        document.getElementById(
-            "courierOrdersArea"
-        );
-
-    if(!area)
-        return;
-
-
-    area.innerHTML = `
-
-    <div class="sectionTitle">
-        Мои доставки
-    </div>
-
-    ${
-        list.length
-
-        ? list
-            .map(courierOrder)
-            .join("")
-
-        : `
-            <div class="empty">
-                Назначенных заказов пока нет.
-            </div>
-        `
-    }
-
-    `;
+   alert("Геолокация отправлена");
+  }catch(e){
+   alert(formatError(e.message));
+  }
+ },()=>alert("Разрешите доступ к геолокации"));
 }
 
+async function loadCourierOrders(){
+ try{
+  const orders=await api("/api/courier/orders");
+  const area=document.getElementById("courierOrders");
 
-function courierOrder(order){
+  if(!orders.length){
+   area.innerHTML='<div class="small">Заказов нет</div>';
+   return;
+  }
 
-    const status =
-        statusInfo(order.status);
+  area.innerHTML=orders.map(o=>`
+   <div class="item">
+    <b>#${o.id} — ${escapeHtml(o.title)}</b>
+    <div class="small">👤 ${escapeHtml(o.customer_name)}</div>
+    <div class="small">📱 ${escapeHtml(o.customer_phone)}</div>
+    <div class="small">📍 ${escapeHtml(o.address)}</div>
+    <div>💰 ${Number(o.price).toFixed(2)}</div>
+    <span class="badge">${escapeHtml(o.status)}</span>
 
+    ${o.status==="assigned"
+      ? `<button class="btn green" onclick="courierAction(${o.id},'accept')">Принять</button>`
+      : ""}
 
-    return `
-    <div class="item">
+    ${o.status==="accepted"
+      ? `<button class="btn green" onclick="courierAction(${o.id},'start')">Начать доставку</button>`
+      : ""}
 
-        <div class="itemTop">
-
-            <div>
-
-                <div class="itemTitle">
-                    #${order.id}
-                    — ${escapeHtml(
-                        order.title
-                    )}
-                </div>
-
-                <div class="itemSub">
-
-                    👤 ${escapeHtml(
-                        order.customer_name || ""
-                    )}
-
-                    <br>
-
-                    📱 ${escapeHtml(
-                        order.customer_phone || ""
-                    )}
-
-                    <br>
-
-                    📍 ${escapeHtml(
-                        order.address || ""
-                    )}
-
-                    <br>
-
-                    💰 $${Number(
-                        order.price || 0
-                    ).toFixed(2)}
-
-                </div>
-
-            </div>
-
-            <span class="badge ${status.class}">
-                ${status.icon}
-                ${status.text}
-            </span>
-
-        </div>
-
-
-        <div class="itemActions">
-
-            ${
-                order.status === "assigned"
-
-                ? `
-                <button
-                    class="success"
-                    onclick="courierAccept(${order.id})"
-                >
-                    ✓ Принять
-                </button>
-                `
-
-                : ""
-            }
-
-
-            ${
-                order.status === "accepted"
-
-                ? `
-                <button
-                    class="blue"
-                    onclick="courierStart(${order.id})"
-                >
-                    🚚 Начать доставку
-                </button>
-                `
-
-                : ""
-            }
-
-
-            ${
-                order.status === "delivering"
-
-                ? `
-                <button
-                    class="primary"
-                    onclick="courierComplete(${order.id})"
-                >
-                    ✅ Доставлено
-                </button>
-                `
-
-                : ""
-            }
-
-        </div>
-
-    </div>
-    `;
+    ${o.status==="delivering"
+      ? `<button class="btn green" onclick="courierAction(${o.id},'complete')">Доставлено</button>`
+      : ""}
+   </div>
+  `).join("");
+ }catch(e){}
 }
 
-
-async function toggleCourierOnline(){
-
-    try{
-
-        await api(
-            "/api/courier/online",
-            {
-                method:"POST",
-                body:JSON.stringify({
-                    online:
-                        !courierOnline
-                })
-            }
-        );
-
-        courierOnline =
-            !courierOnline;
-
-        updateCourierOnlineUI();
-
-        if(
-            courierOnline &&
-            navigator.geolocation
-        ){
-            startLocationUpdates();
-        }
-
-    }catch(error){
-
-        toast(
-            formatError(
-                error.message
-            )
-        );
-    }
+async function courierAction(id,action){
+ try{
+  await api("/api/courier/orders/"+id+"/"+action,{method:"POST"});
+  await loadCourierOrders();
+ }catch(e){
+  alert(formatError(e.message));
+ }
 }
-
-
-function updateCourierOnlineUI(){
-
-    const btn =
-        document.getElementById(
-            "courierOnlineBtn"
-        );
-
-    const text =
-        document.getElementById(
-            "courierOnlineText"
-        );
-
-    if(!btn || !text)
-        return;
-
-
-    if(courierOnline){
-
-        btn.textContent =
-            "Онлайн";
-
-        btn.className =
-            "switchBtn success";
-
-        text.textContent =
-            "Вы онлайн и готовы к доставкам";
-
-    }else{
-
-        btn.textContent =
-            "Офлайн";
-
-        btn.className =
-            "switchBtn danger";
-
-        text.textContent =
-            "Вы сейчас офлайн";
-    }
-}
-
-
-async function courierAccept(id){
-
-    try{
-
-        await api(
-            `/api/courier/orders/${id}/accept`,
-            {
-                method:"POST"
-            }
-        );
-
-        toast(
-            "Заказ принят"
-        );
-
-        await loadCourier();
-
-    }catch(error){
-
-        toast(
-            formatError(
-                error.message
-            )
-        );
-    }
-}
-
-
-async function courierStart(id){
-
-    try{
-
-        await api(
-            `/api/courier/orders/${id}/start`,
-            {
-                method:"POST"
-            }
-        );
-
-        toast(
-            "🚚 Доставка начата"
-        );
-
-        await loadCourier();
-
-    }catch(error){
-
-        toast(
-            formatError(
-                error.message
-            )
-        );
-    }
-}
-
-
-async function courierComplete(id){
-
-    try{
-
-        await api(
-            `/api/courier/orders/${id}/complete`,
-            {
-                method:"POST"
-            }
-        );
-
-        toast(
-            "✅ Заказ отмечен как доставленный"
-        );
-
-        await loadCourier();
-
-    }catch(error){
-
-        toast(
-            formatError(
-                error.message
-            )
-        );
-    }
-}
-
-
-/* =========================================================
-   GEOLOCATION
-========================================================= */
-
-function startLocationUpdates(){
-
-    if(!navigator.geolocation)
-        return;
-
-    if(geoTimer)
-        clearInterval(geoTimer);
-
-
-    const sendLocation = () => {
-
-        navigator.geolocation.getCurrentPosition(
-
-            async position => {
-
-                try{
-
-                    await api(
-                        "/api/courier/location",
-                        {
-                            method:"POST",
-                            body:JSON.stringify({
-                                lat:
-                                    position.coords.latitude,
-                                lon:
-                                    position.coords.longitude
-                            })
-                        }
-                    );
-
-                }catch(error){
-
-                    console.log(
-                        "Location:",
-                        error.message
-                    );
-                }
-            },
-
-            () => {},
-
-            {
-                enableHighAccuracy:true,
-                timeout:10000,
-                maximumAge:5000
-            }
-        );
-    };
-
-
-    sendLocation();
-
-    geoTimer =
-        setInterval(
-            sendLocation,
-            15000
-        );
-}
-
-
-/* =========================================================
-   STATUS
-========================================================= */
-
-function statusInfo(status){
-
-    const map = {
-
-        new:{
-            text:"Новый",
-            icon:"🆕",
-            class:"orange"
-        },
-
-        assigned:{
-            text:"Назначен",
-            icon:"🛵",
-            class:"orange"
-        },
-
-        accepted:{
-            text:"Принят",
-            icon:"✓",
-            class:"blue"
-        },
-
-        delivering:{
-            text:"Доставляется",
-            icon:"🚚",
-            class:"blue"
-        },
-
-        delivered:{
-            text:"Доставлен",
-            icon:"✅",
-            class:"green"
-        },
-
-        closed:{
-            text:"Закрыт",
-            icon:"✕",
-            class:"red"
-        }
-
-    };
-
-
-    return (
-        map[status] ||
-        {
-            text:
-                status ||
-                "Неизвестно",
-            icon:"•",
-            class:""
-        }
-    );
-}
-
-
-/* =========================================================
-   ESCAPE
-========================================================= */
 
 function escapeHtml(value){
-
-    return String(
-        value ?? ""
-    )
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+ return String(value??"")
+  .replaceAll("&","&amp;")
+  .replaceAll("<","&lt;")
+  .replaceAll(">","&gt;")
+  .replaceAll('"',"&quot;")
+  .replaceAll("'","&#039;");
 }
-
-
-/* =========================================================
-   GAME
-========================================================= */
-
-function tapGame(){
-
-    gameScore++;
-
-    document
-        .getElementById(
-            "gameScore"
-        )
-        .textContent =
-            gameScore;
-}
-
-
-/* =========================================================
-   AUTO REFRESH
-========================================================= */
-
-setInterval(
-    async () => {
-
-        if(!token)
-            return;
-
-        try{
-
-            if(role === "admin"){
-
-                await loadAdminStats();
-
-                const area =
-                    document.getElementById(
-                        "adminOrdersArea"
-                    );
-
-                if(
-                    area &&
-                    !area.classList.contains(
-                        "hidden"
-                    )
-                ){
-
-                    await loadAdminOrders();
-                }
-
-            }else if(role === "customer"){
-
-                await loadCustomer();
-
-            }else if(role === "courier"){
-
-                await loadCourier();
-            }
-
-        }catch(error){
-
-            console.log(
-                "Auto refresh:",
-                error.message
-            );
-        }
-
-    },
-    15000
-);
-
-
-/* =========================================================
-   START
-========================================================= */
 
 boot();
 
+setInterval(async()=>{
+ if(!token||!me)return;
+
+ try{
+  if(me.role==="admin"){
+   await loadStats();
+   const active=document.querySelector(".tab.active");
+   if(active){
+    if(active.textContent.includes("Заказы"))await loadAdminOrders();
+    if(active.textContent.includes("Клиенты"))await loadCustomers();
+    if(active.textContent.includes("Курьеры"))await loadCouriers();
+   }
+  }
+
+  if(me.role==="customer")await loadCustomerOrders();
+  if(me.role==="courier")await loadCourierOrders();
+ }catch{}
+},10000);
 </script>
 
 </body>
-   </html>
+  </html>
