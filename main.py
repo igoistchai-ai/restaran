@@ -1,23 +1,18 @@
 import os
+import re
 import hmac
 import hashlib
+import secrets
 import sqlite3
 import asyncio
-import time
-import json
-from pathlib import Path
-from urllib.parse import parse_qsl
+from datetime import datetime, timedelta, timezone
+from typing import Optional
 
-from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI, Request, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse
+from pydantic import BaseModel
 
-from telegram import (
-    Update,
-    KeyboardButton,
-    ReplyKeyboardMarkup,
-    ReplyKeyboardRemove,
-    WebAppInfo,
-)
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -26,104 +21,95 @@ from telegram.ext import (
     filters,
 )
 
-
 # =========================================================
 # CONFIG
 # =========================================================
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "restaran.db")
+
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-ADMIN_ID = int(os.getenv("ADMIN_ID", "8357023784"))
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "change-this-password")
 
-if not BOT_TOKEN:
-    raise RuntimeError("BOT_TOKEN is missing")
+PORT = int(os.getenv("PORT", "10000"))
 
-# Render автоматически даёт эту переменную.
-WEB_APP_URL = os.getenv("RENDER_EXTERNAL_URL")
+app = FastAPI(title="RESTARAN")
 
-if not WEB_APP_URL:
-    raise RuntimeError(
-        "RENDER_EXTERNAL_URL was not detected"
-    )
-
-BASE_DIR = Path(__file__).resolve().parent
-INDEX_FILE = BASE_DIR / "index.html"
-DB_PATH = BASE_DIR / "delivery.db"
-
-app = FastAPI()
-
-connections = set()
+bot_app = None
+websockets = set()
 
 
 # =========================================================
 # DATABASE
 # =========================================================
 
-def db():
-    connection = sqlite3.connect(DB_PATH)
-    connection.row_factory = sqlite3.Row
-    return connection
+def database():
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
 def init_db():
+    conn = database()
 
-    connection = db()
-
-    connection.executescript("""
-    CREATE TABLE IF NOT EXISTS users (
-        telegram_id INTEGER PRIMARY KEY,
-        username TEXT DEFAULT '',
-        first_name TEXT DEFAULT '',
-        role TEXT DEFAULT 'customer',
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
-    );
-
+    conn.executescript("""
     CREATE TABLE IF NOT EXISTS customers (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        telegram_id INTEGER UNIQUE,
+        name TEXT NOT NULL,
         phone TEXT UNIQUE NOT NULL,
-        name TEXT DEFAULT '',
-        verified INTEGER DEFAULT 1,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        pin_hash TEXT NOT NULL,
+        telegram_id INTEGER,
+        created_at TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS couriers (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        telegram_id INTEGER UNIQUE NOT NULL,
-        phone TEXT DEFAULT '',
-        name TEXT DEFAULT '',
-        photo_file_id TEXT DEFAULT '',
-        approved INTEGER DEFAULT 0,
+        name TEXT NOT NULL,
+        phone TEXT UNIQUE NOT NULL,
+        pin_hash TEXT NOT NULL,
+        telegram_id INTEGER,
+        photo_file_id TEXT,
+
+        verified INTEGER DEFAULT 0,
         online INTEGER DEFAULT 0,
+
         lat REAL,
-        lon REAL,
-        location_time TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        lng REAL,
+        location_at TEXT,
+
+        created_at TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS orders (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+
         customer_id INTEGER NOT NULL,
         courier_id INTEGER,
-        address TEXT DEFAULT '',
+
+        address TEXT NOT NULL,
         comment TEXT DEFAULT '',
+
+        total REAL DEFAULT 0,
+
         status TEXT DEFAULT 'new',
-        customer_confirmed INTEGER DEFAULT 0,
-        courier_confirmed INTEGER DEFAULT 0,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
     );
 
-    CREATE TABLE IF NOT EXISTS support (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        telegram_id INTEGER NOT NULL,
-        message TEXT NOT NULL,
-        answer TEXT DEFAULT '',
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    CREATE TABLE IF NOT EXISTS sessions (
+        token TEXT PRIMARY KEY,
+
+        role TEXT NOT NULL,
+        user_id INTEGER,
+
+        created_at TEXT NOT NULL,
+        expires_at TEXT NOT NULL
     );
     """)
 
-    connection.commit()
-    connection.close()
+    conn.commit()
+    conn.close()
 
 
 init_db()
@@ -133,736 +119,368 @@ init_db()
 # HELPERS
 # =========================================================
 
-def json_error(message, status=400):
-    return JSONResponse(
-        {"error": message},
-        status_code=status
+def current_time():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def normalize_phone(phone):
+    digits = re.sub(r"\D", "", phone or "")
+
+    if digits.startswith("00"):
+        digits = digits[2:]
+
+    if not digits:
+        return ""
+
+    return "+" + digits
+
+
+def hash_pin(pin):
+    return hashlib.sha256(pin.encode()).hexdigest()
+
+
+def create_session(role, user_id=None):
+    token = secrets.token_urlsafe(40)
+
+    created = datetime.now(timezone.utc)
+    expires = created + timedelta(days=7)
+
+    conn = database()
+
+    conn.execute(
+        """
+        INSERT INTO sessions
+        (token, role, user_id, created_at, expires_at)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            token,
+            role,
+            user_id,
+            created.isoformat(),
+            expires.isoformat()
+        )
     )
 
+    conn.commit()
+    conn.close()
 
-def telegram_user(request: Request):
-
-    init_data = request.headers.get(
-        "X-Telegram-Init-Data",
-        ""
-    )
-
-    if not init_data:
-        return None
-
-    try:
-
-        parsed = dict(
-            parse_qsl(
-                init_data,
-                keep_blank_values=True
-            )
-        )
-
-        received_hash = parsed.pop(
-            "hash",
-            None
-        )
-
-        if not received_hash:
-            return None
-
-        auth_date = int(
-            parsed.get(
-                "auth_date",
-                "0"
-            )
-        )
-
-        # initData не старше 24 часов
-        if time.time() - auth_date > 86400:
-            return None
-
-        data_check_string = "\n".join(
-            f"{key}={parsed[key]}"
-            for key in sorted(parsed)
-        )
-
-        secret_key = hmac.new(
-            b"WebAppData",
-            BOT_TOKEN.encode(),
-            hashlib.sha256
-        ).digest()
-
-        calculated_hash = hmac.new(
-            secret_key,
-            data_check_string.encode(),
-            hashlib.sha256
-        ).hexdigest()
-
-        if not hmac.compare_digest(
-            calculated_hash,
-            received_hash
-        ):
-            return None
-
-        return json.loads(
-            parsed.get("user", "{}")
-        )
-
-    except Exception:
-        return None
+    return token
 
 
-async def require_user(request):
+def get_session(request: Request):
+    authorization = request.headers.get("Authorization", "")
 
-    user = telegram_user(request)
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(401, "Необходимо войти")
 
-    if not user:
-        return None
+    token = authorization.replace("Bearer ", "").strip()
 
-    return user
+    conn = database()
+
+    row = conn.execute(
+        """
+        SELECT *
+        FROM sessions
+        WHERE token=?
+        AND expires_at>?
+        """,
+        (token, current_time())
+    ).fetchone()
+
+    conn.close()
+
+    if not row:
+        raise HTTPException(401, "Сессия недействительна")
+
+    return dict(row)
+
+
+def require_role(request, role):
+    session = get_session(request)
+
+    if session["role"] != role:
+        raise HTTPException(403, "Недостаточно прав")
+
+    return session
 
 
 async def broadcast(data):
-
     dead = []
 
-    for ws in list(connections):
-
+    for ws in list(websockets):
         try:
             await ws.send_json(data)
-
         except Exception:
             dead.append(ws)
 
     for ws in dead:
-        connections.discard(ws)
+        websockets.discard(ws)
 
 
 # =========================================================
-# WEB APP
+# MODELS
 # =========================================================
 
-@app.get("/", response_class=HTMLResponse)
+class LoginData(BaseModel):
+    phone: str
+    pin: str
+
+
+class AdminLogin(BaseModel):
+    password: str
+
+
+class CustomerCreate(BaseModel):
+    name: str
+    phone: str
+    pin: str
+
+
+class CourierCreate(BaseModel):
+    name: str
+    phone: str
+    pin: str
+
+
+class OrderCreate(BaseModel):
+    customer_id: int
+    courier_id: Optional[int] = None
+    address: str
+    comment: str = ""
+    total: float = 0
+
+
+class OnlineData(BaseModel):
+    online: bool
+
+
+# =========================================================
+# PAGES
+# =========================================================
+
+@app.get("/")
 async def index():
+    return FileResponse(
+        os.path.join(BASE_DIR, "index.html")
+    )
 
-    return INDEX_FILE.read_text(
-        encoding="utf-8"
+
+@app.get("/admin")
+async def admin():
+    return FileResponse(
+        os.path.join(BASE_DIR, "index.html")
     )
 
 
 @app.get("/health")
 async def health():
-
     return {
         "status": "ok"
     }
 
 
-@app.websocket("/ws")
-async def websocket(ws: WebSocket):
-
-    await ws.accept()
-
-    connections.add(ws)
-
-    try:
-
-        while True:
-            await ws.receive_text()
-
-    except WebSocketDisconnect:
-        connections.discard(ws)
-
-    except Exception:
-        connections.discard(ws)
-
-
 # =========================================================
-# TELEGRAM /START
+# AUTH
 # =========================================================
 
-async def start(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
+@app.post("/api/login")
+async def login(data: LoginData):
 
-    user = update.effective_user
+    phone = normalize_phone(data.phone)
 
-    if not user:
-        return
+    conn = database()
 
-    connection = db()
+    # CUSTOMER
+    customer = conn.execute(
+        """
+        SELECT *
+        FROM customers
+        WHERE phone=?
+        """,
+        (phone,)
+    ).fetchone()
 
-    connection.execute("""
-        INSERT INTO users(
-            telegram_id,
-            username,
-            first_name
-        )
-        VALUES (?, ?, ?)
+    if customer:
 
-        ON CONFLICT(telegram_id)
-        DO UPDATE SET
-            username=excluded.username,
-            first_name=excluded.first_name
-    """, (
-        user.id,
-        user.username or "",
-        user.first_name or ""
-    ))
+        if hmac.compare_digest(
+            customer["pin_hash"],
+            hash_pin(data.pin)
+        ):
 
-    connection.commit()
-    connection.close()
-
-    keyboard = [
-        [
-            KeyboardButton(
-                "🍔 Открыть приложение",
-                web_app=WebAppInfo(
-                    url=WEB_APP_URL
-                )
+            token = create_session(
+                "customer",
+                customer["id"]
             )
-        ],
-        [
-            KeyboardButton(
-                "🚴 Стать курьером"
-            )
-        ],
-        [
-            KeyboardButton(
-                "💬 Поддержка"
-            )
-        ]
-    ]
 
-    # Админу тоже показываем приложение
-    if user.id == ADMIN_ID:
+            conn.close()
 
-        keyboard.insert(
-            0,
-            [
-                KeyboardButton(
-                    "👑 Админ-панель",
-                    web_app=WebAppInfo(
-                        url=WEB_APP_URL
-                    )
-                )
-            ]
-        )
+            return {
+                "ok": True,
+                "token": token,
+                "role": "customer"
+            }
 
-    await update.message.reply_text(
-        "🍔 Добро пожаловать в Delivery!\n\n"
-        "Выбери нужный раздел:",
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard,
-            resize_keyboard=True
-        )
-    )
-
-
-# =========================================================
-# COURIER REGISTRATION
-# =========================================================
-
-async def courier_registration(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    context.user_data[
-        "courier_registration"
-    ] = True
-
-    keyboard = ReplyKeyboardMarkup(
-        [[
-            KeyboardButton(
-                "📱 Отправить номер",
-                request_contact=True
-            )
-        ]],
-        resize_keyboard=True
-    )
-
-    await update.message.reply_text(
-        "🚴 Регистрация курьера\n\n"
-        "Для начала отправь свой номер телефона.",
-        reply_markup=keyboard
-    )
-
-
-async def contact_handler(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    contact = update.message.contact
-    user = update.effective_user
-
-    if not contact or not user:
-        return
-
-    if not context.user_data.get(
-        "courier_registration"
-    ):
-        return
-
-    phone = contact.phone_number
-
-    connection = db()
-
-    connection.execute("""
-        INSERT INTO couriers(
-            telegram_id,
-            phone,
-            name
-        )
-        VALUES (?, ?, ?)
-
-        ON CONFLICT(telegram_id)
-        DO UPDATE SET
-            phone=excluded.phone,
-            name=excluded.name
-    """, (
-        user.id,
-        phone,
-        user.first_name or ""
-    ))
-
-    connection.execute("""
-        UPDATE users
-        SET role='courier'
-        WHERE telegram_id=?
-    """, (
-        user.id,
-    ))
-
-    connection.commit()
-    connection.close()
-
-    context.user_data[
-        "courier_registration"
-    ] = False
-
-    context.user_data[
-        "waiting_courier_photo"
-    ] = True
-
-    await update.message.reply_text(
-        "✅ Номер получен.\n\n"
-        "Теперь отправь свою фотографию "
-        "обычным сообщением.",
-        reply_markup=ReplyKeyboardRemove()
-    )
-
-
-# =========================================================
-# COURIER PHOTO
-# =========================================================
-
-async def photo_handler(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    user = update.effective_user
-
-    if not user:
-        return
-
-    if not context.user_data.get(
-        "waiting_courier_photo"
-    ):
-        return
-
-    if not update.message.photo:
-        return
-
-    photo = update.message.photo[-1]
-
-    connection = db()
-
-    connection.execute("""
-        UPDATE couriers
-        SET photo_file_id=?
-        WHERE telegram_id=?
-    """, (
-        photo.file_id,
-        user.id
-    ))
-
-    connection.commit()
-    connection.close()
-
-    context.user_data[
-        "waiting_courier_photo"
-    ] = False
-
-    await update.message.reply_text(
-        "📸 Фото сохранено.\n\n"
-        "Теперь отправь свою геопозицию.\n\n"
-        "Лучше использовать Telegram "
-        "Live Location, чтобы координаты "
-        "обновлялись автоматически."
-    )
-
-
-# =========================================================
-# LOCATION
-# =========================================================
-
-async def save_location(
-    telegram_id,
-    latitude,
-    longitude
-):
-
-    connection = db()
-
-    courier = connection.execute("""
+    # COURIER
+    courier = conn.execute(
+        """
         SELECT *
         FROM couriers
-        WHERE telegram_id=?
-    """, (
-        telegram_id,
-    )).fetchone()
+        WHERE phone=?
+        """,
+        (phone,)
+    ).fetchone()
 
-    if not courier:
+    conn.close()
 
-        connection.close()
-        return
+    if courier:
 
-    connection.execute("""
-        UPDATE couriers
-        SET
-            lat=?,
-            lon=?,
-            online=1,
-            location_time=CURRENT_TIMESTAMP
-        WHERE telegram_id=?
-    """, (
-        latitude,
-        longitude,
-        telegram_id
-    ))
-
-    connection.commit()
-    connection.close()
-
-    await broadcast({
-        "type": "courier_location",
-        "courier_id": courier["id"],
-        "lat": latitude,
-        "lon": longitude
-    })
-
-
-async def location_handler(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    location = update.effective_message.location
-    user = update.effective_user
-
-    if not location or not user:
-        return
-
-    await save_location(
-        user.id,
-        location.latitude,
-        location.longitude
-    )
-
-
-async def edited_location_handler(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    message = update.edited_message
-
-    if not message:
-        return
-
-    if not message.location:
-        return
-
-    user = message.from_user
-
-    if not user:
-        return
-
-    await save_location(
-        user.id,
-        message.location.latitude,
-        message.location.longitude
-    )
-
-
-# =========================================================
-# BOT TEXT
-# =========================================================
-
-async def text_handler(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    if not update.message:
-        return
-
-    text = update.message.text
-
-    if text == "🚴 Стать курьером":
-
-        await courier_registration(
-            update,
-            context
-        )
-
-        return
-
-    if text == "💬 Поддержка":
-
-        context.user_data[
-            "support"
-        ] = True
-
-        await update.message.reply_text(
-            "💬 Напиши сообщение для поддержки."
-        )
-
-        return
-
-    if context.user_data.get(
-        "support"
-    ):
-
-        connection = db()
-
-        connection.execute("""
-            INSERT INTO support(
-                telegram_id,
-                message
+        if not courier["verified"]:
+            raise HTTPException(
+                403,
+                "Ваш аккаунт курьера ещё не подтверждён"
             )
-            VALUES (?, ?)
-        """, (
-            update.effective_user.id,
-            text
-        ))
 
-        connection.commit()
-        connection.close()
+        if hmac.compare_digest(
+            courier["pin_hash"],
+            hash_pin(data.pin)
+        ):
 
-        context.user_data[
-            "support"
-        ] = False
+            token = create_session(
+                "courier",
+                courier["id"]
+            )
 
-        await update.message.reply_text(
-            "✅ Сообщение отправлено."
+            return {
+                "ok": True,
+                "token": token,
+                "role": "courier"
+            }
+
+    raise HTTPException(
+        401,
+        "Неверный номер телефона или PIN"
+    )
+
+
+@app.post("/api/admin/login")
+async def admin_login(data: AdminLogin):
+
+    if not hmac.compare_digest(
+        data.password,
+        ADMIN_PASSWORD
+    ):
+        raise HTTPException(
+            401,
+            "Неверный пароль"
         )
 
+    return {
+        "ok": True,
+        "token": create_session("admin"),
+        "role": "admin"
+    }
 
-# =========================================================
-# ME
-# =========================================================
 
 @app.get("/api/me")
 async def me(request: Request):
 
-    user = await require_user(request)
+    session = get_session(request)
 
-    if not user:
-        return json_error(
-            "Unauthorized. Открой приложение через Telegram.",
-            401
-        )
+    conn = database()
 
-    telegram_id = int(user["id"])
+    if session["role"] == "customer":
 
-    connection = db()
+        user = conn.execute(
+            """
+            SELECT id,name,phone
+            FROM customers
+            WHERE id=?
+            """,
+            (session["user_id"],)
+        ).fetchone()
 
-    customer = connection.execute("""
-        SELECT *
-        FROM customers
-        WHERE telegram_id=?
-    """, (
-        telegram_id,
-    )).fetchone()
+    elif session["role"] == "courier":
 
-    courier = connection.execute("""
-        SELECT *
-        FROM couriers
-        WHERE telegram_id=?
-    """, (
-        telegram_id,
-    )).fetchone()
-
-    connection.close()
-
-    if telegram_id == ADMIN_ID:
-        role = "admin"
-
-    elif courier:
-        role = "courier"
+        user = conn.execute(
+            """
+            SELECT
+                id,
+                name,
+                phone,
+                verified,
+                online,
+                lat,
+                lng,
+                location_at
+            FROM couriers
+            WHERE id=?
+            """,
+            (session["user_id"],)
+        ).fetchone()
 
     else:
-        role = "customer"
 
-    return {
-        "telegram_id": telegram_id,
-        "name": user.get(
-            "first_name",
-            ""
-        ),
-        "username": user.get(
-            "username",
-            ""
-        ),
-        "role": role,
-        "customer": (
-            dict(customer)
-            if customer else None
-        ),
-        "courier": (
-            dict(courier)
-            if courier else None
-        )
-    }
-
-
-# =========================================================
-# CUSTOMER LOGIN
-# =========================================================
-
-@app.post("/api/login")
-async def login(request: Request):
-
-    user = await require_user(request)
-
-    if not user:
-        return json_error(
-            "Unauthorized",
-            401
-        )
-
-    data = await request.json()
-
-    phone = str(
-        data.get("phone", "")
-    ).strip()
-
-    if not phone:
-        return json_error(
-            "Введите номер телефона"
-        )
-
-    telegram_id = int(user["id"])
-
-    connection = db()
-
-    customer = connection.execute("""
-        SELECT *
-        FROM customers
-        WHERE phone=?
-    """, (
-        phone,
-    )).fetchone()
-
-    if not customer:
-
-        connection.close()
-
-        return json_error(
-            "Этот номер не добавлен администратором.",
-            404
-        )
-
-    if (
-        customer["telegram_id"]
-        and customer["telegram_id"] != telegram_id
-    ):
-
-        connection.close()
-
-        return json_error(
-            "Номер уже привязан к другому Telegram.",
-            409
-        )
-
-    connection.execute("""
-        UPDATE customers
-        SET telegram_id=?
-        WHERE id=?
-    """, (
-        telegram_id,
-        customer["id"]
-    ))
-
-    connection.commit()
-    connection.close()
-
-    return {
-        "ok": True
-    }
-
-
-# =========================================================
-# CUSTOMER ORDERS
-# =========================================================
-
-@app.get("/api/orders")
-async def customer_orders(
-    request: Request
-):
-
-    user = await require_user(request)
-
-    if not user:
-        return json_error(
-            "Unauthorized",
-            401
-        )
-
-    connection = db()
-
-    customer = connection.execute("""
-        SELECT *
-        FROM customers
-        WHERE telegram_id=?
-    """, (
-        int(user["id"]),
-    )).fetchone()
-
-    if not customer:
-
-        connection.close()
-
-        return {
-            "orders": []
+        user = {
+            "name": "Administrator"
         }
 
-    rows = connection.execute("""
-        SELECT
-            o.*,
+    conn.close()
 
+    return {
+        "role": session["role"],
+        "user": dict(user) if user else None
+    }
+
+
+# =========================================================
+# CUSTOMER
+# =========================================================
+
+@app.get("/api/customer/orders")
+async def customer_orders(request: Request):
+
+    session = require_role(
+        request,
+        "customer"
+    )
+
+    conn = database()
+
+    rows = conn.execute(
+        """
+        SELECT
+
+            o.id,
+            o.address,
+            o.comment,
+            o.total,
+            o.status,
+            o.created_at,
+            o.updated_at,
+
+            cr.id AS courier_id,
             cr.name AS courier_name,
+
             cr.lat AS courier_lat,
-            cr.lon AS courier_lon,
-            cr.online AS courier_online
+            cr.lng AS courier_lng,
+
+            cr.online AS courier_online,
+            cr.location_at AS courier_location_at
 
         FROM orders o
 
         LEFT JOIN couriers cr
-            ON o.courier_id=cr.id
+        ON cr.id=o.courier_id
 
         WHERE o.customer_id=?
 
-        AND o.status!='closed'
-
         ORDER BY o.id DESC
-    """, (
-        customer["id"],
-    )).fetchall()
+        """,
+        (session["user_id"],)
+    ).fetchall()
 
-    connection.close()
+    conn.close()
 
     return {
         "orders": [
@@ -872,468 +490,68 @@ async def customer_orders(
     }
 
 
-# =========================================================
-# COURIER ORDERS
-# =========================================================
-
-@app.get("/api/courier/orders")
-async def courier_orders(
-    request: Request
-):
-
-    user = await require_user(request)
-
-    if not user:
-        return json_error(
-            "Unauthorized",
-            401
-        )
-
-    connection = db()
-
-    courier = connection.execute("""
-        SELECT *
-        FROM couriers
-        WHERE telegram_id=?
-    """, (
-        int(user["id"]),
-    )).fetchone()
-
-    if not courier:
-
-        connection.close()
-
-        return {
-            "orders": []
-        }
-
-    rows = connection.execute("""
-        SELECT
-            o.*,
-            c.name AS customer_name,
-            c.phone AS customer_phone
-
-        FROM orders o
-
-        JOIN customers c
-            ON o.customer_id=c.id
-
-        WHERE o.courier_id=?
-
-        AND o.status!='closed'
-
-        ORDER BY o.id DESC
-    """, (
-        courier["id"],
-    )).fetchall()
-
-    connection.close()
-
-    return {
-        "orders": [
-            dict(row)
-            for row in rows
-        ]
-    }
-
-
-# =========================================================
-# COURIER ONLINE
-# =========================================================
-
-@app.post("/api/courier/online")
-async def courier_online(
-    request: Request
-):
-
-    user = await require_user(request)
-
-    if not user:
-        return json_error(
-            "Unauthorized",
-            401
-        )
-
-    data = await request.json()
-
-    online = 1 if data.get(
-        "online"
-    ) else 0
-
-    connection = db()
-
-    courier = connection.execute("""
-        SELECT *
-        FROM couriers
-        WHERE telegram_id=?
-    """, (
-        int(user["id"]),
-    )).fetchone()
-
-    if not courier:
-
-        connection.close()
-
-        return json_error(
-            "Курьер не найден",
-            404
-        )
-
-    if not courier["approved"]:
-
-        connection.close()
-
-        return json_error(
-            "Курьер ещё не подтверждён администратором",
-            403
-        )
-
-    connection.execute("""
-        UPDATE couriers
-        SET online=?
-        WHERE telegram_id=?
-    """, (
-        online,
-        int(user["id"])
-    ))
-
-    connection.commit()
-    connection.close()
-
-    await broadcast({
-        "type": "courier_status",
-        "courier_id": courier["id"],
-        "online": bool(online)
-    })
-
-    return {
-        "ok": True
-    }
-
-
-# =========================================================
-# COURIER CONFIRM ORDER
-# =========================================================
-
-@app.post(
-    "/api/courier/orders/{order_id}/accept"
-)
-async def accept_order(
+@app.post("/api/customer/orders/{order_id}/confirm")
+async def confirm_order(
     order_id: int,
     request: Request
 ):
 
-    user = await require_user(request)
+    session = require_role(
+        request,
+        "customer"
+    )
 
-    if not user:
-        return json_error(
-            "Unauthorized",
-            401
-        )
+    conn = database()
 
-    connection = db()
-
-    courier = connection.execute("""
-        SELECT *
-        FROM couriers
-        WHERE telegram_id=?
-    """, (
-        int(user["id"]),
-    )).fetchone()
-
-    if not courier:
-
-        connection.close()
-
-        return json_error(
-            "Courier not found",
-            404
-        )
-
-    if not courier["approved"]:
-
-        connection.close()
-
-        return json_error(
-            "Курьер не подтверждён",
-            403
-        )
-
-    order = connection.execute("""
-        SELECT *
-        FROM orders
-        WHERE id=?
-        AND courier_id=?
-    """, (
-        order_id,
-        courier["id"]
-    )).fetchone()
-
-    if not order:
-
-        connection.close()
-
-        return json_error(
-            "Заказ не найден",
-            404
-        )
-
-    connection.execute("""
-        UPDATE orders
-        SET
-            courier_confirmed=1,
-            status='accepted',
-            updated_at=CURRENT_TIMESTAMP
-        WHERE id=?
-    """, (
-        order_id,
-    ))
-
-    connection.commit()
-    connection.close()
-
-    await broadcast({
-        "type": "order_update",
-        "order_id": order_id,
-        "status": "accepted"
-    })
-
-    return {
-        "ok": True
-    }
-
-
-# =========================================================
-# COURIER START DELIVERY
-# =========================================================
-
-@app.post(
-    "/api/courier/orders/{order_id}/start"
-)
-async def start_delivery(
-    order_id: int,
-    request: Request
-):
-
-    user = await require_user(request)
-
-    if not user:
-        return json_error(
-            "Unauthorized",
-            401
-        )
-
-    connection = db()
-
-    courier = connection.execute("""
-        SELECT id
-        FROM couriers
-        WHERE telegram_id=?
-    """, (
-        int(user["id"]),
-    )).fetchone()
-
-    if not courier:
-
-        connection.close()
-
-        return json_error(
-            "Courier not found",
-            404
-        )
-
-    connection.execute("""
-        UPDATE orders
-        SET
-            status='delivering',
-            updated_at=CURRENT_TIMESTAMP
-        WHERE id=?
-        AND courier_id=?
-        AND courier_confirmed=1
-    """, (
-        order_id,
-        courier["id"]
-    ))
-
-    connection.commit()
-    connection.close()
-
-    await broadcast({
-        "type": "order_update",
-        "order_id": order_id,
-        "status": "delivering"
-    })
-
-    return {
-        "ok": True
-    }
-
-
-# =========================================================
-# COMPLETE DELIVERY
-# =========================================================
-
-@app.post(
-    "/api/courier/orders/{order_id}/complete"
-)
-async def complete_order(
-    order_id: int,
-    request: Request
-):
-
-    user = await require_user(request)
-
-    if not user:
-        return json_error(
-            "Unauthorized",
-            401
-        )
-
-    connection = db()
-
-    courier = connection.execute("""
-        SELECT id
-        FROM couriers
-        WHERE telegram_id=?
-    """, (
-        int(user["id"]),
-    )).fetchone()
-
-    if not courier:
-
-        connection.close()
-
-        return json_error(
-            "Courier not found",
-            404
-        )
-
-    order = connection.execute("""
-        SELECT *
-        FROM orders
-        WHERE id=?
-        AND courier_id=?
-    """, (
-        order_id,
-        courier["id"]
-    )).fetchone()
-
-    if not order:
-
-        connection.close()
-
-        return json_error(
-            "Order not found",
-            404
-        )
-
-    connection.execute("""
-        UPDATE orders
-        SET
-            status='delivered',
-            updated_at=CURRENT_TIMESTAMP
-        WHERE id=?
-    """, (
-        order_id,
-    ))
-
-    connection.commit()
-    connection.close()
-
-    await broadcast({
-        "type": "order_update",
-        "order_id": order_id,
-        "status": "delivered"
-    })
-
-    return {
-        "ok": True
-    }
-
-
-# =========================================================
-# CUSTOMER CONFIRM RECEIVED
-# =========================================================
-
-@app.post(
-    "/api/orders/{order_id}/confirm"
-)
-async def customer_confirm(
-    order_id: int,
-    request: Request
-):
-
-    user = await require_user(request)
-
-    if not user:
-        return json_error(
-            "Unauthorized",
-            401
-        )
-
-    connection = db()
-
-    customer = connection.execute("""
-        SELECT id
-        FROM customers
-        WHERE telegram_id=?
-    """, (
-        int(user["id"]),
-    )).fetchone()
-
-    if not customer:
-
-        connection.close()
-
-        return json_error(
-            "Customer not found",
-            404
-        )
-
-    order = connection.execute("""
+    order = conn.execute(
+        """
         SELECT *
         FROM orders
         WHERE id=?
         AND customer_id=?
-    """, (
-        order_id,
-        customer["id"]
-    )).fetchone()
+        """,
+        (
+            order_id,
+            session["user_id"]
+        )
+    ).fetchone()
 
     if not order:
+        conn.close()
 
-        connection.close()
-
-        return json_error(
-            "Заказ не найден",
-            404
+        raise HTTPException(
+            404,
+            "Заказ не найден"
         )
 
     if order["status"] != "delivered":
+        conn.close()
 
-        connection.close()
-
-        return json_error(
-            "Курьер ещё не отметил заказ доставленным",
-            400
+        raise HTTPException(
+            400,
+            "Заказ ещё не доставлен"
         )
 
-    connection.execute("""
+    conn.execute(
+        """
         UPDATE orders
-        SET
-            customer_confirmed=1,
-            status='closed',
-            updated_at=CURRENT_TIMESTAMP
-        WHERE id=?
-    """, (
-        order_id,
-    ))
 
-    connection.commit()
-    connection.close()
+        SET status='closed',
+            updated_at=?
+
+        WHERE id=?
+        """,
+        (
+            current_time(),
+            order_id
+        )
+    )
+
+    conn.commit()
+    conn.close()
 
     await broadcast({
-        "type": "order_update",
+        "type": "order_updated",
         "order_id": order_id,
         "status": "closed"
     })
@@ -1344,418 +562,1041 @@ async def customer_confirm(
 
 
 # =========================================================
-# ADMIN STATS
+# COURIER
 # =========================================================
 
-@app.get("/api/admin/stats")
-async def admin_stats(
-    request: Request
-):
+@app.get("/api/courier/orders")
+async def courier_orders(request: Request):
 
-    user = await require_user(request)
+    session = require_role(
+        request,
+        "courier"
+    )
 
-    if not user or int(user["id"]) != ADMIN_ID:
-        return json_error(
-            "Forbidden",
-            403
-        )
+    conn = database()
 
-    connection = db()
+    rows = conn.execute(
+        """
+        SELECT
 
-    customers = connection.execute(
-        "SELECT COUNT(*) FROM customers"
-    ).fetchone()[0]
+            o.id,
+            o.address,
+            o.comment,
+            o.total,
+            o.status,
+            o.created_at,
 
-    couriers = connection.execute(
-        "SELECT COUNT(*) FROM couriers"
-    ).fetchone()[0]
+            c.name AS customer_name,
+            c.phone AS customer_phone
 
-    pending = connection.execute("""
-        SELECT COUNT(*)
-        FROM couriers
-        WHERE approved=0
-    """).fetchone()[0]
+        FROM orders o
 
-    online = connection.execute("""
-        SELECT COUNT(*)
-        FROM couriers
-        WHERE online=1
-        AND approved=1
-    """).fetchone()[0]
+        JOIN customers c
+        ON c.id=o.customer_id
 
-    active = connection.execute("""
-        SELECT COUNT(*)
-        FROM orders
-        WHERE status!='closed'
-    """).fetchone()[0]
+        WHERE o.courier_id=?
 
-    closed = connection.execute("""
-        SELECT COUNT(*)
-        FROM orders
-        WHERE status='closed'
-    """).fetchone()[0]
+        ORDER BY o.id DESC
+        """,
+        (session["user_id"],)
+    ).fetchall()
 
-    connection.close()
+    conn.close()
 
     return {
-        "customers": customers,
-        "couriers": couriers,
-        "pending_couriers": pending,
-        "online": online,
-        "active_orders": active,
-        "closed_orders": closed
+        "orders": [
+            dict(row)
+            for row in rows
+        ]
     }
 
 
-# =========================================================
-# ADMIN CUSTOMERS
-# =========================================================
-
-@app.get("/api/admin/customers")
-async def admin_customers(
+@app.post("/api/courier/online")
+async def courier_online(
+    data: OnlineData,
     request: Request
 ):
 
-    user = await require_user(request)
+    session = require_role(
+        request,
+        "courier"
+    )
 
-    if not user or int(user["id"]) != ADMIN_ID:
-        return json_error(
-            "Forbidden",
-            403
+    conn = database()
+
+    conn.execute(
+        """
+        UPDATE couriers
+
+        SET online=?
+
+        WHERE id=?
+        """,
+        (
+            1 if data.online else 0,
+            session["user_id"]
+        )
+    )
+
+    conn.commit()
+    conn.close()
+
+    await broadcast({
+        "type": "courier_online",
+        "courier_id": session["user_id"],
+        "online": data.online
+    })
+
+    return {
+        "ok": True
+    }
+
+
+async def courier_status(
+    request,
+    order_id,
+    old_status,
+    new_status
+):
+
+    session = require_role(
+        request,
+        "courier"
+    )
+
+    conn = database()
+
+    order = conn.execute(
+        """
+        SELECT *
+        FROM orders
+
+        WHERE id=?
+        AND courier_id=?
+        """,
+        (
+            order_id,
+            session["user_id"]
+        )
+    ).fetchone()
+
+    if not order:
+        conn.close()
+
+        raise HTTPException(
+            404,
+            "Заказ не найден"
         )
 
-    connection = db()
+    if order["status"] != old_status:
+        conn.close()
 
-    rows = connection.execute("""
+        raise HTTPException(
+            400,
+            "Невозможно выполнить действие"
+        )
+
+    conn.execute(
+        """
+        UPDATE orders
+
+        SET status=?,
+            updated_at=?
+
+        WHERE id=?
+        """,
+        (
+            new_status,
+            current_time(),
+            order_id
+        )
+    )
+
+    conn.commit()
+    conn.close()
+
+    await broadcast({
+        "type": "order_updated",
+        "order_id": order_id,
+        "status": new_status
+    })
+
+    return {
+        "ok": True
+    }
+
+
+@app.post("/api/courier/orders/{order_id}/accept")
+async def courier_accept(
+    order_id: int,
+    request: Request
+):
+    return await courier_status(
+        request,
+        order_id,
+        "assigned",
+        "accepted"
+    )
+
+
+@app.post("/api/courier/orders/{order_id}/start")
+async def courier_start(
+    order_id: int,
+    request: Request
+):
+    return await courier_status(
+        request,
+        order_id,
+        "accepted",
+        "delivering"
+    )
+
+
+@app.post("/api/courier/orders/{order_id}/complete")
+async def courier_complete(
+    order_id: int,
+    request: Request
+):
+    return await courier_status(
+        request,
+        order_id,
+        "delivering",
+        "delivered"
+    )
+
+
+# =========================================================
+# ADMIN
+# =========================================================
+
+@app.get("/api/admin/stats")
+async def admin_stats(request: Request):
+
+    require_role(
+        request,
+        "admin"
+    )
+
+    conn = database()
+
+    result = {
+
+        "customers":
+            conn.execute(
+                "SELECT COUNT(*) FROM customers"
+            ).fetchone()[0],
+
+        "couriers":
+            conn.execute(
+                "SELECT COUNT(*) FROM couriers"
+            ).fetchone()[0],
+
+        "verified_couriers":
+            conn.execute(
+                """
+                SELECT COUNT(*)
+                FROM couriers
+                WHERE verified=1
+                """
+            ).fetchone()[0],
+
+        "pending_couriers":
+            conn.execute(
+                """
+                SELECT COUNT(*)
+                FROM couriers
+                WHERE verified=0
+                """
+            ).fetchone()[0],
+
+        "online_couriers":
+            conn.execute(
+                """
+                SELECT COUNT(*)
+                FROM couriers
+                WHERE verified=1
+                AND online=1
+                """
+            ).fetchone()[0],
+
+        "active_orders":
+            conn.execute(
+                """
+                SELECT COUNT(*)
+                FROM orders
+                WHERE status!='closed'
+                """
+            ).fetchone()[0],
+
+        "closed_orders":
+            conn.execute(
+                """
+                SELECT COUNT(*)
+                FROM orders
+                WHERE status='closed'
+                """
+            ).fetchone()[0]
+    }
+
+    conn.close()
+
+    return result
+
+
+@app.get("/api/admin/customers")
+async def admin_customers(request: Request):
+
+    require_role(
+        request,
+        "admin"
+    )
+
+    conn = database()
+
+    rows = conn.execute(
+        """
         SELECT *
         FROM customers
         ORDER BY id DESC
-    """).fetchall()
+        """
+    ).fetchall()
 
-    connection.close()
+    conn.close()
 
     return {
         "customers": [
-            dict(x)
-            for x in rows
+            dict(row)
+            for row in rows
         ]
     }
 
 
 @app.post("/api/admin/customers")
 async def admin_create_customer(
+    data: CustomerCreate,
     request: Request
 ):
 
-    user = await require_user(request)
+    require_role(
+        request,
+        "admin"
+    )
 
-    if not user or int(user["id"]) != ADMIN_ID:
-        return json_error(
-            "Forbidden",
-            403
+    phone = normalize_phone(
+        data.phone
+    )
+
+    if len(re.sub(r"\D", "", phone)) < 8:
+        raise HTTPException(
+            400,
+            "Некорректный номер"
         )
 
-    data = await request.json()
-
-    name = str(
-        data.get("name", "")
-    ).strip()
-
-    phone = str(
-        data.get("phone", "")
-    ).strip()
-
-    if not phone:
-        return json_error(
-            "Введите номер"
+    if len(data.pin) < 4:
+        raise HTTPException(
+            400,
+            "PIN должен быть минимум 4 символа"
         )
 
-    connection = db()
+    conn = database()
 
     try:
 
-        connection.execute("""
-            INSERT INTO customers(
-                name,
-                phone
-            )
-            VALUES (?, ?)
-        """, (
-            name,
-            phone
-        ))
+        cur = conn.execute(
+            """
+            INSERT INTO customers
+            (name,phone,pin_hash,created_at)
 
-        connection.commit()
+            VALUES (?,?,?,?)
+            """,
+            (
+                data.name.strip(),
+                phone,
+                hash_pin(data.pin),
+                current_time()
+            )
+        )
+
+        conn.commit()
+
+        customer_id = cur.lastrowid
 
     except sqlite3.IntegrityError:
 
-        connection.close()
+        conn.close()
 
-        return json_error(
-            "Такой номер уже существует",
-            409
+        raise HTTPException(
+            409,
+            "Клиент уже существует"
         )
 
-    connection.close()
+    conn.close()
 
     return {
-        "ok": True
+        "ok": True,
+        "id": customer_id
     }
 
 
-# =========================================================
-# ADMIN COURIERS
-# =========================================================
-
 @app.get("/api/admin/couriers")
-async def admin_couriers(
-    request: Request
-):
+async def admin_couriers(request: Request):
 
-    user = await require_user(request)
+    require_role(
+        request,
+        "admin"
+    )
 
-    if not user or int(user["id"]) != ADMIN_ID:
-        return json_error(
-            "Forbidden",
-            403
-        )
+    conn = database()
 
-    connection = db()
-
-    rows = connection.execute("""
+    rows = conn.execute(
+        """
         SELECT *
-        FROM couriers
-        ORDER BY approved ASC, id DESC
-    """).fetchall()
 
-    connection.close()
+        FROM couriers
+
+        ORDER BY id DESC
+        """
+    ).fetchall()
+
+    conn.close()
 
     return {
         "couriers": [
-            dict(x)
-            for x in rows
+            dict(row)
+            for row in rows
         ]
     }
 
 
-@app.post(
-    "/api/admin/couriers/{telegram_id}/approve"
-)
-async def approve_courier(
-    telegram_id: int,
+@app.post("/api/admin/couriers")
+async def admin_create_courier(
+    data: CourierCreate,
     request: Request
 ):
 
-    user = await require_user(request)
+    require_role(
+        request,
+        "admin"
+    )
 
-    if not user or int(user["id"]) != ADMIN_ID:
-        return json_error(
-            "Forbidden",
-            403
-        )
+    phone = normalize_phone(
+        data.phone
+    )
 
-    connection = db()
-
-    connection.execute("""
-        UPDATE couriers
-        SET approved=1
-        WHERE telegram_id=?
-    """, (
-        telegram_id,
-    ))
-
-    connection.commit()
-    connection.close()
+    conn = database()
 
     try:
 
-        bot = context_bot
+        cur = conn.execute(
+            """
+            INSERT INTO couriers
+            (name,phone,pin_hash,created_at)
 
-        await bot.send_message(
-            chat_id=telegram_id,
-            text=(
-                "🎉 Твоя заявка курьера одобрена!\n\n"
-                "Теперь ты можешь открыть приложение "
-                "и принимать заказы."
+            VALUES (?,?,?,?)
+            """,
+            (
+                data.name.strip(),
+                phone,
+                hash_pin(data.pin),
+                current_time()
             )
         )
 
-    except Exception:
-        pass
+        conn.commit()
+
+        courier_id = cur.lastrowid
+
+    except sqlite3.IntegrityError:
+
+        conn.close()
+
+        raise HTTPException(
+            409,
+            "Курьер уже существует"
+        )
+
+    conn.close()
+
+    return {
+        "ok": True,
+        "id": courier_id
+    }
+
+
+@app.post("/api/admin/couriers/{courier_id}/approve")
+async def approve_courier(
+    courier_id: int,
+    request: Request
+):
+
+    require_role(
+        request,
+        "admin"
+    )
+
+    conn = database()
+
+    courier = conn.execute(
+        """
+        SELECT *
+        FROM couriers
+        WHERE id=?
+        """,
+        (courier_id,)
+    ).fetchone()
+
+    if not courier:
+        conn.close()
+
+        raise HTTPException(
+            404,
+            "Курьер не найден"
+        )
+
+    conn.execute(
+        """
+        UPDATE couriers
+
+        SET verified=1
+
+        WHERE id=?
+        """,
+        (courier_id,)
+    )
+
+    conn.commit()
+    conn.close()
+
+    if courier["telegram_id"] and bot_app:
+
+        try:
+
+            await bot_app.bot.send_message(
+                courier["telegram_id"],
+                "✅ Ваша заявка курьера подтверждена."
+            )
+
+        except Exception:
+            pass
 
     return {
         "ok": True
     }
 
 
-# =========================================================
-# ADMIN ORDERS
-# =========================================================
-
 @app.get("/api/admin/orders")
-async def admin_orders(
-    request: Request
-):
+async def admin_orders(request: Request):
 
-    user = await require_user(request)
+    require_role(
+        request,
+        "admin"
+    )
 
-    if not user or int(user["id"]) != ADMIN_ID:
-        return json_error(
-            "Forbidden",
-            403
-        )
+    conn = database()
 
-    connection = db()
-
-    rows = connection.execute("""
+    rows = conn.execute(
+        """
         SELECT
+
             o.*,
+
             c.name AS customer_name,
             c.phone AS customer_phone,
-            cr.name AS courier_name
+
+            cr.name AS courier_name,
+            cr.phone AS courier_phone,
+
+            cr.lat AS courier_lat,
+            cr.lng AS courier_lng,
+            cr.online AS courier_online
 
         FROM orders o
 
         JOIN customers c
-            ON o.customer_id=c.id
+        ON c.id=o.customer_id
 
         LEFT JOIN couriers cr
-            ON o.courier_id=cr.id
+        ON cr.id=o.courier_id
 
         ORDER BY o.id DESC
-    """).fetchall()
+        """
+    ).fetchall()
 
-    connection.close()
+    conn.close()
 
     return {
         "orders": [
-            dict(x)
-            for x in rows
+            dict(row)
+            for row in rows
         ]
     }
 
 
 @app.post("/api/admin/orders")
 async def admin_create_order(
+    data: OrderCreate,
     request: Request
 ):
 
-    user = await require_user(request)
-
-    if not user or int(user["id"]) != ADMIN_ID:
-        return json_error(
-            "Forbidden",
-            403
-        )
-
-    data = await request.json()
-
-    try:
-        customer_id = int(
-            data["customer_id"]
-        )
-    except Exception:
-        return json_error(
-            "Выбери клиента"
-        )
-
-    courier_id = data.get(
-        "courier_id"
+    require_role(
+        request,
+        "admin"
     )
 
-    if courier_id:
-        courier_id = int(courier_id)
+    conn = database()
 
-    address = str(
-        data.get("address", "")
-    ).strip()
-
-    comment = str(
-        data.get("comment", "")
-    ).strip()
-
-    connection = db()
-
-    customer = connection.execute("""
+    customer = conn.execute(
+        """
         SELECT *
         FROM customers
         WHERE id=?
-    """, (
-        customer_id,
-    )).fetchone()
+        """,
+        (data.customer_id,)
+    ).fetchone()
 
     if not customer:
+        conn.close()
 
-        connection.close()
-
-        return json_error(
+        raise HTTPException(
+            404,
             "Клиент не найден"
         )
 
-    if courier_id:
+    courier = None
 
-        courier = connection.execute("""
+    status = "new"
+
+    if data.courier_id:
+
+        courier = conn.execute(
+            """
             SELECT *
             FROM couriers
+
             WHERE id=?
-            AND approved=1
-        """, (
-            courier_id,
-        )).fetchone()
+            AND verified=1
+            """,
+            (data.courier_id,)
+        ).fetchone()
 
         if not courier:
 
-            connection.close()
+            conn.close()
 
-            return json_error(
+            raise HTTPException(
+                400,
                 "Курьер не найден или не подтверждён"
             )
 
-    connection.execute("""
-        INSERT INTO orders(
+        status = "assigned"
+
+    cur = conn.execute(
+        """
+        INSERT INTO orders
+
+        (
             customer_id,
             courier_id,
             address,
             comment,
-            status
+            total,
+            status,
+            created_at,
+            updated_at
         )
-        VALUES (?, ?, ?, ?, ?)
-    """, (
-        customer_id,
-        courier_id,
-        address,
-        comment,
-        "assigned" if courier_id else "new"
-    ))
 
-    order_id = connection.execute(
-        "SELECT last_insert_rowid()"
-    ).fetchone()[0]
+        VALUES (?,?,?,?,?,?,?,?)
+        """,
+        (
+            data.customer_id,
+            data.courier_id,
+            data.address.strip(),
+            data.comment.strip(),
+            data.total,
+            status,
+            current_time(),
+            current_time()
+        )
+    )
 
-    connection.commit()
-    connection.close()
+    conn.commit()
+
+    order_id = cur.lastrowid
+
+    conn.close()
 
     await broadcast({
         "type": "new_order",
         "order_id": order_id
     })
 
+    # Notify courier
+    if courier and courier["telegram_id"] and bot_app:
+
+        try:
+
+            await bot_app.bot.send_message(
+                courier["telegram_id"],
+                (
+                    f"📦 Новый заказ #{order_id}\n\n"
+                    f"📍 {data.address}\n"
+                    f"💰 {data.total:.2f}"
+                )
+            )
+
+        except Exception:
+            pass
+
     return {
         "ok": True,
-        "order_id": order_id
+        "id": order_id
     }
 
 
 # =========================================================
-# BOT INSTANCE
+# WEBSOCKET
 # =========================================================
 
-context_bot = None
+@app.websocket("/ws")
+async def websocket_endpoint(
+    websocket: WebSocket
+):
+
+    await websocket.accept()
+
+    websockets.add(
+        websocket
+    )
+
+    try:
+
+        while True:
+
+            await websocket.receive_text()
+
+    except WebSocketDisconnect:
+
+        websockets.discard(
+            websocket
+        )
+
+    except Exception:
+
+        websockets.discard(
+            websocket
+        )
 
 
-async def run_bot():
+# =========================================================
+# TELEGRAM COURIER BOT
+# =========================================================
 
-    global context_bot
+def courier_keyboard():
+
+    return ReplyKeyboardMarkup(
+        [
+            [
+                KeyboardButton(
+                    "📱 Отправить номер",
+                    request_contact=True
+                )
+            ],
+
+            [
+                KeyboardButton(
+                    "📍 Отправить геопозицию",
+                    request_location=True
+                )
+            ]
+        ],
+        resize_keyboard=True
+    )
+
+
+async def telegram_start(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    await update.message.reply_text(
+        "RESTARAN\n\n"
+        "Для регистрации курьера нажмите /courier",
+        reply_markup=courier_keyboard()
+    )
+
+
+async def telegram_courier(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    context.user_data["courier_registration"] = True
+
+    await update.message.reply_text(
+        "🛵 Регистрация курьера\n\n"
+        "Отправьте свой номер телефона.",
+        reply_markup=courier_keyboard()
+    )
+
+
+async def telegram_contact(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    contact = update.message.contact
+
+    telegram_id = update.effective_user.id
+
+    phone = normalize_phone(
+        contact.phone_number
+    )
+
+    conn = database()
+
+    courier = conn.execute(
+        """
+        SELECT *
+        FROM couriers
+        WHERE phone=?
+        """,
+        (phone,)
+    ).fetchone()
+
+    if courier:
+
+        conn.execute(
+            """
+            UPDATE couriers
+
+            SET telegram_id=?
+
+            WHERE id=?
+            """,
+            (
+                telegram_id,
+                courier["id"]
+            )
+        )
+
+        conn.commit()
+
+        context.user_data[
+            "courier_phone"
+        ] = phone
+
+        await update.message.reply_text(
+            "✅ Номер найден.\n\n"
+            "Теперь отправьте фотографию."
+        )
+
+    else:
+
+        pin = str(
+            secrets.randbelow(9000) + 1000
+        )
+
+        conn.execute(
+            """
+            INSERT INTO couriers
+
+            (
+                name,
+                phone,
+                pin_hash,
+                telegram_id,
+                verified,
+                created_at
+            )
+
+            VALUES (?,?,?,?,?,?)
+            """,
+            (
+                update.effective_user.full_name,
+                phone,
+                hash_pin(pin),
+                telegram_id,
+                0,
+                current_time()
+            )
+        )
+
+        conn.commit()
+
+        context.user_data[
+            "courier_phone"
+        ] = phone
+
+        await update.message.reply_text(
+            "📸 Отправьте фотографию для профиля.\n\n"
+            f"Ваш PIN для входа: {pin}"
+        )
+
+    conn.close()
+
+
+async def telegram_photo(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    phone = context.user_data.get(
+        "courier_phone"
+    )
+
+    if not phone:
+
+        await update.message.reply_text(
+            "Сначала используйте /courier"
+        )
+
+        return
+
+    file_id = (
+        update.message
+        .photo[-1]
+        .file_id
+    )
+
+    conn = database()
+
+    conn.execute(
+        """
+        UPDATE couriers
+
+        SET photo_file_id=?
+
+        WHERE phone=?
+        """,
+        (
+            file_id,
+            phone
+        )
+    )
+
+    conn.commit()
+    conn.close()
+
+    await update.message.reply_text(
+        "✅ Фото сохранено.\n\n"
+        "Теперь отправьте вашу геопозицию."
+    )
+
+
+async def save_location(
+    telegram_id,
+    lat,
+    lng
+):
+
+    conn = database()
+
+    courier = conn.execute(
+        """
+        SELECT id
+        FROM couriers
+
+        WHERE telegram_id=?
+        """,
+        (telegram_id,)
+    ).fetchone()
+
+    if not courier:
+
+        conn.close()
+        return
+
+    location_time = current_time()
+
+    conn.execute(
+        """
+        UPDATE couriers
+
+        SET
+            lat=?,
+            lng=?,
+            location_at=?,
+            online=1
+
+        WHERE id=?
+        """,
+        (
+            lat,
+            lng,
+            location_time,
+            courier["id"]
+        )
+    )
+
+    conn.commit()
+    conn.close()
+
+    await broadcast({
+        "type": "courier_location",
+
+        "courier_id":
+            courier["id"],
+
+        "lat": lat,
+        "lng": lng,
+
+        "time":
+            location_time
+    })
+
+
+async def telegram_location(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    location = update.message.location
+
+    await save_location(
+        update.effective_user.id,
+        location.latitude,
+        location.longitude
+    )
+
+    await update.message.reply_text(
+        "📍 Геопозиция получена.\n"
+        "Отслеживание включено."
+    )
+
+
+async def telegram_edited_location(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    if not update.edited_message:
+        return
+
+    location = (
+        update.edited_message.location
+    )
+
+    if not location:
+        return
+
+    await save_location(
+        update.effective_user.id,
+        location.latitude,
+        location.longitude
+    )
+
+
+async def run_telegram():
+
+    global bot_app
+
+    if not BOT_TOKEN:
+
+        print(
+            "BOT_TOKEN is not configured."
+        )
+
+        return
 
     bot_app = (
         Application
@@ -1767,52 +1608,43 @@ async def run_bot():
     bot_app.add_handler(
         CommandHandler(
             "start",
-            start
+            telegram_start
         )
     )
 
     bot_app.add_handler(
         CommandHandler(
             "courier",
-            courier_registration
+            telegram_courier
         )
     )
 
     bot_app.add_handler(
         MessageHandler(
             filters.CONTACT,
-            contact_handler
+            telegram_contact
         )
     )
 
     bot_app.add_handler(
         MessageHandler(
             filters.PHOTO,
-            photo_handler
+            telegram_photo
         )
     )
 
     bot_app.add_handler(
         MessageHandler(
             filters.LOCATION,
-            location_handler
+            telegram_location
         )
     )
 
     bot_app.add_handler(
         MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            text_handler
-        )
-    )
-
-    # Отдельный обработчик для изменения Live Location
-    from telegram.ext import TypeHandler
-
-    bot_app.add_handler(
-        TypeHandler(
-            Update,
-            edited_location_handler
+            filters.UpdateType.EDITED_MESSAGE
+            & filters.LOCATION,
+            telegram_edited_location
         )
     )
 
@@ -1820,53 +1652,41 @@ async def run_bot():
 
     await bot_app.start()
 
-    await bot_app.updater.start_polling()
+    if bot_app.updater:
 
-    context_bot = bot_app.bot
+        await bot_app.updater.start_polling(
+            allowed_updates=Update.ALL_TYPES
+        )
 
-    try:
+    print(
+        "Telegram bot started."
+    )
 
-        while True:
-            await asyncio.sleep(3600)
+    while True:
 
-    finally:
+        await asyncio.sleep(3600)
 
-        await bot_app.updater.stop()
-        await bot_app.stop()
-        await bot_app.shutdown()
+
+@app.on_event("startup")
+async def startup():
+
+    if BOT_TOKEN:
+
+        asyncio.create_task(
+            run_telegram()
+        )
 
 
 # =========================================================
-# SERVER
+# RENDER ENTRYPOINT
 # =========================================================
 
-async def run_server():
+if __name__ == "__main__":
 
     import uvicorn
 
-    config = uvicorn.Config(
-        app,
+    uvicorn.run(
+        "main:app",
         host="0.0.0.0",
-        port=int(
-            os.getenv(
-                "PORT",
-                "10000"
-            )
-        )
+        port=PORT
     )
-
-    server = uvicorn.Server(config)
-
-    await server.serve()
-
-
-async def main():
-
-    await asyncio.gather(
-        run_server(),
-        run_bot()
-    )
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
