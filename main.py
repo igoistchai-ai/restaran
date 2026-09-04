@@ -101,7 +101,10 @@ def init_db():
         weight_kg REAL NOT NULL DEFAULT 0,
         courier_bonus_amd INTEGER NOT NULL DEFAULT 0,
         lat REAL,
-        lon REAL
+        lon REAL,
+        restaurant_address TEXT,
+        restaurant_lat REAL,
+        restaurant_lon REAL
     )
     """)
 
@@ -131,6 +134,9 @@ def init_db():
         ("orders", "courier_bonus_amd", "INTEGER NOT NULL DEFAULT 0"),
         ("orders", "lat", "REAL"),
         ("orders", "lon", "REAL"),
+        ("orders", "restaurant_address", "TEXT"),
+        ("orders", "restaurant_lat", "REAL"),
+        ("orders", "restaurant_lon", "REAL"),
     ]
 
     for table, column, definition in migrations:
@@ -433,6 +439,7 @@ class OrderCreate(BaseModel):
     phone: str
     title: str
     address: str
+    restaurant_address: str = ""
     price: float = 0
     weight_kg: float = 0
 
@@ -990,6 +997,7 @@ async def admin_map_orders(
     rows = conn.execute("""
         SELECT o.id, o.title, o.address, o.price, o.status,
                o.weight_kg, o.courier_bonus_amd, o.lat, o.lon,
+               o.restaurant_address, o.restaurant_lat, o.restaurant_lon,
                u.name AS customer_name,
                co.name AS courier_name
         FROM orders o
@@ -997,11 +1005,15 @@ async def admin_map_orders(
         LEFT JOIN couriers c ON c.id=o.courier_id
         LEFT JOIN users co ON co.id=c.user_id
         WHERE o.status!='closed'
-        AND o.lat IS NOT NULL AND o.lon IS NOT NULL
         ORDER BY o.id DESC
     """).fetchall()
+    couriers = conn.execute("""
+        SELECT c.id, c.lat, c.lon, c.online, u.name
+        FROM couriers c JOIN users u ON u.id=c.user_id
+        WHERE c.active=1 AND c.lat IS NOT NULL AND c.lon IS NOT NULL
+    """).fetchall()
     conn.close()
-    return [dict(x) for x in rows]
+    return {"orders": [dict(x) for x in rows], "couriers": [dict(x) for x in couriers]}
 
 
 @app.post("/api/admin/ai")
@@ -1017,7 +1029,7 @@ async def admin_ai(
     # Optional real AI integration. If OPENAI_API_KEY is not configured,
     # the assistant still works in local operational mode.
     api_key = os.getenv("OPENAI_API_KEY", "").strip()
-    model = os.getenv("OPENAI_MODEL", "gpt-5-mini")
+    model = os.getenv("OPENAI_MODEL", "gpt-5.6-luna")
     if api_key:
         try:
             conn = db()
@@ -1175,14 +1187,17 @@ async def admin_create_order(
         raise HTTPException(status_code=400, detail=f"Максимальный вес заказа — {MAX_ORDER_WEIGHT_KG:g} кг")
 
     lat, lon = geocode_yerevan(data.address)
+    restaurant_address = str(data.restaurant_address or "").strip()
+    restaurant_lat, restaurant_lon = geocode_yerevan(restaurant_address) if restaurant_address else (None, None)
     bonus = calculate_courier_bonus(weight)
 
     cur = conn.execute("""
         INSERT INTO orders(
             customer_id, title, address, price, status, created_at,
-            weight_kg, courier_bonus_amd, lat, lon
+            weight_kg, courier_bonus_amd, lat, lon,
+            restaurant_address, restaurant_lat, restaurant_lon
         )
-        VALUES(?,?,?,?, 'new',?,?,?,?,?)
+        VALUES(?,?,?,?, 'new',?,?,?,?,?,?,?,?)
     """, (
         customer["id"],
         data.title.strip(),
@@ -1192,7 +1207,10 @@ async def admin_create_order(
         weight,
         bonus,
         lat,
-        lon
+        lon,
+        restaurant_address,
+        restaurant_lat,
+        restaurant_lon
     ))
 
     conn.commit()
@@ -2001,4 +2019,4 @@ if __name__ == "__main__":
         app,
         host="0.0.0.0",
         port=int(os.getenv("PORT", "10000"))
-    )
+              )
