@@ -519,7 +519,7 @@ SERTAL DELIVERY
 </button>
 
 <button class="tab" onclick="adminTab('ai',this)">🤖 ИИ</button>
-<button class="tab" onclick="downloadExcel()">📊 Excel A4</button><button class="tab" onclick="sendExcelToTelegram()">📤 Excel в бот</button>
+
 
 </div>
 
@@ -1086,53 +1086,19 @@ function adminTab(tab,button){
    ADMIN ORDERS
 ========================================================= */
 
-async function loadAdminOrders(){
-
-    const area =
-        document.getElementById(
-            "adminOrdersArea"
-        );
-
-    if(!area)
-        return;
-
-    area.innerHTML = `
-        <div class="sectionTitle">
-            Все заказы
-        </div>
-        <div class="itemSub">
-            Загрузка...
-        </div>
-    `;
-
+async function loadAdminOrders(options={}){
+    const area=document.getElementById("adminOrdersArea");
+    if(!area)return;
+    if(orderFormEditing() && !options.force){ captureOrderDraft(); return; }
     try{
-
-        const list =
-            await api(
-                "/api/admin/orders"
-            );
-
-        renderAdminOrders(
-            Array.isArray(list)
-            ? list
-            : []
-        );
+        const list=await api("/api/admin/orders");
+        renderAdminOrders(Array.isArray(list)?list:[]);
         await loadOrderClients();
-
+        restoreOrderDraft();
     }catch(error){
-
-        area.innerHTML = `
-            <div class="empty glass">
-                ❌ ${escapeHtml(
-                    formatError(
-                        error.message
-                    )
-                )}
-            </div>
-        `;
+        area.innerHTML=`<div class="empty glass">${escapeHtml(formatError(error.message))}</div>`;
     }
 }
-
 
 function renderAdminOrders(list){
 
@@ -1187,15 +1153,15 @@ function adminOrderCreateForm(){
 
         <div class="form" style="margin-top:12px">
             <div class="clientPickerRow">
-                <input id="orderPhone" type="tel" placeholder="Номер клиента · +374…" oninput="filterOrderClients()">
-                <select id="orderClientSelect" onchange="selectOrderClient(this.value)">
+                <input id="orderPhone" type="tel" placeholder="Номер клиента · +374…" oninput="filterOrderClients();saveOrderDraft()">
+                <select id="orderClientSelect" onchange="selectOrderClient(this.value);saveOrderDraft()">
                     <option value="">Выбрать зарегистрированного клиента</option>
                 </select>
             </div>
             <div id="orderClientHint" class="itemSub"></div>
 
-            <input id="orderAddress" placeholder="Куда доставлять · адрес">
-            <input id="orderTitle" placeholder="Что доставить">
+            <input id="orderAddress" placeholder="Куда доставлять · адрес" oninput="saveOrderDraft()">
+            <input id="orderTitle" placeholder="Что доставить" oninput="saveOrderDraft()">
 
             <input id="orderPrice" type="hidden" value="0">
             <input id="orderWeight" type="hidden" value="0">
@@ -1385,6 +1351,47 @@ function adminOrder(order){
     `;
 }
 
+
+/* =========================================================
+   ORDER DRAFT PERSISTENCE
+========================================================= */
+const ORDER_DRAFT_KEY = "sertal_order_draft_v4";
+let orderDraftTimer = null;
+
+function orderFormEditing(){
+    const a=document.activeElement;
+    return !!(a && (a.tagName==="INPUT" || a.tagName==="TEXTAREA" || a.tagName==="SELECT"));
+}
+function captureOrderDraft(){
+    const ids=["orderPhone","orderClientSelect","orderAddress","orderTitle"];
+    const draft={};
+    let has=false;
+    for(const id of ids){
+        const el=document.getElementById(id);
+        if(el){draft[id]=el.value; if(String(el.value||"").trim())has=true;}
+    }
+    if(has) sessionStorage.setItem(ORDER_DRAFT_KEY,JSON.stringify(draft));
+    return draft;
+}
+function restoreOrderDraft(){
+    try{
+        const raw=sessionStorage.getItem(ORDER_DRAFT_KEY); if(!raw)return;
+        const d=JSON.parse(raw);
+        for(const [id,val] of Object.entries(d||{})){
+            const el=document.getElementById(id); if(el)el.value=val??"";
+        }
+        const phone=document.getElementById("orderPhone");
+        if(phone && phone.value) filterOrderClients();
+        const sel=document.getElementById("orderClientSelect");
+        if(sel && d.orderClientSelect) sel.value=d.orderClientSelect;
+        if(sel?.value) selectOrderClient(sel.value);
+    }catch(e){console.log("Draft restore",e)}
+}
+function saveOrderDraft(){
+    clearTimeout(orderDraftTimer);
+    orderDraftTimer=setTimeout(captureOrderDraft,120);
+}
+function clearOrderDraft(){sessionStorage.removeItem(ORDER_DRAFT_KEY)}
 
 /* =========================================================
    CREATE ORDER
@@ -2378,6 +2385,62 @@ async function askAdminAI(){
 }
 
 /* =========================================================
+   SUPPORT / HISTORY
+========================================================= */
+async function refreshSupportChat(){
+    const box=document.getElementById("supportChat");
+    if(!box)return;
+    try{
+        const messages=await api("/api/chat/messages");
+        const nearBottom=(box.scrollHeight-box.scrollTop-box.clientHeight)<80;
+        box.innerHTML=(messages||[]).map(m=>`<div class="chatBubble ${m.sender_role==="admin"?"admin":"user"}"><div>${escapeHtml(m.text||"")}</div><small>${new Date(Number(m.created_at)*1000).toLocaleString()}</small></div>`).join("")||`<div class="empty">Сообщений пока нет.</div>`;
+        if(nearBottom)box.scrollTop=box.scrollHeight;
+    }catch(e){console.log("Support chat",e)}
+}
+async function sendSupportMessage(){
+    const input=document.getElementById("supportInput");
+    const text=input?.value.trim(); if(!text)return;
+    try{await api("/api/chat/send",{method:"POST",body:JSON.stringify({text})});input.value="";await refreshSupportChat();toast("Сообщение отправлено");}
+    catch(e){toast(formatError(e.message))}
+}
+async function loadCustomerHistory(){
+    const area=document.getElementById("customerOrdersArea"); if(!area)return;
+    try{
+        const orders=await api("/api/customer/orders");
+        const old=orders.filter(o=>["delivered","closed"].includes(o.status));
+        area.innerHTML=`<div class="sectionTitle">История заказов</div>${old.length?old.map(customerOrder).join(""):`<div class="empty">История пока пуста.</div>`}`;
+        area.scrollIntoView({behavior:"smooth",block:"start"});
+    }catch(e){toast(formatError(e.message))}
+}
+async function loadCourierHistory(){
+    try{
+        const orders=await api("/api/courier/history");
+        const area=document.getElementById("courierOrdersArea"); if(!area)return;
+        area.innerHTML=`<div class="sectionTitle">История доставок</div>${orders?.length?orders.map(courierOrder).join(""):`<div class="empty">История пока пуста.</div>`}`;
+        area.scrollIntoView({behavior:"smooth",block:"start"});
+    }catch(e){toast(formatError(e.message))}
+}
+async function loadCourierSchedule(){
+    const area=document.getElementById("courierOrdersArea"); if(!area)return;
+    try{
+        const data=await api("/api/courier/orders");
+        const orders=Array.isArray(data.orders)?data.orders:[];
+        area.innerHTML=`<div class="sectionTitle">График</div><div class="item">Сегодня активных доставок: <b>${orders.length}</b></div>${orders.map(courierOrder).join("")}`;
+        area.scrollIntoView({behavior:"smooth",block:"start"});
+    }catch(e){toast(formatError(e.message))}
+}
+async function contactAdmin(){
+    let box=document.getElementById("supportChat");
+    if(!box){
+        const host=document.getElementById(role==="courier"?"courierOrdersArea":"customerOrdersArea");
+        if(!host)return;
+        host.insertAdjacentHTML("beforebegin",`<div class="section glass"><div class="sectionTitle">Поддержка</div><div id="supportChat" style="max-height:340px;overflow:auto;display:grid;gap:8px"></div><div class="form" style="margin-top:10px"><input id="supportInput" placeholder="Сообщение поддержке" onkeydown="if(event.key==='Enter'){event.preventDefault();sendSupportMessage()}"><button class="primary" onclick="sendSupportMessage()">Отправить</button></div></div>`);
+    }
+    await refreshSupportChat();
+    document.getElementById("supportChat")?.parentElement?.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+/* =========================================================
    CUSTOMER
 ========================================================= */
 
@@ -3046,60 +3109,30 @@ function escapeHtml(value){
 
 
 /* =========================================================
-   AUTO REFRESH
+   AUTO REFRESH — NON-DESTRUCTIVE
 ========================================================= */
-
-setInterval(
-    async () => {
-
-        if(!token)
-            return;
-
-        try{
-
-            if(role === "admin"){
-
-                await loadAdminStats();
-
-                const area =
-                    document.getElementById(
-                        "adminOrdersArea"
-                    );
-
-                if(
-                    area &&
-                    !area.classList.contains(
-                        "hidden"
-                    )
-                ){
-
-                    await loadAdminOrders();
-                }
-
-            }else if(role === "customer"){
-
-                await loadCustomer();
-
-            }else if(role === "courier"){
-
-                await loadCourier();
+setInterval(async()=>{
+    if(!token || document.visibilityState==="hidden") return;
+    try{
+        // Never rebuild forms while the user is typing/selecting.
+        const editing=orderFormEditing();
+        if(role==="admin"){
+            await loadAdminStats();
+            const ordersArea=document.getElementById("adminOrdersArea");
+            if(ordersArea && !ordersArea.classList.contains("hidden") && !editing){
+                await loadAdminOrders();
             }
-
-            if(document.getElementById("supportChat")){
-                await refreshSupportChat();
-            }
-
-        }catch(error){
-
-            console.log(
-                "Auto refresh:",
-                error.message
-            );
+        }else if(role==="customer"){
+            if(!editing) await loadCustomer();
+        }else if(role==="courier"){
+            if(!editing) await loadCourier();
         }
-
-    },
-    15000
-);
+        // Support chat can refresh without rebuilding the whole page.
+        if(document.getElementById("supportChat") && typeof refreshSupportChat==="function"){
+            await refreshSupportChat();
+        }
+    }catch(error){console.log("Auto refresh:",error.message)}
+},15000);
 
 
 /* =========================================================
@@ -3111,4 +3144,4 @@ boot();
 </script>
 
 </body>
-   </html>
+         </html>
