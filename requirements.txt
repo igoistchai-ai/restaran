@@ -2,5 +2,6 @@ fastapi
 uvicorn[standard]
 pydantic
 openpyxl
+reportlab
 python-telegram-bot
 python-multipart
