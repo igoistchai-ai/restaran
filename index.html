@@ -244,6 +244,7 @@ input{background:#090c11;border-color:var(--line);border-radius:13px}input:focus
   .mapTool{min-height:40px;font-size:11px;padding:9px 12px}.leaflet-control-zoom{display:block!important}.leaflet-control-zoom a{width:38px!important;height:38px!important;line-height:38px!important}
   .leaflet-container{touch-action:pan-x pan-y}
 }
+</style>
 
 <style>
 /* === BLACK & GOLD DESIGN === */
@@ -283,9 +284,10 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;background:rad
 .secondary,.tab{background:#121212!important;color:#ddd7c8!important;border:1px solid rgba(255,255,255,.07)!important;border-radius:14px}.tab.active{background:var(--accent)!important;color:#151108!important;border-color:var(--accent)!important}
 input{background:#0d0d0d!important;color:#fff;border:1px solid rgba(255,255,255,.09)!important;border-radius:15px!important;min-height:48px}.item{border-radius:19px;background:#111!important;border-color:rgba(255,255,255,.06)!important}
 .chatBubble{border-radius:18px}.chatMine{background:rgba(212,175,55,.13)}.chatAdmin{background:#141414}
+.publicBanner{width:min(1180px,100%);margin:20px auto 0;border:1px solid rgba(212,175,55,.24);border-radius:30px;overflow:hidden;background:#070707;box-shadow:0 25px 90px rgba(0,0,0,.6)}.publicBanner img{display:block;width:100%;height:auto;max-height:620px;object-fit:cover}.publicBanner:after{content:"";display:block;position:relative}
+.publicMenuBtn{display:none;min-height:40px;padding:9px 12px;border-radius:12px;background:#0e0d0a;color:#d4af37;border:1px solid rgba(212,175,55,.22);font-weight:900}.publicMenu{display:none;position:absolute;right:12px;top:62px;padding:10px;border:1px solid rgba(212,175,55,.22);border-radius:16px;background:#0b0a08;box-shadow:0 20px 60px rgba(0,0,0,.7);z-index:50}.publicMenu.show{display:grid;gap:6px}.publicMenu button{padding:11px 14px;border-radius:11px;background:#14120e;color:#e8dfcc;text-align:left}
 @media(max-width:720px){.serviceGrid{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:repeat(2,1fr)}.hero{padding:20px}.tabs{overflow-x:auto;flex-wrap:nowrap!important;padding-bottom:4px}.tab{white-space:nowrap}}
 @media(max-width:430px){.app{padding-left:10px;padding-right:10px}.serviceCard{min-height:96px;padding:13px}.logo{font-size:15px}.userPill{font-size:11px}.hero h1{font-size:25px}}
-</style>
 
 .marketHero{display:flex;justify-content:space-between;gap:16px;align-items:center}.marketHeroText h1{margin:0 0 7px}.restaurantCard{padding:18px;border-radius:24px;background:linear-gradient(145deg,#151515,#0c0c0c);border:1px solid rgba(212,175,55,.14);margin-bottom:12px}.restaurantHead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.restaurantName{font-size:18px;font-weight:950}.menuGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}.menuItem{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid rgba(255,255,255,.07);border-radius:18px;background:#111;cursor:pointer}.menuItem input{width:20px;min-height:20px;margin-top:2px;accent-color:#d4af37}.menuItem b{font-size:13px}.menuItem small{display:block;color:var(--muted);margin-top:4px;line-height:1.35}.price{color:#f3d36a;font-weight:900;white-space:nowrap}.cartBar{position:sticky;bottom:12px;z-index:30;margin-top:14px;padding:12px;border-radius:20px;background:rgba(15,15,15,.96);border:1px solid rgba(212,175,55,.22);backdrop-filter:blur(18px);display:flex;justify-content:space-between;align-items:center;gap:10px}.cartTotal{font-size:17px;font-weight:950}.paymentChoices{display:grid;grid-template-columns:1fr 1fr;gap:9px}.paymentChoice{padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:#111;color:var(--text);text-align:left}.paymentChoice.active{border-color:#d4af37;background:rgba(212,175,55,.1)}@media(max-width:650px){.menuGrid{grid-template-columns:1fr}.marketHero{align-items:flex-start;flex-direction:column}.paymentChoices{grid-template-columns:1fr}}
 </style>
@@ -321,39 +323,118 @@ input,select{background:#080806!important;border-color:rgba(212,175,55,.20)!impo
 .luxuryBrandHero:before{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 25%,rgba(255,232,165,.035) 45%,transparent 62%);pointer-events:none}.luxuryBrandLogo{width:72px;height:72px;border-radius:24px;overflow:hidden;border:1px solid rgba(212,175,55,.48);box-shadow:0 0 35px rgba(212,175,55,.16);z-index:1}.luxuryBrandLogo img{width:100%;height:100%;object-fit:cover}.luxuryBrandName{margin-top:9px;font-family:Georgia,'Times New Roman',serif;font-size:30px;line-height:1;color:#e9c95e;letter-spacing:.14em;z-index:1}.luxuryBrandSub{font-family:Georgia,'Times New Roman',serif;font-size:11px;color:#fff4d3;letter-spacing:.46em;margin-left:.46em;margin-top:6px;z-index:1}.luxuryGoldLine{width:155px;height:1px;background:linear-gradient(90deg,transparent,#d4af37,transparent);margin:12px 0 7px}.luxuryBrandTag{font-size:8px;letter-spacing:.32em;color:#938873}
 @media(max-width:650px){.luxuryBrandHero{min-height:178px;padding-top:16px}.luxuryBrandLogo{width:64px;height:64px}.luxuryBrandName{font-size:27px}.luxuryBrandTag{font-size:7px}.serviceGrid{margin-bottom:10px}}
 </style>
+
+<style>
+/* === PUBLIC LUXURY LANDING === */
+.publicHome{min-height:100vh;background:radial-gradient(circle at 50% -15%,rgba(212,175,55,.16),transparent 32%),#030303;color:#fffaf0}
+.publicNav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px max(18px,calc((100vw - 1180px)/2));background:rgba(3,3,3,.82);backdrop-filter:blur(22px);border-bottom:1px solid rgba(212,175,55,.12)}
+.publicBrand{display:flex;align-items:center;gap:10px}.publicBrand img{width:42px;height:42px;object-fit:cover;border-radius:13px;border:1px solid rgba(212,175,55,.45)}.publicBrand b{display:block;font-family:Georgia,serif;font-size:16px;letter-spacing:.16em;color:#e8c85c}.publicBrand span{display:block;font-size:8px;letter-spacing:.42em;color:#b8ae98;margin-top:3px}
+.publicNavActions{display:flex;align-items:center;gap:7px}.publicLink,.publicLogin{min-height:40px;padding:9px 13px;border-radius:12px;font-weight:850}.publicLink{background:transparent;color:#c7bfad}.publicLogin{background:linear-gradient(135deg,#a77b19,#d4af37 50%,#ffe7a0);color:#171106;box-shadow:0 8px 25px rgba(212,175,55,.15)}
+.publicContainer{width:min(1180px,100%);margin:auto;padding:20px 18px 70px}.publicHero{min-height:570px;display:grid;grid-template-columns:1.1fr .9fr;align-items:center;gap:30px;padding:48px;border:1px solid rgba(212,175,55,.2);border-radius:34px;background:radial-gradient(circle at 78% 40%,rgba(212,175,55,.14),transparent 30%),linear-gradient(145deg,#15120c,#050505 72%);overflow:hidden;position:relative;box-shadow:0 30px 100px rgba(0,0,0,.65)}.publicGlow{position:absolute;width:360px;height:360px;right:-100px;top:-120px;border-radius:50%;background:rgba(212,175,55,.12);filter:blur(70px)}.eyebrow{font-size:10px;letter-spacing:.3em;color:#a79b82;font-weight:900}.publicHero h1{font-family:Georgia,serif;font-size:clamp(48px,8vw,92px);line-height:.82;letter-spacing:.09em;margin:18px 0;color:#fff7e6}.publicHero h1 em,.publicStory h2 em{font-style:normal;color:#d4af37}.publicHeroCopy p{max-width:560px;color:#aaa08d;line-height:1.7;font-size:16px}.publicHeroActions{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}.goldBtn,.darkBtn{min-height:50px;padding:13px 18px;border-radius:15px;font-weight:900}.goldBtn{background:linear-gradient(135deg,#a77b19,#d4af37 50%,#ffe8a0);color:#171106;box-shadow:0 12px 35px rgba(212,175,55,.15)}.darkBtn{background:#0e0d0a;color:#e8dfcc;border:1px solid rgba(212,175,55,.2)}.publicHeroCard{justify-self:center;width:min(330px,100%);min-height:390px;padding:28px;border-radius:32px;border:1px solid rgba(212,175,55,.32);background:linear-gradient(155deg,rgba(35,29,17,.9),rgba(8,8,7,.96));box-shadow:0 30px 80px rgba(0,0,0,.7);display:flex;flex-direction:column;justify-content:space-between}.publicHeroLogo{width:100px;height:100px;border-radius:30px;overflow:hidden;border:1px solid rgba(212,175,55,.5);box-shadow:0 0 40px rgba(212,175,55,.15)}.publicHeroLogo img{width:100%;height:100%;object-fit:cover}.publicHeroCardTitle{font-family:Georgia,serif;font-size:31px;line-height:1.08}.publicHeroCardTitle strong{color:#d4af37}.publicMiniStats{border-top:1px solid rgba(212,175,55,.18);padding-top:15px}.publicMiniStats span{display:block;font-size:26px;color:#e6c65b;font-family:Georgia,serif}.publicMiniStats small{color:#8f8778;letter-spacing:.16em;text-transform:uppercase}
+.publicServices,.publicHow{padding:82px 4px 20px}.publicSectionHead{display:flex;gap:22px;align-items:flex-start;margin-bottom:28px}.publicSectionHead>span{font-family:Georgia,serif;color:#d4af37;font-size:14px;padding-top:5px}.publicSectionHead h2,.publicStory h2,.publicCta h2{font-family:Georgia,serif;font-size:clamp(34px,5vw,58px);line-height:.98;margin:8px 0 0;letter-spacing:-.02em}.publicServiceGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.publicServiceGrid article{min-height:225px;padding:24px;border-radius:23px;background:linear-gradient(145deg,#14120d,#090908);border:1px solid rgba(212,175,55,.14)}.publicIcon{font-size:28px;color:#d4af37}.publicServiceGrid h3{font-family:Georgia,serif;font-size:22px;margin:28px 0 8px}.publicServiceGrid p,.publicStoryText p,.steps p{color:#918978;line-height:1.65;font-size:13px}.publicStory{display:grid;grid-template-columns:1fr 1fr;gap:70px;padding:100px 4px;border-top:1px solid rgba(212,175,55,.1);border-bottom:1px solid rgba(212,175,55,.1)}.publicStoryText{padding-top:40px;max-width:520px}.publicHow .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.steps>div{padding:24px;border-top:1px solid rgba(212,175,55,.3)}.steps b{color:#d4af37;font-family:Georgia,serif}.steps h3{font-family:Georgia,serif;font-size:22px;margin:30px 0 8px}.publicCta{margin-top:70px;padding:36px;border-radius:28px;border:1px solid rgba(212,175,55,.25);background:radial-gradient(circle at 80% 0%,rgba(212,175,55,.14),transparent 35%),#0c0b08;display:flex;justify-content:space-between;align-items:center;gap:20px}.publicFooter{display:flex;justify-content:space-between;gap:15px;width:min(1180px,100%);margin:auto;padding:20px 18px 35px;color:#746d60;font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+.authModal{position:fixed;inset:0;z-index:500;display:grid;place-items:center;padding:18px;background:rgba(0,0,0,.78);backdrop-filter:blur(15px)}.authCard{position:relative;width:min(430px,100%);padding:30px;border-radius:30px;background:radial-gradient(circle at 50% 0,rgba(212,175,55,.13),transparent 30%),#0b0a08;border:1px solid rgba(212,175,55,.3);box-shadow:0 35px 110px rgba(0,0,0,.8)}.authClose{position:absolute;right:14px;top:10px;background:transparent;color:#bfb5a0;font-size:32px}.authLogo{width:62px;height:62px;border-radius:20px;overflow:hidden;border:1px solid rgba(212,175,55,.4);margin-bottom:18px}.authLogo img{width:100%;height:100%;object-fit:cover}.authCard h2{font-family:Georgia,serif;font-size:34px;margin:7px 0}.authCard>p{color:#8f8778;line-height:1.5;font-size:13px}.authForm{display:grid;gap:10px;margin-top:18px}.authSwitch{background:transparent;color:#d4af37;padding:8px}.authHint{color:#766e61;line-height:1.5}
+@media(max-width:720px){.publicMenuBtn{display:block}.publicNav{padding:11px 12px}.publicBrand img{width:36px;height:36px}.publicBrand b{font-size:13px}.publicBrand span{font-size:7px}.publicNavActions{gap:3px}.publicLink{display:none}.publicLink:nth-child(2){display:none}.publicLink:nth-child(3){display:none}.adminPublicLink{display:block;padding:8px 9px;font-size:10px}.publicLogin{padding:9px 12px}.publicContainer{padding:10px 10px 45px}.publicHero{grid-template-columns:1fr;min-height:auto;padding:28px 22px;border-radius:27px}.publicHeroCard{min-height:290px;width:100%;padding:22px}.publicHeroLogo{width:72px;height:72px;border-radius:22px}.publicHeroCardTitle{font-size:27px}.publicServiceGrid{grid-template-columns:1fr 1fr}.publicServices,.publicHow{padding-top:58px}.publicStory{grid-template-columns:1fr;gap:10px;padding:65px 4px}.publicStoryText{padding-top:0}.publicHow .steps{grid-template-columns:1fr}.publicCta{margin-top:45px;display:grid;padding:25px}.publicFooter{padding:15px 12px 25px}.publicHero h1{font-size:54px}.publicHeroCopy p{font-size:14px}.publicBanner{margin-top:12px;border-radius:22px}.publicBanner img{min-height:250px;object-fit:cover;object-position:center top}}
+</style>
 </head>
 
 <body>
 
 <div id="toast" class="toast"></div>
 
-<!--
-  ВАЖНО:
-  Для Telegram-админов этот экран НИКОГДА не показывается.
--->
-<div id="loginScreen" class="app login">
+<div id="publicHome" class="publicHome">
+  <div class="publicNav">
+    <div class="publicBrand">
+      <img src="https://i.ibb.co/9k5Z0FtT/IMG-20260904-183452-458.jpg" alt="SERTAL DELIVERY">
+      <div><b>SERTAL</b><span>DELIVERY</span></div>
+    </div>
+    <div class="publicNavActions">
+      <button class="publicMenuBtn" onclick="togglePublicMenu()" aria-label="Меню">☰</button>
+      <button class="publicLink adminPublicLink" onclick="openAdminLogin()">Админ</button>
+      <button class="publicLink" onclick="scrollToPublic('services')">Сервисы</button>
+      <button class="publicLink" onclick="scrollToPublic('how')">Как работает</button>
+      <button class="publicLink" onclick="openRegister()">Регистрация</button>
+      <button class="publicLogin" onclick="openLogin()">Войти</button>
+    </div>
+    <div id="publicMenu" class="publicMenu">
+      <button onclick="scrollToPublic('services');togglePublicMenu(false)">🍽 Сервисы</button>
+      <button onclick="scrollToPublic('how');togglePublicMenu(false)">✦ Как работает</button>
+      <button onclick="openRegister();togglePublicMenu(false)">✦ Регистрация</button>
+      <button onclick="openAdminLogin();togglePublicMenu(false)">⌘ Кабинет администратора</button>
+    </div>
+  </div>
 
-<div class="loginCard glass">
+  <main class="publicContainer">
+    <section class="publicHero">
+      <div class="publicGlow"></div>
+      <div class="publicHeroCopy">
+        <div class="eyebrow">ПРЕМИАЛЬНАЯ ДОСТАВКА</div>
+        <h1>SERTAL<br><em>DELIVERY</em></h1>
+        <p>Еда, покупки и доставка по городу — в одном стильном сервисе.</p>
+        <div class="publicHeroActions">
+          <button class="goldBtn" onclick="openRegister()">Начать пользоваться →</button>
+          <button class="darkBtn" onclick="document.getElementById('aboutPublic').scrollIntoView({behavior:'smooth'})">О сервисе</button>
+        </div>
+      </div>
+      <div class="publicHeroCard">
+        <div class="publicHeroLogo"><img src="https://i.ibb.co/9k5Z0FtT/IMG-20260904-183452-458.jpg" alt="SERTAL"></div>
+        <div class="publicHeroCardTitle">Ваш заказ.<br><strong>Наш маршрут.</strong></div>
+        <div class="publicMiniStats"><span>24/7</span><small>приём заказов</small></div>
+      </div>
+    </section>
 
-<div class="loginLogo"><img src="https://i.ibb.co/9k5Z0FtT/IMG-20260904-183452-458.jpg" alt="SERTAL DELIVERY"></div>
+    <section class="publicServices" id="aboutPublic">
+      <div class="publicSectionHead"><span>01</span><div><div class="eyebrow">ЧТО МЫ ДЕЛАЕМ</div><h2>Всё необходимое<br>для доставки</h2></div></div>
+      <div class="publicServiceGrid">
+        <article><div class="publicIcon">🍽</div><h3>Рестораны</h3><p>Выбирайте блюда из ассортимента подключённых ресторанов и оформляйте заказ.</p></article>
+        <article><div class="publicIcon">📦</div><h3>Доставка</h3><p>Передайте нам адрес и описание того, что нужно доставить — остальное организуем.</p></article>
+        <article><div class="publicIcon">🛵</div><h3>Курьеры</h3><p>Заказ проходит через систему назначения курьера и контроля маршрута.</p></article>
+        <article><div class="publicIcon">💬</div><h3>Поддержка</h3><p>Связь с администратором прямо внутри Web App и через Telegram.</p></article>
+      </div>
+    </section>
 
-<h1>SERTAL DELIVERY</h1>
+    <section class="publicStory">
+      <div><div class="eyebrow">О SERTAL</div><h2>Сервис, который<br><em>выглядит дорого</em><br>и работает просто.</h2></div>
+      <div class="publicStoryText"><p>SERTAL DELIVERY создан как единая цифровая точка для покупателей, ресторанов, курьеров и администраторов.</p><p>Один номер телефона — один личный кабинет. Заказы, история, рестораны, корзина, поддержка и статусы доставки собраны в одном месте.</p></div>
+    </section>
 
-<p>
-Введите номер телефона, который добавил администратор,
-чтобы открыть личный кабинет.
-</p>
+    <section id="how" class="publicHow">
+      <div class="publicSectionHead"><span>02</span><div><div class="eyebrow">КАК ЭТО РАБОТАЕТ</div><h2>Три шага<br>до доставки</h2></div></div>
+      <div class="steps"><div><b>01</b><h3>Зарегистрируйтесь</h3><p>Введите имя и номер телефона.</p></div><div><b>02</b><h3>Оформите заказ</h3><p>Выберите ресторан или укажите, что нужно доставить.</p></div><div><b>03</b><h3>Получите заказ</h3><p>Следите за статусом и общайтесь с поддержкой.</p></div></div>
+    </section>
 
-<div class="form">
-
-<input id="loginPhone" type="tel" placeholder="+374 XX XX XX XX">
-
-
-<button class="primary" onclick="login()">Войти</button>
-
+    <section class="publicCta">
+      <div><div class="eyebrow">SERTAL DELIVERY</div><h2>Готовы оформить<br>первую доставку?</h2></div>
+      <button class="goldBtn" onclick="openRegister()">Создать аккаунт →</button>
+    </section>
+  </main>
+  <footer class="publicFooter"><span>© SERTAL DELIVERY</span><span>Премиальная доставка</span></footer>
 </div>
 
-</div>
+<div id="authModal" class="authModal hidden" onclick="if(event.target===this)closeAuth()">
+  <div class="authCard">
+    <button class="authClose" onclick="closeAuth()">×</button>
+    <div class="authLogo"><img src="https://i.ibb.co/9k5Z0FtT/IMG-20260904-183452-458.jpg" alt="SERTAL"></div>
+    <div class="eyebrow" id="authEyebrow">ЛИЧНЫЙ КАБИНЕТ</div>
+    <h2 id="authTitle">Войти</h2>
+    <p id="authText">Введите номер телефона, добавленный в SERTAL DELIVERY.</p>
+    <div id="loginFormBox" class="authForm">
+      <input id="loginPhone" type="tel" inputmode="tel" placeholder="Номер телефона">
+      <button class="goldBtn" onclick="login()">Войти →</button>
+      <button class="authSwitch" onclick="openRegister()">Нет аккаунта? Регистрация</button>
+    </div>
+    <div id="registerFormBox" class="authForm hidden">
+      <input id="regName" placeholder="Ваше имя">
+      <input id="regPhone" type="tel" inputmode="tel" placeholder="Номер телефона">
+      <button class="goldBtn" onclick="registerCustomer()">Зарегистрироваться →</button>
+      <button class="authSwitch" onclick="openLogin()">Уже есть аккаунт? Войти</button>
+    </div>
+    <div id="adminFormBox" class="authForm hidden">
+      <input id="adminPhone" type="tel" inputmode="tel" placeholder="Номер администратора">
+      <input id="adminNickname" placeholder="Никнейм администратора">
+      <button class="goldBtn" onclick="adminPersonalLogin()">Войти как администратор →</button>
+      <small class="authHint">Доступ только для администраторов, прописанных в серверном коде.</small>
+    </div>
+  </div>
 </div>
 
 
@@ -786,442 +867,80 @@ async function api(path, options = {}){
 
 
 /* =========================================================
-   АВТОМАТИЧЕСКИЙ ВХОД АДМИНА
-   НИКАКОГО PHONE/PIN
+   PUBLIC / AUTH
 ========================================================= */
-
-async function adminAutoLogin(){
-
-    /*
-      Админ определяется локально по Telegram ID.
-    */
-
-    if(!isAdminTelegram())
-        return false;
-
-    /*
-      initData ОБЯЗАТЕЛЕН.
-      Именно сервер проверяет его подпись.
-    */
-
-    if(!tg?.initData){
-
-        showAdminError(
-            "Откройте приложение через Telegram."
-        );
-
-        return false;
-    }
-
-    try{
-
-        /*
-          Сначала удаляем старую сессию.
-          Она НЕ используется для входа админа.
-        */
-
-        token = "";
-
-        localStorage.removeItem(
-            "sertal_delivery_token"
-        );
-
-        const response =
-            await fetch(
-                "/api/admin/web-login",
-                {
-                    method:"POST",
-                    headers:{
-                        "Content-Type":
-                            "application/json"
-                    },
-                    body:JSON.stringify({
-                        init_data:
-                            tg.initData
-                    })
-                }
-            );
-
-        const text =
-            await response.text();
-
-        let data;
-
-        try{
-            data =
-                text
-                ? JSON.parse(text)
-                : {};
-        }catch{
-            data = {
-                detail:text
-            };
-        }
-
-        if(!response.ok){
-
-            throw new Error(
-                formatError(
-                    data.detail ||
-                    data.message ||
-                    data.error
-                )
-            );
-        }
-
-        if(!data.token){
-
-            throw new Error(
-                "Сервер не выдал токен администратора"
-            );
-        }
-
-        token =
-            data.token;
-
-        localStorage.setItem(
-            "sertal_delivery_token",
-            token
-        );
-
-        return true;
-
-    }catch(error){
-
-        console.error(
-            "ADMIN AUTO LOGIN:",
-            error
-        );
-
-        showAdminError(
-            error.message
-        );
-
-        return false;
-    }
+function togglePublicMenu(force){const el=document.getElementById('publicMenu');if(!el)return;el.classList.toggle('show',force===undefined?!el.classList.contains('show'):!!force);}
+function scrollToPublic(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});}
+function showPublicHome(){
+  document.getElementById("publicHome")?.classList.remove("hidden");
+  document.getElementById("app")?.classList.add("hidden");
 }
-
-
-/* =========================================================
-   АДМИН ERROR
-========================================================= */
-
-function showAdminError(message){
-
-    document
-        .getElementById("loginScreen")
-        ?.classList.add("hidden");
-
-    document
-        .getElementById("app")
-        ?.classList.remove("hidden");
-
-    hideViews();
-
-    show("adminView");
-
-    const area =
-        document.getElementById(
-            "adminOrdersArea"
-        );
-
-    if(area){
-
-        area.innerHTML = `
-            <div class="empty glass">
-                ❌ ${escapeHtml(message)}
-            </div>
-        `;
-    }
-
-    document
-        .getElementById("userPill")
-        .textContent =
-            "Администратор";
+function openAuth(mode="login"){
+  document.getElementById("authModal")?.classList.remove("hidden");
+  document.getElementById("loginFormBox")?.classList.toggle("hidden", mode!=="login");
+  document.getElementById("registerFormBox")?.classList.toggle("hidden", mode!=="register");
+  document.getElementById("adminFormBox")?.classList.toggle("hidden", mode!=="admin");
+  const titles={login:["ЛИЧНЫЙ КАБИНЕТ","Войти","Введите номер телефона, добавленный в SERTAL DELIVERY."],register:["НОВЫЙ ПОКУПАТЕЛЬ","Регистрация","Создайте аккаунт — вход дальше будет только по номеру телефона."],admin:["PRIVATE ADMIN","Вход администратора","Введите персональный номер и никнейм администратора."]};
+  const t=titles[mode]||titles.login;
+  document.getElementById("authEyebrow").textContent=t[0];
+  document.getElementById("authTitle").textContent=t[1];
+  document.getElementById("authText").textContent=t[2];
 }
+function openLogin(){openAuth("login")}
+function openRegister(){openAuth("register")}
+function openAdminLogin(){openAuth("admin")}
+function closeAuth(){document.getElementById("authModal")?.classList.add("hidden")}
+function hideRegister(){closeAuth()}
 
-
-function hideRegister(){document.getElementById("registerBox")?.classList.add("hidden")}
 async function registerCustomer(){
   const name=document.getElementById("regName")?.value.trim();
   const phone=document.getElementById("regPhone")?.value.trim();
-  const pin=document.getElementById("regPin")?.value.trim();
-  if(!name||!phone||!pin){toast("Заполните все поля");return}
+  if(!name||!phone){toast("Введите имя и номер телефона");return}
   try{
-    const r=await api("/api/register",{method:"POST",body:JSON.stringify({name,phone,pin})});
-    token=r.token; localStorage.setItem("sertal_delivery_token",token); hideRegister();
-    await bootAfterLogin(); toast("✅ Аккаунт создан");
-  }catch(e){toast(formatError(e.message))}
-}
-async function downloadExcel(){
-  try{
-    const r=await fetch("/api/admin/export-xlsx",{headers:{Authorization:"Bearer "+token}});
-    if(!r.ok) throw new Error("Не удалось создать Excel");
-    const blob=await r.blob(), url=URL.createObjectURL(blob), a=document.createElement("a");
-    a.href=url; a.download="orders_A4.xlsx"; a.click(); URL.revokeObjectURL(url);
-    toast("📊 Excel сформирован");
-  }catch(e){toast(formatError(e.message))}
-}
-async function sendExcelToTelegram(){
-    try{
-        await api("/api/admin/export-xlsx/telegram",{method:"POST"});
-        toast("📤 Excel отправлен администраторам в Telegram");
-    }catch(e){toast(formatError(e.message))}
-}
-
-async function contactAdmin(){ openSupportChat(); }
-
-async function openSupportChat(){
-    const area=role==="customer"
-        ? document.getElementById("customerOrdersArea")
-        : document.getElementById("courierOrdersArea");
-    if(!area)return;
-    area.innerHTML=`
-      <div class="sectionTitle">💬 Чат с администратором</div>
-      <div id="supportChat" class="chatBox"></div>
-      <div class="form">
-        <input id="supportText" placeholder="Напишите администратору..." onkeydown="if(event.key==='Enter'){event.preventDefault();sendSupportMessage()}">
-        <div class="fileRow">
-          <input id="supportFile" type="file" style="flex:1">
-          <button class="secondary" type="button" onclick="uploadSupportFile()">📎 Файл</button>
-        </div>
-        <button class="primary" type="button" onclick="sendSupportMessage()">Отправить</button>
-      </div>`;
-    await refreshSupportChat();
-}
-
-async function refreshSupportChat(){
-    const box=document.getElementById("supportChat");
-    if(!box)return;
-    try{
-        const list=await api("/api/chat/messages");
-        box.innerHTML=list.length?list.map(m=>{
-            const mine=m.sender_role!=="admin";
-            return `<div class="chatBubble ${mine?"chatMine":"chatAdmin"}">
-                <b>${mine?"Вы":"Администратор"}</b><br>
-                ${escapeHtml(m.text||"")}
-                ${m.file_name?`<div>📎 ${escapeHtml(m.file_name)}</div>`:""}
-            </div>`;
-        }).join(""):'<div class="empty">Сообщений пока нет</div>';
-        box.scrollTop=box.scrollHeight;
-    }catch(e){toast(formatError(e.message))}
-}
-
-async function sendSupportMessage(){
-    const input=document.getElementById("supportText");
-    const text=input?.value.trim();
-    if(!text)return;
-    try{
-        await api("/api/chat/send",{method:"POST",body:JSON.stringify({text})});
-        input.value="";
-        await refreshSupportChat();
-    }catch(e){toast(formatError(e.message))}
-}
-
-async function uploadSupportFile(){
-    const input=document.getElementById("supportFile");
-    const file=input?.files?.[0];
-    if(!file){toast("Выберите файл");return}
-    try{
-        const fd=new FormData();
-        fd.append("file",file);
-        await api("/api/chat/upload",{method:"POST",body:fd});
-        input.value="";
-        await refreshSupportChat();
-        toast("📎 Файл отправлен администратору");
-    }catch(e){toast(formatError(e.message))}
-}
-
-async function loadCustomerHistory(){
-  try{ const d=await api("/api/customer/history"); renderCustomerOrders(d); }
-  catch(e){toast(formatError(e.message))}
-}
-async function loadCourierHistory(){
-  try{ const d=await api("/api/courier/history"); renderCourierOrders(d); }
-  catch(e){toast(formatError(e.message))}
-}
-async function loadCourierSchedule(){
-  try{
-    const d=await api("/api/courier/schedule");
-    const area=document.getElementById("courierOrdersArea");
-    area.innerHTML='<div class="sectionTitle">🗓 График / маршруты</div>'+
-      (d.length?d.map(o=>`<div class="item"><b>#${o.id} · ${escapeHtml(o.title)}</b><div class="itemSub">До: ${escapeHtml(o.delivery_deadline||"—")} · Маршрут: ${o.route_no||"—"}<br>📍 ${escapeHtml(o.address)}</div></div>`).join(""):'<div class="empty">Активных маршрутов нет</div>');
+    const r=await fetch("/api/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,phone,telegram_id:telegramId()})});
+    const data=await r.json();
+    if(!r.ok)throw new Error(formatError(data.detail||data.message||data.error));
+    token=data.token;localStorage.setItem("sertal_delivery_token",token);closeAuth();await boot();toast("Добро пожаловать в SERTAL DELIVERY");
   }catch(e){toast(formatError(e.message))}
 }
 
-async function bootAfterLogin(){ return boot(); }
-function renderCustomerOrders(list){
-  const area=document.getElementById("customerOrdersArea");
-  if(!area)return;
-  area.innerHTML=`<div class="sectionTitle">Заказы</div>`+
-    (Array.isArray(list)&&list.length ? list.map(customerOrder).join("") :
-    `<div class="empty">Заказов пока нет</div>`);
+async function adminPersonalLogin(){
+  const phone=document.getElementById("adminPhone")?.value.trim();
+  const nickname=document.getElementById("adminNickname")?.value.trim();
+  if(!phone||!nickname){toast("Введите номер и никнейм администратора");return}
+  try{
+    const r=await fetch("/api/admin/personal-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,nickname})});
+    const data=await r.json();
+    if(!r.ok)throw new Error(formatError(data.detail||data.message||data.error));
+    token=data.token;localStorage.setItem("sertal_delivery_token",token);closeAuth();await boot();toast("Администратор авторизован");
+  }catch(e){toast(formatError(e.message))}
 }
-function renderCourierOrders(list){
-  const area=document.getElementById("courierOrdersArea");
-  if(!area)return;
-  area.innerHTML=`<div class="sectionTitle">История заказов</div>`+
-    (Array.isArray(list)&&list.length ? list.map(courierOrder).join("") :
-    `<div class="empty">История пуста</div>`);
-}
-
-/* =========================================================
-   LOGIN CUSTOMER / COURIER
-========================================================= */
 
 async function login(){
-    const phone=document.getElementById("loginPhone").value.trim();
-    if(!phone){toast("Введите номер телефона");return}
-    try{
-        const data=await api("/api/login",{
-            method:"POST",
-            body:JSON.stringify({phone, telegram_id: telegramId()})
-        });
-        token=data.token;
-        localStorage.setItem("sertal_delivery_token",token);
-        await boot();
-    }catch(error){toast(formatError(error.message))}
+  const phone=document.getElementById("loginPhone")?.value.trim();
+  if(!phone){toast("Введите номер телефона");return}
+  try{
+    const data=await api("/api/login",{method:"POST",body:JSON.stringify({phone,telegram_id:telegramId()})});
+    token=data.token;localStorage.setItem("sertal_delivery_token",token);closeAuth();await boot();
+  }catch(error){toast(formatError(error.message))}
 }
-
-
-/* =========================================================
-   BOOT
-========================================================= */
 
 async function boot(){
-
-    /*
-      КЛЮЧЕВОЙ ФИКС.
-
-      Если Telegram ID админа —
-      PHONE/PIN вообще НЕ используются.
-    */
-
-    if(isAdminTelegram()){
-
-        const ok =
-            await adminAutoLogin();
-
-        if(!ok)
-            return;
-
-    }else if(!token){
-
-        document
-            .getElementById("loginScreen")
-            .classList.remove("hidden");
-
-        document
-            .getElementById("app")
-            .classList.add("hidden");
-
-        return;
-    }
-
-
-    try{
-
-        currentUser =
-            await api("/api/me");
-
-        role =
-            currentUser.role;
-
-
-        /*
-          Защита:
-          если Telegram ID админа,
-          сервер тоже должен вернуть admin.
-        */
-
-        if(
-            isAdminTelegram() &&
-            role !== "admin"
-        ){
-
-            throw new Error(
-                "Сервер не определил вас как администратора"
-            );
-        }
-
-
-        document
-            .getElementById("loginScreen")
-            .classList.add("hidden");
-
-        document
-            .getElementById("app")
-            .classList.remove("hidden");
-
-
-        document
-            .getElementById("userPill")
-            .textContent =
-                role === "admin"
-                ? "Администратор"
-                : (
-                    currentUser.name || ""
-                );
-
-
-        hideViews();
-
-
-        if(role === "admin"){
-
-            show("adminView");
-
-            await loadAdmin();
-
-        }else if(role === "customer"){
-
-            show("customerView");
-
-            await loadCustomer();
-
-        }else if(role === "courier"){
-
-            show("courierView");
-
-            await loadCourier();
-        }
-
-
-    }catch(error){
-
-        /*
-          Админа НИКОГДА не отправляем
-          на экран телефона/PIN.
-        */
-
-        if(isAdminTelegram()){
-
-            await adminAutoLogin();
-
-            return;
-        }
-
-
-        token = "";
-
-        localStorage.removeItem(
-            "sertal_delivery_token"
-        );
-
-        document
-            .getElementById("loginScreen")
-            .classList.remove("hidden");
-
-        document
-            .getElementById("app")
-            .classList.add("hidden");
-
-        toast(
-            formatError(error.message)
-        );
-    }
+  if(!token){showPublicHome();return}
+  try{
+    currentUser=await api("/api/me");
+    role=currentUser.role;
+    document.getElementById("publicHome")?.classList.add("hidden");
+      document.getElementById("app")?.classList.remove("hidden");
+    document.getElementById("userPill").textContent=role==="admin"?`Администратор · ${currentUser.name||""}`:(currentUser.name||"");
+    hideViews();
+    if(role==="admin"){show("adminView");await loadAdmin();}
+    else if(role==="customer"){show("customerView");await loadCustomer();}
+    else if(role==="courier"){show("courierView");await loadCourier();}
+  }catch(error){
+    token="";role="";currentUser=null;localStorage.removeItem("sertal_delivery_token");showPublicHome();toast(formatError(error.message));
+  }
 }
-
 
 /* =========================================================
    VIEWS
