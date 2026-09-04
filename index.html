@@ -339,6 +339,67 @@ input,select{background:#080806!important;border-color:rgba(212,175,55,.20)!impo
 
 #customerView .serviceCard{position:relative;overflow:hidden;min-height:128px;background-size:cover;background-position:center}#customerView .serviceCard:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.12),rgba(0,0,0,.88));pointer-events:none}#customerView .serviceCard>*{position:relative;z-index:2}#customerView .serviceCard:nth-child(1){background-image:url("https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=700&q=78")}#customerView .serviceCard:nth-child(2){background-image:url("https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=700&q=78")}#customerView .serviceCard:nth-child(3){background-image:url("https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=700&q=78")}#customerView .serviceCard:nth-child(4){background-image:url("https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=700&q=78")}#customerView .serviceCard:nth-child(5){background-image:url("https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=700&q=78")}
 </style>
+
+<style>
+/* =========================================================
+   SERTAL MEGA MARKETPLACE 2026 — LIVE CITY DISCOVERY
+   This layer is intentionally self-contained so it can be dropped
+   into the existing premium black/gold interface without breaking
+   the older admin/courier screens.
+========================================================= */
+.liveMarket{margin-top:14px;display:grid;gap:12px}
+.liveMarketHeader{padding:18px;border-radius:24px;border:1px solid rgba(212,175,55,.25);background:radial-gradient(circle at 90% 0,rgba(212,175,55,.13),transparent 34%),linear-gradient(145deg,#16130d,#090909);box-shadow:0 18px 60px rgba(0,0,0,.45)}
+.liveMarketHeader h2{font-family:Georgia,serif;font-size:31px;margin:0 0 6px;color:#f6e5b1}
+.liveMarketHeader p{margin:0;color:#9d9484;line-height:1.55;font-size:12px}
+.liveMarketMeta{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.liveChip{padding:7px 10px;border-radius:999px;border:1px solid rgba(212,175,55,.18);background:#0d0c09;color:#d9c78f;font-size:10px;font-weight:800}
+.liveChip strong{color:#fff4d0}
+.liveToolbar{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center}
+.liveToolbar input{min-height:46px}
+.liveFilterBtn{min-height:46px;padding:10px 13px;border-radius:14px;background:#12110e;color:#e8ddc5;border:1px solid rgba(212,175,55,.18);font-weight:850}
+.liveFilterBtn.active{background:rgba(212,175,55,.13);border-color:#d4af37;color:#f0cf63}
+.liveTabs{display:flex;gap:7px;overflow:auto;padding-bottom:2px}
+.liveTabs button{white-space:nowrap;padding:9px 12px;border-radius:999px;background:#0e0d0b;color:#9f9685;border:1px solid rgba(255,255,255,.07);font-size:11px;font-weight:850}
+.liveTabs button.active{background:#d4af37;color:#151108;border-color:#d4af37}
+.liveGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.liveService{position:relative;padding:15px;border-radius:21px;background:linear-gradient(145deg,#15130f,#0a0a09);border:1px solid rgba(212,175,55,.14);min-height:205px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;box-shadow:0 14px 38px rgba(0,0,0,.28)}
+.liveService:before{content:"";position:absolute;right:-35px;top:-35px;width:120px;height:120px;border-radius:50%;background:rgba(212,175,55,.055);filter:blur(2px);pointer-events:none}
+.liveService:hover{border-color:rgba(212,175,55,.38);transform:translateY(-1px)}
+.liveServiceTop{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;position:relative;z-index:1}
+.liveServiceIcon{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;background:#0b0a08;border:1px solid rgba(212,175,55,.22);font-size:22px}
+.liveSource{font-size:9px;text-transform:uppercase;letter-spacing:.13em;color:#7f7768}
+.liveService h3{font-size:17px;margin:12px 0 5px;position:relative;z-index:1}
+.liveService p{margin:0;color:#938b7c;font-size:11px;line-height:1.48;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;position:relative;z-index:1}
+.liveActions{display:flex;gap:7px;margin-top:12px;position:relative;z-index:1}
+.liveActions button,.liveActions a{flex:1;min-height:40px;border-radius:12px;padding:8px 9px;text-align:center;text-decoration:none;font-size:10px;font-weight:900;display:grid;place-items:center}
+.liveOpen{background:linear-gradient(135deg,#a77b19,#d4af37 50%,#ffe7a0);color:#171106}
+.liveMap{background:#11100d;color:#e4d8bd;border:1px solid rgba(212,175,55,.18)}
+.livePartner{border-color:rgba(212,175,55,.34)}
+.livePartner .liveSource{color:#d4af37}
+.liveMenu{margin-top:10px;padding:10px;border-radius:14px;background:#0b0b09;border:1px solid rgba(255,255,255,.06);max-height:125px;overflow:auto}
+.liveMenuRow{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.045);font-size:10px;color:#c6bdad}
+.liveMenuRow:last-child{border-bottom:0}
+.liveMenuRow b{color:#f0cf63;white-space:nowrap}
+.liveEmpty{padding:30px 18px;border-radius:21px;text-align:center;background:#0c0c0a;border:1px dashed rgba(212,175,55,.18);color:#8f8778}
+.liveEmpty strong{display:block;color:#e5d7b9;font-family:Georgia,serif;font-size:21px;margin-bottom:7px}
+.liveLoading{display:grid;gap:8px}
+.liveSkeleton{height:110px;border-radius:20px;background:linear-gradient(90deg,#0d0d0b,#17150f,#0d0d0b);background-size:220% 100%;animation:liveShimmer 1.2s infinite}
+@keyframes liveShimmer{0%{background-position:200% 0}100%{background-position:-20% 0}}
+.liveAISummary{margin:10px 0 14px;padding:14px 16px;border:1px solid rgba(212,175,55,.28);border-radius:16px;background:rgba(212,175,55,.06);line-height:1.45;color:#eee}.liveAISummaryTitle{font-weight:800;margin-bottom:7px;color:#d4af37}
+.liveNotice{padding:12px 14px;border-radius:16px;background:rgba(212,175,55,.07);border:1px solid rgba(212,175,55,.12);color:#a79d8b;font-size:10px;line-height:1.55}
+.liveCount{font-size:11px;color:#8f8778}
+.liveCount b{color:#f0cf63}
+.liveBack{display:flex;gap:8px;align-items:center}
+.liveBack button{padding:9px 12px;border-radius:12px;background:#12110e;color:#e7dcc4;border:1px solid rgba(212,175,55,.18);font-weight:850}
+.favoriteToggle{width:40px!important;flex:0 0 40px!important;background:#11100d!important;color:#d4af37!important;border:1px solid rgba(212,175,55,.18)}
+.favoriteToggle.active{background:rgba(212,175,55,.16)!important}
+@media(max-width:650px){
+  .liveToolbar{grid-template-columns:1fr auto}
+  .liveToolbar .liveFilterBtn:last-child{display:none}
+  .liveGrid{grid-template-columns:1fr}
+  .liveService{min-height:190px}
+}
+</style>
 </head>
 
 <body>
@@ -547,18 +608,12 @@ SERTAL DELIVERY
 
 <div id="buyerHomePanel">
 <div class="buyerWelcome"><h2>Добро пожаловать в SERTAL</h2><p>Еда, магазины и доставка — всё в одном приложении.</p></div>
-<div class="buyerSearch"><input id="buyerGoogleSearch" placeholder="Поиск ресторанов, магазинов, товаров..." onkeydown="if(event.key==='Enter'){event.preventDefault();searchGoogle()}" oninput="saveBuyerSearchDraft()"><button class="goldBtn" onclick="searchGoogle()">⌕</button></div>
+<div class="buyerSearch"><input id="buyerGoogleSearch" placeholder="Спросите что угодно — поиск по интернету..." onkeydown="if(event.key==='Enter'){event.preventDefault();searchGoogle()}" oninput="saveBuyerSearchDraft()"><button class="goldBtn" onclick="searchGoogle()">⌕</button></div>
 <div id="buyerAddressCard" class="addressCard"><div class="sectionTitle">📍 Мой адрес доставки</div><div class="addressRow"><input id="buyerAddress" placeholder="Введите адрес, например: Ереван, ул. ..."><button class="secondary locationBtn" onclick="useCurrentLocation()">📍 GPS</button></div><div class="itemActions" style="margin-top:8px"><button class="goldBtn" onclick="saveDefaultAddress()">Сохранить адрес</button></div></div>
-<div class="buyerCategories">
-<button class="buyerCategory" onclick="openRestaurantShop()"><img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=700&q=82" alt="Еда"><span class="buyerCategoryText"><b>Еда</b><small>Рестораны и блюда</small></span></button>
-<button class="buyerCategory" onclick="searchGoogle('супермаркеты Ереван')"><img src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=700&q=82" alt="Супермаркеты"><span class="buyerCategoryText"><b>Супермаркеты</b><small>Продукты и покупки</small></span></button>
-<button class="buyerCategory" onclick="searchGoogle('магазины Ереван')"><img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=700&q=82" alt="Магазины"><span class="buyerCategoryText"><b>Магазины</b><small>Покупки по городу</small></span></button>
-<button class="buyerCategory" onclick="searchGoogle('аптеки Ереван')"><img src="https://images.unsplash.com/photo-1585435557343-3b092031a831?auto=format&fit=crop&w=700&q=82" alt="Здоровье"><span class="buyerCategoryText"><b>Здоровье</b><small>Аптеки и товары</small></span></button>
-</div>
-<div class="buyerSectionTitle"><h3>Популярное в SERTAL</h3><span>обновляется автоматически</span></div>
-<div class="buyerCategories">
-<button class="buyerCategory" onclick="openRestaurantShop()"><img src="https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=700&q=82" alt="Пицца"><span class="buyerCategoryText"><b>Пицца</b><small>Заказать сейчас</small></span></button>
-<button class="buyerCategory" onclick="openRestaurantShop()"><img src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=700&q=82" alt="Суши"><span class="buyerCategoryText"><b>Суши</b><small>Рестораны рядом</small></span></button>
+<div class="searchOnlyInfo section glass">
+  <div class="sectionTitle">🤖 ИИ-поиск по интернету</div>
+  <p style="margin:6px 0;color:#bdb7ad">Напишите любой запрос. Gemini сам решит, когда нужен поиск Google, найдёт актуальную информацию и покажет источники.</p>
+  <div class="itemSub">Примеры: «лучшие фильмы 2026», «курс доллара к драму», «как открыть ИП в Армении», «новости про ...»</div>
 </div>
 <div id="buyerSearchResults" class="buyerSearchResults"></div>
 </div>
@@ -2542,7 +2597,7 @@ function buyerPage(page,btn){
     if(page==="discover"){
         disc?.classList.remove("hidden");
         if(disc && !disc.dataset.loaded){
-            disc.innerHTML=`<div class="buyerWelcome"><h2>Интересное</h2><p>Ищите рестораны, магазины, сервисы и любые сайты через Google.</p></div><div class="buyerSearch"><input id="buyerDiscoverSearch" placeholder="Что ищем?" onkeydown="if(event.key==='Enter'){event.preventDefault();searchGoogle(document.getElementById('buyerDiscoverSearch').value)}"><button class="goldBtn" onclick="searchGoogle(document.getElementById('buyerDiscoverSearch').value)">⌕</button></div><div id="buyerDiscoverResults" class="buyerSearchResults"></div>`;
+            disc.innerHTML=`<div class="buyerWelcome"><h2>Интересное</h2><p>Задайте любой вопрос — ИИ может искать актуальную информацию в интернете.</p></div><div class="buyerSearch"><input id="buyerDiscoverSearch" placeholder="Что ищем?" onkeydown="if(event.key==='Enter'){event.preventDefault();searchGoogle(document.getElementById('buyerDiscoverSearch').value)}"><button class="goldBtn" onclick="searchGoogle(document.getElementById('buyerDiscoverSearch').value)">⌕</button></div><div id="buyerDiscoverResults" class="buyerSearchResults"></div>`;
             disc.dataset.loaded="1";
         }
         return;
@@ -2553,21 +2608,30 @@ function buyerPage(page,btn){
     }
 }
 async function searchGoogle(forced){
-    const q=String(forced??document.getElementById("buyerGoogleSearch")?.value??"").trim();
+    const q=String(forced??document.getElementById("buyerGoogleSearch")?.value??document.getElementById("buyerDiscoverSearch")?.value??"").trim();
     if(!q){toast("Введите запрос для поиска");return;}
     const target=document.getElementById("buyerSearchResults")||document.getElementById("buyerDiscoverResults");
-    if(target) target.innerHTML=`<div class="empty">Ищу в Google…</div>`;
+    if(target) target.innerHTML=`<div class="empty">🤖 Gemini ищет в интернете…</div>`;
     try{
         const data=await api(`/api/customer/search?q=${encodeURIComponent(q)}`);
-        if(data.configured && data.items?.length){
-            if(target) target.innerHTML=`<div class="buyerSectionTitle"><h3>Результаты Google</h3><span>${escapeHtml(q)}</span></div>`+data.items.map(x=>`<div class="googleResult"><a href="${escapeAttr(x.link)}" target="_blank" rel="noopener">${escapeHtml(x.title)}</a><small>${escapeHtml(x.displayLink||"")}</small><p>${escapeHtml(x.snippet||"")}</p></div>`).join("");
-        }else{
-            if(target) target.innerHTML=`<div class="item"><b>Google поиск готов</b><div class="itemSub">API ещё не подключён к Render. Откройте обычный Google или добавьте GOOGLE_API_KEY + GOOGLE_CX в Environment.</div><button class="goldBtn" onclick="window.open('${escapeAttr(data.search_url||('https://www.google.com/search?q='+encodeURIComponent(q)))}','_blank')">Открыть Google →</button></div>`;
+        const sources=Array.isArray(data.sources)?data.sources:[];
+        let html=`<div class="buyerSectionTitle"><h3>Результат ИИ-поиска</h3><span>${escapeHtml(q)}</span></div>`;
+        if(data.answer){
+            html+=`<div class="item glass"><b>🤖 Gemini</b><p style="white-space:pre-wrap;margin:8px 0">${escapeHtml(data.answer)}</p>${data.grounded?'<small>🔎 Ответ проверен через Google Search</small>':''}</div>`;
         }
+        if(sources.length){
+            html+=`<div class="buyerSectionTitle"><h3>Источники</h3><span>${sources.length}</span></div>`;
+            html+=sources.map(x=>`<div class="googleResult"><a href="${escapeAttr(x.link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(x.title||x.link)}</a><small>${escapeHtml(x.displayLink||"")}</small><p>${escapeHtml(x.snippet||"")}</p></div>`).join('');
+        }
+        if(!data.answer && !sources.length){
+            html+=`<div class="item"><b>Поиск временно недоступен</b><div class="itemSub">Попробуйте повторить запрос позже.</div></div>`;
+        }
+        if(target) target.innerHTML=html;
     }catch(e){
         if(target) target.innerHTML=`<div class="empty">${escapeHtml(formatError(e.message))}</div>`;
     }
 }
+
 
 /* =========================================================
    CUSTOMER
@@ -3275,7 +3339,11 @@ document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==
 
 boot();
 
-</script>
 
-</body>
-   </html>
+/* =========================================================
+   GENERIC INTERNET SEARCH UI
+   Search is intentionally query-based; no marketplace/service catalog.
+========================================================= */
+window.searchGoogle=searchGoogle;
+window.searchInternet=searchGoogle;
+
