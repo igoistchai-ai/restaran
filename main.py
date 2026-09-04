@@ -699,7 +699,7 @@ class CustomerAddressData(BaseModel):
 
 @app.get("/")
 async def index():
-    return FileResponse("index.html")
+    return FileResponse("app.html")
 
 
 @app.head("/")
