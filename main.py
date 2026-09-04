@@ -20,6 +20,8 @@ import uvicorn
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.worksheet.page import PageMargins
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import (
@@ -37,9 +39,18 @@ from telegram.ext import (
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 WEB_APP_URL = os.getenv("RENDER_EXTERNAL_URL", "").rstrip("/")
 
+# Telegram IDs are used for bot-side admin permissions and message delivery.
 ADMIN_IDS = {
     8357023784,
     7003441441,
+}
+
+# Separate personal Web App logins for administrators.
+# Keep these credentials on the server; they are not exposed to the public UI.
+ADMIN_ACCOUNTS = {
+    "777": "администратор",
+    "778": "администратор2",
+    "779": "администратор3",
 }
 
 DB_PATH = "restaran.db"
@@ -92,6 +103,30 @@ def init_db():
         lon REAL,
         updated_at INTEGER,
         active INTEGER NOT NULL DEFAULT 1
+    )
+    """)
+
+    conn.execute("""
+    CREATE TABLE IF NOT EXISTS restaurants(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        address TEXT NOT NULL DEFAULT '',
+        phone TEXT NOT NULL DEFAULT '',
+        active INTEGER NOT NULL DEFAULT 1,
+        created_at INTEGER NOT NULL
+    )
+    """)
+
+    conn.execute("""
+    CREATE TABLE IF NOT EXISTS menu_items(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        restaurant_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
+        price REAL NOT NULL DEFAULT 0,
+        active INTEGER NOT NULL DEFAULT 1,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY(restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE
     )
     """)
 
@@ -181,6 +216,10 @@ def init_db():
         ("orders", "items_text", "TEXT"),
         ("orders", "change_amount", "REAL"),
         ("orders", "route_no", "INTEGER"),
+        ("orders", "restaurant_id", "INTEGER"),
+        ("orders", "payment_method", "TEXT NOT NULL DEFAULT 'cash'"),
+        ("orders", "payment_status", "TEXT NOT NULL DEFAULT 'cash'"),
+        ("orders", "receipt_file", "TEXT"),
     ]
 
     for table, column, definition in migrations:
@@ -344,7 +383,7 @@ def geocode_yerevan(address):
         if "ереван" not in query.lower() and "yerevan" not in query.lower():
             query = f"{query}, Yerevan, Armenia"
         url = "https://nominatim.openstreetmap.org/search?" +               f"format=jsonv2&limit=1&countrycodes=am&q={quote(query)}"
-        req = Request(url, headers={"User-Agent": "RESTARAN/1.0 order-map"})
+        req = Request(url, headers={"User-Agent": "SERTAL DELIVERY/1.0 order-map"})
         with urlopen(req, timeout=5) as response:
             data = json.loads(response.read().decode("utf-8"))
         if data:
@@ -446,15 +485,65 @@ def validate_telegram_init_data(init_data):
 
 
 # =========================================================
+# RECEIPTS / RESTAURANT HELPERS
+# =========================================================
+
+def generate_receipt(order_id):
+    conn = db()
+    row = conn.execute("""
+        SELECT o.*, u.name AS customer_name, u.phone AS customer_phone
+        FROM orders o JOIN users u ON u.id=o.customer_id WHERE o.id=?
+    """, (order_id,)).fetchone()
+    conn.close()
+    if not row:
+        return None
+    path = EXPORT_DIR / f"sertal_order_{order_id}.pdf"
+    c = canvas.Canvas(str(path), pagesize=A4)
+    w, h = A4
+    y = h - 55
+    c.setFont("Helvetica-Bold", 22); c.drawString(55, y, "SERTAL DELIVERY")
+    y -= 38
+    c.setFont("Helvetica-Bold", 16); c.drawString(55, y, f"Заказ №{order_id}")
+    y -= 28
+    c.setFont("Helvetica", 11)
+    payment = row["payment_method"] if "payment_method" in row.keys() else "cash"
+    lines = [
+        f"Клиент: {row['customer_name']}",
+        f"Телефон: +{row['customer_phone']}",
+        f"Адрес доставки: {row['address']}",
+        f"Что доставить: {row['title']}",
+        f"Ресторан: {row['restaurant_name'] or '—'}",
+        f"Способ оплаты: {'Наличные' if payment == 'cash' else 'Онлайн'}",
+        f"Сумма: {float(row['price'] or 0):.0f} ֏",
+        f"Статус: {row['status']}",
+        f"Создан: {datetime.fromtimestamp(row['created_at']).strftime('%d.%m.%Y %H:%M')}",
+    ]
+    for line in lines:
+        c.drawString(55, y, line[:110]); y -= 22
+    c.line(55, y, w-55, y); y -= 28
+    c.setFont("Helvetica-Oblique", 10); c.drawString(55, y, "Документ сформирован автоматически SERTAL DELIVERY")
+    c.save()
+    conn = db(); conn.execute("UPDATE orders SET receipt_file=? WHERE id=?", (str(path), order_id)); conn.commit(); conn.close()
+    return path
+
+async def send_receipt_to_customer(user, path, order_id):
+    if not path or not telegram_app or not user["telegram_id"]:
+        return
+    try:
+        with open(path, "rb") as fh:
+            await telegram_app.bot.send_document(user["telegram_id"], fh, filename=path.name, caption=f"SERTAL DELIVERY — чек заказа №{order_id}")
+    except Exception as exc:
+        print("RECEIPT TELEGRAM:", exc)
+
+# =========================================================
 # MODELS
 # =========================================================
 
 class LoginData(BaseModel):
     phone: str
+    telegram_id: int | None = None
 
 
-class AdminWebLogin(BaseModel):
-    init_data: str
 
 
 class CustomerCreate(BaseModel):
@@ -503,6 +592,28 @@ class LocationData(BaseModel):
 class ChatMessageData(BaseModel):
     text: str = ""
 
+class RestaurantCreate(BaseModel):
+    name: str
+    address: str = ""
+    phone: str = ""
+
+class MenuItemCreate(BaseModel):
+    restaurant_id: int
+    name: str
+    description: str = ""
+    price: float
+
+class CartItem(BaseModel):
+    menu_item_id: int
+    quantity: int = 1
+
+class CartOrderData(BaseModel):
+    restaurant_id: int
+    items: list[CartItem]
+    address: str
+    payment_method: str = "cash"
+    delivery_note: str = ""
+
 
 # =========================================================
 # WEB
@@ -524,9 +635,20 @@ async def head_index():
 
 @app.post("/api/login")
 async def login(data: LoginData):
-    # Авторизация только по номеру, заранее добавленному администратором.
+    # Обычный вход покупателя/курьера.
+    # Специальные номера администраторов (+777/+778/+779)
+    # разрешены отдельным персональным входом, но не считаются
+    # обычными телефонными номерами.
     phone = normalize_phone(data.phone)
-    if len(phone) < 5:
+    if phone in ADMIN_ACCOUNTS:
+        raise HTTPException(
+            status_code=403,
+            detail="Это номер администратора. Нажмите «Админ» и введите персональный никнейм."
+        )
+    # Публичная регистрация включена. Для реальных номеров разрешаем
+    # международный формат после очистки от пробелов, скобок и дефисов.
+    # Минимум 3 цифры оставляем только для тестовых номеров администраторов.
+    if len(phone) < 3:
         raise HTTPException(status_code=400, detail="Введите корректный номер телефона")
 
     conn = db()
@@ -551,110 +673,12 @@ async def login(data: LoginData):
             conn.close()
             raise HTTPException(status_code=403, detail="Курьер деактивирован")
 
+    if data.telegram_id:
+        conn.execute("UPDATE users SET telegram_id=? WHERE id=?", (int(data.telegram_id), user["id"]))
+        conn.commit()
     token = create_session(user["id"], user["role"])
     conn.close()
     return {"token": token, "role": user["role"]}
-
-
-# =========================================================
-# ADMIN AUTO LOGIN
-# =========================================================
-
-@app.post("/api/admin/web-login")
-async def admin_web_login(data: AdminWebLogin):
-
-    telegram_user = validate_telegram_init_data(
-        data.init_data
-    )
-
-    if not telegram_user:
-        raise HTTPException(
-            status_code=401,
-            detail="Недействительные данные Telegram"
-        )
-
-    telegram_id = int(
-        telegram_user.get("id", 0)
-    )
-
-    # ТОЛЬКО ЭТИ ДВА ID АДМИНЫ
-    if telegram_id not in ADMIN_IDS:
-        raise HTTPException(
-            status_code=403,
-            detail="Вы не являетесь администратором"
-        )
-
-    conn = db()
-
-    admin = conn.execute(
-        "SELECT * FROM users WHERE telegram_id=? AND role='admin'",
-        (telegram_id,)
-    ).fetchone()
-
-    if not admin:
-
-        name = (
-            telegram_user.get("first_name", "")
-            + " "
-            + telegram_user.get("last_name", "")
-        ).strip()
-
-        if not name:
-            name = telegram_user.get(
-                "username",
-                "Администратор"
-            )
-
-        # Админ создаётся автоматически.
-        # Телефон/PIN НЕ НУЖНЫ.
-        conn.execute("""
-            INSERT INTO users(
-                name,
-                phone,
-                pin_hash,
-                pin_plain,
-                role,
-                telegram_id,
-                created_at,
-                active
-            )
-            VALUES(?,?,?,?,?,?,?,1)
-        """, (
-            name,
-            f"admin_{telegram_id}",
-            hash_pin(secrets.token_urlsafe(32)),
-            "",
-            "admin",
-            telegram_id,
-            int(time.time())
-        ))
-
-        conn.commit()
-
-        admin = conn.execute(
-            "SELECT * FROM users WHERE telegram_id=? AND role='admin'",
-            (telegram_id,)
-        ).fetchone()
-
-    else:
-        conn.execute(
-            "UPDATE users SET active=1 WHERE id=?",
-            (admin["id"],)
-        )
-        conn.commit()
-
-    token = create_session(
-        admin["id"],
-        "admin"
-    )
-
-    conn.close()
-
-    return {
-        "token": token,
-        "role": "admin",
-        "telegram_id": telegram_id
-    }
 
 
 # =========================================================
@@ -824,24 +848,33 @@ async def admin_create_customer(
 # CUSTOMER DEACTIVATION — SOFT DELETE
 # =========================================================
 
+@app.post("/api/admin/users/{user_id}/delete")
+async def admin_delete_user(user_id: int, authorization: str = Header(default="")):
+    require_admin(authorization)
+    conn=db()
+    try:
+        user=conn.execute("SELECT id,role FROM users WHERE id=?",(user_id,)).fetchone()
+        if not user or user["role"]=="admin":
+            raise HTTPException(status_code=404,detail="Участник не найден")
+        # Full deletion: remove the participant, courier record, sessions,
+        # support chat and orders owned by this participant.
+        conn.execute("DELETE FROM admin_message_bridge WHERE user_id=?",(user_id,))
+        conn.execute("DELETE FROM chat_messages WHERE user_id=?",(user_id,))
+        conn.execute("DELETE FROM sessions WHERE user_id=?",(user_id,))
+        courier=conn.execute("SELECT id FROM couriers WHERE user_id=?",(user_id,)).fetchone()
+        if courier:
+            conn.execute("DELETE FROM orders WHERE courier_id=?",(courier["id"],))
+            conn.execute("DELETE FROM couriers WHERE id=?",(courier["id"],))
+        conn.execute("DELETE FROM orders WHERE customer_id=?",(user_id,))
+        conn.execute("DELETE FROM users WHERE id=?",(user_id,))
+        conn.commit()
+        return {"ok":True,"deleted_user_id":user_id}
+    finally:
+        conn.close()
+
 @app.post("/api/admin/customers/{customer_id}/delete")
 async def admin_delete_customer(customer_id: int, authorization: str = Header(default="")):
-    require_admin(authorization)
-    conn = db()
-    customer = conn.execute(
-        "SELECT id FROM users WHERE id=? AND role='customer'",
-        (customer_id,)
-    ).fetchone()
-    if not customer:
-        conn.close()
-        raise HTTPException(status_code=404, detail="Клиент не найден")
-
-    # Доступ закрываем, но заказы, чат и логи оставляем.
-    conn.execute("UPDATE users SET active=0 WHERE id=?", (customer_id,))
-    conn.execute("DELETE FROM sessions WHERE user_id=?", (customer_id,))
-    conn.commit()
-    conn.close()
-    return {"ok": True, "logs_preserved": True}
+    return await admin_delete_user(customer_id, authorization)
 
 
 # =========================================================
@@ -1130,8 +1163,8 @@ async def admin_ai(
             conn.close()
 
             prompt = (
-                "Ты ИИ-помощник админ-панели RESTARAN в Ереване. "
-                "Отвечай кратко и по делу на русском. "
+                "Ты ИИ-помощник админ-панели SERTAL DELIVERY в Ереване. "
+                "Отвечай на русском, структурированно и по делу. Учитывай текущие заказы, клиентов, курьеров, рестораны и поддержку. Не выдумывай данные. Если действие нельзя выполнить через доступные команды, честно скажи об этом. "
                 f"Текущая статистика: {dict(summary)}. "
                 f"Вопрос администратора: {question}"
             )
@@ -1177,12 +1210,37 @@ async def admin_ai(
     """).fetchone()
     conn.close()
 
+    if any(x in q for x in ("клиент", "покупател", "зарегистрирован")):
+        rows=conn.execute("SELECT name,phone,role,active FROM users WHERE role IN ('customer','courier') ORDER BY id DESC LIMIT 20").fetchall()
+        answer="Клиенты и курьеры в базе:\n" + ("\n".join(f"{r['name']} — {r['phone']} — {r['role']} — {'активен' if r['active'] else 'неактивен'}" for r in rows) if rows else "База пуста.")
+        conn.close()
+        return {"answer":answer,"mode":"local"}
+
+    if any(x in q for x in ("курьер", "курьеры")):
+        rows=conn.execute("SELECT u.name,u.phone,c.approved,c.online,c.active FROM couriers c JOIN users u ON u.id=c.user_id ORDER BY c.id DESC").fetchall()
+        answer="Курьеры:\n" + ("\n".join(f"{r['name']} — {r['phone']} — {'одобрен' if r['approved'] else 'не одобрен'} — {'онлайн' if r['online'] else 'офлайн'}" for r in rows) if rows else "Курьеров нет.")
+        conn.close()
+        return {"answer":answer,"mode":"local"}
+
+    if any(x in q for x in ("ресторан", "рестораны", "меню")):
+        try:
+            rows=conn.execute("SELECT name,address,phone,active FROM restaurants ORDER BY id DESC").fetchall()
+            answer="Рестораны:\n" + ("\n".join(f"{r['name']} — {r['address']} — {'активен' if r['active'] else 'выключен'}" for r in rows) if rows else "Рестораны ещё не добавлены.")
+        except sqlite3.OperationalError:
+            answer="Таблица ресторанов ещё не создана."
+        conn.close()
+        return {"answer":answer,"mode":"local"}
+
+    if any(x in q for x in ("помощ", "что умеешь", "команд")):
+        conn.close()
+        return {"answer":"Я могу показать статистику, найти клиентов и курьеров, проверить рестораны, подсказать по активным заказам и выполнять разрешённые административные действия. Для выгрузки клиентской базы в Telegram используйте !logsfile.","mode":"local"}
+
     if any(x in q for x in ("статист", "заказ", "сколько", "заказы")):
         answer = (
-            f"📦 Всего активных заказов: {stats['total'] or 0}\n"
-            f"🆕 Новых: {stats['new_count'] or 0}\n"
-            f"🚚 В работе: {stats['active_count'] or 0}\n"
-            f"✅ Доставлено: {stats['delivered_count'] or 0}\n"
+            f"Всего активных заказов: {stats['total'] or 0}\n"
+            f"Новых: {stats['new_count'] or 0}\n"
+            f"В работе: {stats['active_count'] or 0}\n"
+            f"Доставлено: {stats['delivered_count'] or 0}\n"
             f"⚖️ Доплат за тяжёлые заказы: {stats['heavy_bonus'] or 0} AMD"
         )
     elif "правил" in q or "вес" in q or "4 кг" in q or "8 кг" in q:
@@ -1283,11 +1341,77 @@ async def admin_create_order(
 class RegisterData(BaseModel):
     name: str
     phone: str
-    pin: str
+    telegram_id: int | None = None
+
+class AdminPersonalLogin(BaseModel):
+    phone: str
+    nickname: str
 
 @app.post("/api/register")
-async def register_disabled():
-    raise HTTPException(status_code=403, detail="Регистрация отключена. Номер добавляет администратор.")
+async def register_customer(data: RegisterData):
+    """Public customer registration: no admin approval and no PIN required."""
+    name = str(data.name or "").strip()
+    phone = normalize_phone(data.phone)
+    if len(name) < 2:
+        raise HTTPException(status_code=400, detail="Введите имя")
+    if len(phone) < 5:
+        raise HTTPException(status_code=400, detail="Введите корректный номер телефона")
+
+    conn = db()
+    try:
+        existing = conn.execute("SELECT * FROM users WHERE phone=?", (phone,)).fetchone()
+        if existing:
+            if existing["active"] != 1:
+                raise HTTPException(status_code=403, detail="Этот аккаунт деактивирован")
+            if existing["role"] == "customer":
+                token = create_session(existing["id"], "customer")
+                if data.telegram_id:
+                    conn.execute("UPDATE users SET telegram_id=? WHERE id=?", (int(data.telegram_id), existing["id"]))
+                    conn.commit()
+                return {"token": token, "role": "customer", "existing": True}
+            raise HTTPException(status_code=409, detail="Этот номер уже используется другим типом аккаунта")
+
+        cur = conn.execute("""
+            INSERT INTO users(name,phone,pin_hash,pin_plain,role,telegram_id,created_at,active)
+            VALUES(?,?,?,?,?,?,?,1)
+        """, (
+            name, phone, hash_pin(secrets.token_urlsafe(32)), "", "customer",
+            int(data.telegram_id) if data.telegram_id else None, int(time.time())
+        ))
+        conn.commit()
+        user_id = cur.lastrowid
+        token = create_session(user_id, "customer")
+        return {"token": token, "role": "customer", "existing": False}
+    finally:
+        conn.close()
+
+@app.post("/api/admin/personal-login")
+async def admin_personal_login(data: AdminPersonalLogin):
+    phone = normalize_phone(data.phone)
+    nickname = re.sub(r"\s+", " ", str(data.nickname or "").strip())
+    expected = ADMIN_ACCOUNTS.get(phone)
+    # +777 / +778 / +779 are intentional short internal admin logins,
+    # so they must NOT pass through the normal 5+ digit phone validator.
+    if not expected or nickname != expected:
+        raise HTTPException(status_code=403, detail="Неверный номер или никнейм администратора")
+
+    conn = db()
+    try:
+        admin = conn.execute("SELECT * FROM users WHERE phone=? AND role='admin'", (phone,)).fetchone()
+        if not admin:
+            cur = conn.execute("""
+                INSERT INTO users(name,phone,pin_hash,pin_plain,role,created_at,active)
+                VALUES(?,?,?,?,?,?,1)
+            """, (nickname, phone, hash_pin(secrets.token_urlsafe(32)), "", "admin", int(time.time())))
+            conn.commit()
+            admin = conn.execute("SELECT * FROM users WHERE id=?", (cur.lastrowid,)).fetchone()
+        else:
+            conn.execute("UPDATE users SET name=?, active=1 WHERE id=?", (nickname, admin["id"]))
+            conn.commit()
+        token = create_session(admin["id"], "admin")
+        return {"token": token, "role": "admin", "name": nickname}
+    finally:
+        conn.close()
 
 
 @app.get("/api/customer/history")
@@ -1345,6 +1469,44 @@ async def courier_schedule(authorization: str = Header(default="")):
 async def contact_admin():
     return {"admins": [{"telegram_id": x} for x in ADMIN_IDS]}
 
+
+
+def export_customers_xlsx():
+    conn=db()
+    rows=conn.execute("""
+        SELECT u.id,u.name,u.phone,u.telegram_id,u.role,u.active,u.created_at,
+               c.approved AS courier_approved,c.online AS courier_online
+        FROM users u
+        LEFT JOIN couriers c ON c.user_id=u.id
+        WHERE u.role IN ('customer','courier')
+        ORDER BY u.created_at ASC,u.id ASC
+    """).fetchall()
+    conn.close()
+    wb=Workbook()
+    ws=wb.active
+    ws.title="Клиенты"
+    ws.append(["ID","Имя","Телефон","Telegram ID","Роль","Активен","Курьер одобрен","Онлайн","Дата регистрации"])
+    for cell in ws[1]:
+        cell.font=Font(bold=True,color="FFFFFF")
+        cell.fill=PatternFill("solid",fgColor="222222")
+        cell.alignment=Alignment(horizontal="center",vertical="center")
+    for r in rows:
+        ws.append([
+            r["id"],r["name"],r["phone"],r["telegram_id"] or "",r["role"],
+            "Да" if r["active"] else "Нет",
+            "Да" if r["courier_approved"] else ("" if r["role"]!="courier" else "Нет"),
+            "Да" if r["courier_online"] else ("" if r["role"]!="courier" else "Нет"),
+            datetime.fromtimestamp(r["created_at"]).strftime("%Y-%m-%d %H:%M")
+        ])
+    widths=[8,24,20,16,14,10,18,12,22]
+    for i,w in enumerate(widths,1):
+        ws.column_dimensions[__import__("openpyxl").utils.get_column_letter(i)].width=w
+    ws.freeze_panes="A2"
+    ws.auto_filter.ref=ws.dimensions
+    stamp=datetime.now().strftime("%Y%m%d_%H%M%S")
+    path=EXPORT_DIR/f"sertal_customers_{stamp}.xlsx"
+    wb.save(path)
+    return path
 
 def export_orders_xlsx():
     conn = db()
@@ -1435,7 +1597,7 @@ async def admin_export_xlsx_telegram(authorization: str = Header(default="")):
                     chat_id=admin_id,
                     document=fh,
                     filename=path.name,
-                    caption=f"📊 RESTARAN · выгрузка заказов · {datetime.now().strftime('%d.%m.%Y %H:%M')}"
+                    caption=f"📊 SERTAL DELIVERY · выгрузка заказов · {datetime.now().strftime('%d.%m.%Y %H:%M')}"
                 )
             sent += 1
         except Exception as e:
@@ -1479,7 +1641,7 @@ async def assign_order(
         )
 
     order = conn.execute(
-        "SELECT * FROM orders WHERE id=?",
+        "SELECT * FROM orders WHERE id=? AND status NOT IN ('closed','delivered')",
         (order_id,)
     ).fetchone()
 
@@ -1659,6 +1821,121 @@ async def customer_confirm(
 
     return {"ok": True}
 
+
+# =========================================================
+# RESTAURANTS / MARKETPLACE
+# =========================================================
+
+@app.get("/api/public")
+async def public_info():
+    conn = db()
+    rows = conn.execute("SELECT id,name,address,phone FROM restaurants WHERE active=1 ORDER BY name").fetchall()
+    conn.close()
+    return {"name":"SERTAL DELIVERY", "description":"Премиальная городская доставка еды, покупок и заказов.", "restaurants":[dict(r) for r in rows]}
+
+@app.get("/api/customer/restaurants")
+async def customer_restaurants(authorization: str = Header(default="")):
+    user = require_user(authorization)
+    if user["role"] != "customer":
+        raise HTTPException(403, "Нет доступа")
+    conn = db()
+    restaurants = conn.execute("SELECT * FROM restaurants WHERE active=1 ORDER BY name").fetchall()
+    result = []
+    for r in restaurants:
+        items = conn.execute("SELECT id,name,description,price FROM menu_items WHERE restaurant_id=? AND active=1 ORDER BY id", (r["id"],)).fetchall()
+        result.append({**dict(r), "items":[dict(i) for i in items]})
+    conn.close()
+    return result
+
+@app.post("/api/customer/orders/from-cart")
+async def cart_order(data: CartOrderData, authorization: str = Header(default="")):
+    user = require_user(authorization)
+    if user["role"] != "customer":
+        raise HTTPException(403, "Нет доступа")
+    if not data.items or not data.address.strip():
+        raise HTTPException(400, "Выберите товары и укажите адрес")
+    payment = data.payment_method if data.payment_method in ("cash", "online") else "cash"
+    conn = db()
+    restaurant = conn.execute("SELECT * FROM restaurants WHERE id=? AND active=1", (data.restaurant_id,)).fetchone()
+    if not restaurant:
+        conn.close(); raise HTTPException(404, "Ресторан не найден")
+    ids = [int(x.menu_item_id) for x in data.items]
+    placeholders = ",".join("?" for _ in ids)
+    rows = conn.execute(f"SELECT * FROM menu_items WHERE id IN ({placeholders}) AND restaurant_id=? AND active=1", (*ids, data.restaurant_id)).fetchall()
+    byid = {r["id"]: r for r in rows}
+    total = 0.0; parts = []
+    for item in data.items:
+        q = max(1, min(99, int(item.quantity)))
+        row = byid.get(item.menu_item_id)
+        if not row:
+            conn.close(); raise HTTPException(400, "Один из товаров недоступен")
+        total += float(row["price"]) * q
+        parts.append(f"{row['name']} x{q}")
+    lat, lon = geocode_yerevan(data.address)
+    cur = conn.execute("""
+        INSERT INTO orders(customer_id,restaurant_id,restaurant_name,title,items_text,address,restaurant_address,price,payment_method,payment_status,status,created_at,lat,lon,delivery_note)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    """, (user["user_id"], restaurant["id"], restaurant["name"], "Заказ из ресторана", ", ".join(parts), data.address.strip(), restaurant["address"], total, payment, "pending" if payment == "online" else "cash", "new", int(time.time()), lat, lon, data.delivery_note.strip()))
+    order_id = cur.lastrowid
+    conn.commit(); conn.close()
+    path = generate_receipt(order_id)
+    log_action(user["user_id"], "restaurant_order", str(order_id))
+    await send_receipt_to_customer(user, path, order_id)
+    return {"ok":True, "order_id":order_id, "total":total, "receipt":path.name if path else None}
+
+@app.get("/api/admin/restaurants")
+async def admin_restaurants(authorization: str = Header(default="")):
+    require_admin(authorization)
+    conn = db(); restaurants = conn.execute("SELECT * FROM restaurants ORDER BY id DESC").fetchall()
+    result = []
+    for r in restaurants:
+        items = conn.execute("SELECT * FROM menu_items WHERE restaurant_id=? ORDER BY id DESC", (r["id"],)).fetchall()
+        result.append({**dict(r), "items":[dict(i) for i in items]})
+    conn.close(); return result
+
+@app.post("/api/admin/restaurants")
+async def add_restaurant(data: RestaurantCreate, authorization: str = Header(default="")):
+    require_admin(authorization)
+    name = data.name.strip()
+    if not name: raise HTTPException(400, "Введите название ресторана")
+    conn = db(); cur = conn.execute("INSERT INTO restaurants(name,address,phone,active,created_at) VALUES(?,?,?,?,?)", (name, data.address.strip(), data.phone.strip(), 1, int(time.time()))); conn.commit(); rid = cur.lastrowid; conn.close()
+    return {"ok":True,"id":rid}
+
+@app.post("/api/admin/restaurants/menu")
+async def add_menu(data: MenuItemCreate, authorization: str = Header(default="")):
+    require_admin(authorization)
+    if data.price < 0: raise HTTPException(400, "Цена не может быть отрицательной")
+    conn = db(); exists = conn.execute("SELECT id FROM restaurants WHERE id=?", (data.restaurant_id,)).fetchone()
+    if not exists: conn.close(); raise HTTPException(404, "Ресторан не найден")
+    cur = conn.execute("INSERT INTO menu_items(restaurant_id,name,description,price,active,created_at) VALUES(?,?,?,?,1,?)", (data.restaurant_id, data.name.strip(), data.description.strip(), data.price, int(time.time()))); conn.commit(); mid = cur.lastrowid; conn.close()
+    return {"ok":True,"id":mid}
+
+@app.post("/api/admin/restaurants/{restaurant_id}/toggle")
+async def toggle_restaurant(restaurant_id: int, authorization: str = Header(default="")):
+    require_admin(authorization)
+    conn = db(); conn.execute("UPDATE restaurants SET active=CASE active WHEN 1 THEN 0 ELSE 1 END WHERE id=?", (restaurant_id,)); conn.commit(); conn.close(); return {"ok":True}
+
+@app.post("/api/admin/customers/{customer_id}/promote-courier")
+async def promote_courier(customer_id: int, authorization: str = Header(default="")):
+    require_admin(authorization)
+    conn = db(); user = conn.execute("SELECT * FROM users WHERE id=? AND role='customer' AND active=1", (customer_id,)).fetchone()
+    if not user: conn.close(); raise HTTPException(404, "Покупатель не найден")
+    conn.execute("UPDATE users SET role='courier' WHERE id=?", (customer_id,))
+    existing = conn.execute("SELECT id FROM couriers WHERE user_id=?", (customer_id,)).fetchone()
+    if existing:
+        conn.execute("UPDATE couriers SET approved=1,active=1 WHERE user_id=?", (customer_id,))
+    else:
+        conn.execute("INSERT INTO couriers(user_id,approved,active,online) VALUES(?,1,1,0)", (customer_id,))
+    conn.execute("DELETE FROM sessions WHERE user_id=?", (customer_id,)); conn.commit(); conn.close(); log_action(customer_id, "promote_courier", ""); return {"ok":True}
+
+@app.get("/api/admin/map-orders")
+async def admin_map_orders(authorization: str = Header(default="")):
+    require_admin(authorization)
+    conn = db()
+    orders = conn.execute("SELECT id,title,address,lat,lon,status,price FROM orders WHERE lat IS NOT NULL AND lon IS NOT NULL ORDER BY id DESC LIMIT 500").fetchall()
+    couriers = conn.execute("SELECT c.id,u.name,c.lat,c.lon,c.online FROM couriers c JOIN users u ON u.id=c.user_id WHERE c.active=1 AND c.lat IS NOT NULL AND c.lon IS NOT NULL").fetchall()
+    conn.close()
+    return {"orders":[dict(x) for x in orders], "couriers":[dict(x) for x in couriers]}
 
 # =========================================================
 # COURIER
@@ -2061,7 +2338,7 @@ async def notify_admins_about_user_message(user, text, file_path=None, file_name
     if not telegram_app:
         return
     body = (
-        f"💬 RESTARAN\n"
+        f"💬 SERTAL DELIVERY\n"
         f"👤 {user['name']}\n"
         f"📱 {user['phone']}\n"
         f"🆔 user_id: {user['user_id']}\n\n"
@@ -2145,7 +2422,7 @@ async def start_command(
     ]
 
     await update.message.reply_text(
-        "🍽 RESTARAN\n\n"
+        "🍽 SERTAL DELIVERY\n\n"
         "Нажмите кнопку ниже, чтобы открыть приложение.",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
@@ -2153,71 +2430,71 @@ async def start_command(
 
 async def random_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "📱 Вход в RESTARAN выполняется по номеру телефона, который добавил администратор."
+        "📱 Вход в SERTAL DELIVERY выполняется по номеру телефона, который добавил администратор."
     )
 
 
-async def contact_handler(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    contact = update.message.contact
-
-    phone = normalize_phone(
-        contact.phone_number
-    )
-
-    telegram_id = update.effective_user.id
-
-    conn = db()
-
-    conn.execute("""
-        UPDATE users
-        SET telegram_id=?
-        WHERE phone=?
-        AND role='customer'
-    """, (
-        telegram_id,
-        phone
-    ))
-
-    row = conn.execute("""
-        SELECT name,pin_plain
-        FROM users
-        WHERE phone=?
-        AND role='customer'
-        AND active=1
-    """, (phone,)).fetchone()
-
-    conn.commit()
+async def contact_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    contact=update.message.contact
+    phone=normalize_phone(contact.phone_number)
+    telegram_id=update.effective_user.id
+    conn=db()
+    row=conn.execute("SELECT id,name,role,active FROM users WHERE phone=?",(phone,)).fetchone()
+    if row and row["active"]:
+        conn.execute("UPDATE users SET telegram_id=? WHERE id=?",(telegram_id,row["id"]))
+        conn.commit()
     conn.close()
-
-    if not row:
-        await update.message.reply_text(
-            "❌ Клиент с таким номером не найден."
-        )
+    if not row or not row["active"]:
+        await update.message.reply_text("Клиент с таким номером не найден в SERTAL DELIVERY.")
         return
+    await update.message.reply_text("Номер подтверждён. Откройте SERTAL DELIVERY и войдите по номеру телефона.")
 
-    await update.message.reply_text(
-        "✅ Вы найдены!\n\n"
-        f"Имя: {row['name']}\n"
-        f"PIN: {row['pin_plain']}\n\n"
-        "Используйте эти данные для входа."
-    )
+
+async def logsfile_direct(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.message or not update.effective_user or update.effective_user.id not in ADMIN_IDS:
+        return
+    path = export_customers_xlsx()
+    try:
+        with open(path, "rb") as fh:
+            await update.message.reply_document(document=fh, filename=path.name, caption="SERTAL DELIVERY — клиентская база")
+    except Exception as e:
+        await update.message.reply_text(f"Ошибка выгрузки: {e}")
 
 
 async def admin_reply_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
-    if not message or not message.text:
+    if not message or not message.text or not update.effective_user:
         return
     admin_id = update.effective_user.id
     if admin_id not in ADMIN_IDS:
         return
 
+    text = message.text.strip()
+
+    # In groups the bot only handles the explicit export command.
+    # All other group messages are ignored so the working group is not spammed.
+    if message.chat and message.chat.type != "private":
+        if text.lower() == "!logsfile":
+            path = export_customers_xlsx()
+            try:
+                with open(path, "rb") as fh:
+                    await message.reply_document(document=fh, filename=path.name, caption="SERTAL DELIVERY — клиентская база")
+            except Exception as e:
+                await message.reply_text(f"Ошибка выгрузки: {e}")
+        return
+
+    # Private chat: an administrator replies to a forwarded Web App message.
+    if text.lower() == "!logsfile":
+        path = export_customers_xlsx()
+        try:
+            with open(path, "rb") as fh:
+                await message.reply_document(document=fh, filename=path.name, caption="SERTAL DELIVERY — клиентская база")
+        except Exception as e:
+            await message.reply_text(f"Ошибка выгрузки: {e}")
+        return
+
     reply = message.reply_to_message
     if not reply:
-        await message.reply_text("↩️ Ответьте на сообщение клиента/курьера из RESTARAN.")
         return
 
     conn = db()
@@ -2227,13 +2504,18 @@ async def admin_reply_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
         WHERE admin_telegram_id=? AND telegram_message_id=?
     """, (admin_id, reply.message_id)).fetchone()
     conn.close()
-
     if not bridge:
-        await message.reply_text("⚠️ Не найден получатель. Ответьте на сообщение, которое пришло из веб-чата.")
         return
 
-    add_chat_message(bridge["user_id"], "admin", message.text.strip())
-    await message.reply_text("✅ Ответ отправлен в веб-чат.")
+    add_chat_message(bridge["user_id"], "admin", text)
+    conn = db()
+    target = conn.execute("SELECT telegram_id FROM users WHERE id=?", (bridge["user_id"],)).fetchone()
+    conn.close()
+    if target and target["telegram_id"] and telegram_app:
+        try:
+            await telegram_app.bot.send_message(target["telegram_id"], f"SERTAL DELIVERY\n\nОтвет поддержки:\n{text}")
+        except Exception as exc:
+            print("SEND CLIENT:", exc)
 
 
 async def location_handler(
@@ -2318,6 +2600,10 @@ async def startup():
     )
 
     telegram_app.add_handler(
+        CommandHandler("logsfile", lambda update, context: logsfile_direct(update, context))
+    )
+
+    telegram_app.add_handler(
         MessageHandler(
             filters.CONTACT,
             contact_handler
@@ -2346,7 +2632,7 @@ async def startup():
         cleanup_loop()
     )
 
-    print("RESTARAN started")
+    print("SERTAL DELIVERY started")
 
 
 @app.on_event("shutdown")
