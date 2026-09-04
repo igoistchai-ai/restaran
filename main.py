@@ -37,9 +37,18 @@ from telegram.ext import (
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 WEB_APP_URL = os.getenv("RENDER_EXTERNAL_URL", "").rstrip("/")
 
+# Telegram IDs are used for bot-side admin permissions and message delivery.
 ADMIN_IDS = {
     8357023784,
     7003441441,
+}
+
+# Separate personal Web App logins for administrators.
+# Keep these credentials on the server; they are not exposed to the public UI.
+ADMIN_ACCOUNTS = {
+    "777": "администратор",
+    "778": "администратор2",
+    "779": "администратор3",
 }
 
 DB_PATH = "restaran.db"
@@ -344,7 +353,7 @@ def geocode_yerevan(address):
         if "ереван" not in query.lower() and "yerevan" not in query.lower():
             query = f"{query}, Yerevan, Armenia"
         url = "https://nominatim.openstreetmap.org/search?" +               f"format=jsonv2&limit=1&countrycodes=am&q={quote(query)}"
-        req = Request(url, headers={"User-Agent": "RESTARAN/1.0 order-map"})
+        req = Request(url, headers={"User-Agent": "SERTAL DELIVERY/1.0 order-map"})
         with urlopen(req, timeout=5) as response:
             data = json.loads(response.read().decode("utf-8"))
         if data:
@@ -451,10 +460,9 @@ def validate_telegram_init_data(init_data):
 
 class LoginData(BaseModel):
     phone: str
+    telegram_id: int | None = None
 
 
-class AdminWebLogin(BaseModel):
-    init_data: str
 
 
 class CustomerCreate(BaseModel):
@@ -524,9 +532,20 @@ async def head_index():
 
 @app.post("/api/login")
 async def login(data: LoginData):
-    # Авторизация только по номеру, заранее добавленному администратором.
+    # Обычный вход покупателя/курьера.
+    # Специальные номера администраторов (+777/+778/+779)
+    # разрешены отдельным персональным входом, но не считаются
+    # обычными телефонными номерами.
     phone = normalize_phone(data.phone)
-    if len(phone) < 5:
+    if phone in ADMIN_ACCOUNTS:
+        raise HTTPException(
+            status_code=403,
+            detail="Это номер администратора. Нажмите «Админ» и введите персональный никнейм."
+        )
+    # Публичная регистрация включена. Для реальных номеров разрешаем
+    # международный формат после очистки от пробелов, скобок и дефисов.
+    # Минимум 3 цифры оставляем только для тестовых номеров администраторов.
+    if len(phone) < 3:
         raise HTTPException(status_code=400, detail="Введите корректный номер телефона")
 
     conn = db()
@@ -551,110 +570,12 @@ async def login(data: LoginData):
             conn.close()
             raise HTTPException(status_code=403, detail="Курьер деактивирован")
 
+    if data.telegram_id:
+        conn.execute("UPDATE users SET telegram_id=? WHERE id=?", (int(data.telegram_id), user["id"]))
+        conn.commit()
     token = create_session(user["id"], user["role"])
     conn.close()
     return {"token": token, "role": user["role"]}
-
-
-# =========================================================
-# ADMIN AUTO LOGIN
-# =========================================================
-
-@app.post("/api/admin/web-login")
-async def admin_web_login(data: AdminWebLogin):
-
-    telegram_user = validate_telegram_init_data(
-        data.init_data
-    )
-
-    if not telegram_user:
-        raise HTTPException(
-            status_code=401,
-            detail="Недействительные данные Telegram"
-        )
-
-    telegram_id = int(
-        telegram_user.get("id", 0)
-    )
-
-    # ТОЛЬКО ЭТИ ДВА ID АДМИНЫ
-    if telegram_id not in ADMIN_IDS:
-        raise HTTPException(
-            status_code=403,
-            detail="Вы не являетесь администратором"
-        )
-
-    conn = db()
-
-    admin = conn.execute(
-        "SELECT * FROM users WHERE telegram_id=? AND role='admin'",
-        (telegram_id,)
-    ).fetchone()
-
-    if not admin:
-
-        name = (
-            telegram_user.get("first_name", "")
-            + " "
-            + telegram_user.get("last_name", "")
-        ).strip()
-
-        if not name:
-            name = telegram_user.get(
-                "username",
-                "Администратор"
-            )
-
-        # Админ создаётся автоматически.
-        # Телефон/PIN НЕ НУЖНЫ.
-        conn.execute("""
-            INSERT INTO users(
-                name,
-                phone,
-                pin_hash,
-                pin_plain,
-                role,
-                telegram_id,
-                created_at,
-                active
-            )
-            VALUES(?,?,?,?,?,?,?,1)
-        """, (
-            name,
-            f"admin_{telegram_id}",
-            hash_pin(secrets.token_urlsafe(32)),
-            "",
-            "admin",
-            telegram_id,
-            int(time.time())
-        ))
-
-        conn.commit()
-
-        admin = conn.execute(
-            "SELECT * FROM users WHERE telegram_id=? AND role='admin'",
-            (telegram_id,)
-        ).fetchone()
-
-    else:
-        conn.execute(
-            "UPDATE users SET active=1 WHERE id=?",
-            (admin["id"],)
-        )
-        conn.commit()
-
-    token = create_session(
-        admin["id"],
-        "admin"
-    )
-
-    conn.close()
-
-    return {
-        "token": token,
-        "role": "admin",
-        "telegram_id": telegram_id
-    }
 
 
 # =========================================================
@@ -1130,7 +1051,7 @@ async def admin_ai(
             conn.close()
 
             prompt = (
-                "Ты ИИ-помощник админ-панели RESTARAN в Ереване. "
+                "Ты ИИ-помощник админ-панели SERTAL DELIVERY в Ереване. "
                 "Отвечай кратко и по делу на русском. "
                 f"Текущая статистика: {dict(summary)}. "
                 f"Вопрос администратора: {question}"
@@ -1283,11 +1204,77 @@ async def admin_create_order(
 class RegisterData(BaseModel):
     name: str
     phone: str
-    pin: str
+    telegram_id: int | None = None
+
+class AdminPersonalLogin(BaseModel):
+    phone: str
+    nickname: str
 
 @app.post("/api/register")
-async def register_disabled():
-    raise HTTPException(status_code=403, detail="Регистрация отключена. Номер добавляет администратор.")
+async def register_customer(data: RegisterData):
+    """Public customer registration: no admin approval and no PIN required."""
+    name = str(data.name or "").strip()
+    phone = normalize_phone(data.phone)
+    if len(name) < 2:
+        raise HTTPException(status_code=400, detail="Введите имя")
+    if len(phone) < 5:
+        raise HTTPException(status_code=400, detail="Введите корректный номер телефона")
+
+    conn = db()
+    try:
+        existing = conn.execute("SELECT * FROM users WHERE phone=?", (phone,)).fetchone()
+        if existing:
+            if existing["active"] != 1:
+                raise HTTPException(status_code=403, detail="Этот аккаунт деактивирован")
+            if existing["role"] == "customer":
+                token = create_session(existing["id"], "customer")
+                if data.telegram_id:
+                    conn.execute("UPDATE users SET telegram_id=? WHERE id=?", (int(data.telegram_id), existing["id"]))
+                    conn.commit()
+                return {"token": token, "role": "customer", "existing": True}
+            raise HTTPException(status_code=409, detail="Этот номер уже используется другим типом аккаунта")
+
+        cur = conn.execute("""
+            INSERT INTO users(name,phone,pin_hash,pin_plain,role,telegram_id,created_at,active)
+            VALUES(?,?,?,?,?,?,?,1)
+        """, (
+            name, phone, hash_pin(secrets.token_urlsafe(32)), "", "customer",
+            int(data.telegram_id) if data.telegram_id else None, int(time.time())
+        ))
+        conn.commit()
+        user_id = cur.lastrowid
+        token = create_session(user_id, "customer")
+        return {"token": token, "role": "customer", "existing": False}
+    finally:
+        conn.close()
+
+@app.post("/api/admin/personal-login")
+async def admin_personal_login(data: AdminPersonalLogin):
+    phone = normalize_phone(data.phone)
+    nickname = re.sub(r"\s+", " ", str(data.nickname or "").strip())
+    expected = ADMIN_ACCOUNTS.get(phone)
+    # +777 / +778 / +779 are intentional short internal admin logins,
+    # so they must NOT pass through the normal 5+ digit phone validator.
+    if not expected or nickname != expected:
+        raise HTTPException(status_code=403, detail="Неверный номер или никнейм администратора")
+
+    conn = db()
+    try:
+        admin = conn.execute("SELECT * FROM users WHERE phone=? AND role='admin'", (phone,)).fetchone()
+        if not admin:
+            cur = conn.execute("""
+                INSERT INTO users(name,phone,pin_hash,pin_plain,role,created_at,active)
+                VALUES(?,?,?,?,?,?,1)
+            """, (nickname, phone, hash_pin(secrets.token_urlsafe(32)), "", "admin", int(time.time())))
+            conn.commit()
+            admin = conn.execute("SELECT * FROM users WHERE id=?", (cur.lastrowid,)).fetchone()
+        else:
+            conn.execute("UPDATE users SET name=?, active=1 WHERE id=?", (nickname, admin["id"]))
+            conn.commit()
+        token = create_session(admin["id"], "admin")
+        return {"token": token, "role": "admin", "name": nickname}
+    finally:
+        conn.close()
 
 
 @app.get("/api/customer/history")
@@ -1435,7 +1422,7 @@ async def admin_export_xlsx_telegram(authorization: str = Header(default="")):
                     chat_id=admin_id,
                     document=fh,
                     filename=path.name,
-                    caption=f"📊 RESTARAN · выгрузка заказов · {datetime.now().strftime('%d.%m.%Y %H:%M')}"
+                    caption=f"📊 SERTAL DELIVERY · выгрузка заказов · {datetime.now().strftime('%d.%m.%Y %H:%M')}"
                 )
             sent += 1
         except Exception as e:
@@ -2061,7 +2048,7 @@ async def notify_admins_about_user_message(user, text, file_path=None, file_name
     if not telegram_app:
         return
     body = (
-        f"💬 RESTARAN\n"
+        f"💬 SERTAL DELIVERY\n"
         f"👤 {user['name']}\n"
         f"📱 {user['phone']}\n"
         f"🆔 user_id: {user['user_id']}\n\n"
@@ -2145,7 +2132,7 @@ async def start_command(
     ]
 
     await update.message.reply_text(
-        "🍽 RESTARAN\n\n"
+        "🍽 SERTAL DELIVERY\n\n"
         "Нажмите кнопку ниже, чтобы открыть приложение.",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
@@ -2153,7 +2140,7 @@ async def start_command(
 
 async def random_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "📱 Вход в RESTARAN выполняется по номеру телефона, который добавил администратор."
+        "📱 Вход в SERTAL DELIVERY выполняется по номеру телефона, который добавил администратор."
     )
 
 
@@ -2217,7 +2204,7 @@ async def admin_reply_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     reply = message.reply_to_message
     if not reply:
-        await message.reply_text("↩️ Ответьте на сообщение клиента/курьера из RESTARAN.")
+        await message.reply_text("↩️ Ответьте на сообщение клиента/курьера из SERTAL DELIVERY.")
         return
 
     conn = db()
@@ -2346,7 +2333,7 @@ async def startup():
         cleanup_loop()
     )
 
-    print("RESTARAN started")
+    print("SERTAL DELIVERY started")
 
 
 @app.on_event("shutdown")
