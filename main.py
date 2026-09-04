@@ -7,7 +7,9 @@ import hashlib
 import secrets
 import sqlite3
 import asyncio
-from urllib.parse import parse_qsl, unquote
+import math
+from urllib.parse import parse_qsl, unquote, quote
+from urllib.request import Request, urlopen
 
 from fastapi import FastAPI, HTTPException, Header, WebSocket
 from fastapi.responses import FileResponse
@@ -36,6 +38,11 @@ ADMIN_IDS = {
 }
 
 DB_PATH = "restaran.db"
+MAX_ORDER_WEIGHT_KG = 8.0
+HEAVY_WEIGHT_KG = 4.0
+HEAVY_ORDER_BONUS_AMD = 600
+BATCH_MAX_ORDERS = 2
+BATCH_MAX_DISTANCE_KM = 1.0
 
 app = FastAPI()
 
@@ -90,7 +97,11 @@ def init_db():
         status TEXT NOT NULL DEFAULT 'new',
         created_at INTEGER NOT NULL,
         customer_confirmed INTEGER NOT NULL DEFAULT 0,
-        closed_at INTEGER
+        closed_at INTEGER,
+        weight_kg REAL NOT NULL DEFAULT 0,
+        courier_bonus_amd INTEGER NOT NULL DEFAULT 0,
+        lat REAL,
+        lon REAL
     )
     """)
 
@@ -116,6 +127,10 @@ def init_db():
         ("couriers", "active", "INTEGER NOT NULL DEFAULT 1"),
         ("orders", "customer_confirmed", "INTEGER NOT NULL DEFAULT 0"),
         ("orders", "closed_at", "INTEGER"),
+        ("orders", "weight_kg", "REAL NOT NULL DEFAULT 0"),
+        ("orders", "courier_bonus_amd", "INTEGER NOT NULL DEFAULT 0"),
+        ("orders", "lat", "REAL"),
+        ("orders", "lon", "REAL"),
     ]
 
     for table, column, definition in migrations:
@@ -270,6 +285,69 @@ def order_cutoff():
     return int(time.time()) - 300
 
 
+def haversine_km(lat1, lon1, lat2, lon2):
+    """Distance between two GPS points in kilometres."""
+    r = 6371.0088
+    p1 = math.radians(float(lat1))
+    p2 = math.radians(float(lat2))
+    dp = math.radians(float(lat2) - float(lat1))
+    dl = math.radians(float(lon2) - float(lon1))
+    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return 2 * r * math.asin(math.sqrt(a))
+
+
+def geocode_yerevan(address):
+    """Best-effort geocoding. Orders stay valid even if geocoding is unavailable."""
+    try:
+        query = str(address or "").strip()
+        if not query:
+            return None, None
+        if "ереван" not in query.lower() and "yerevan" not in query.lower():
+            query = f"{query}, Yerevan, Armenia"
+        url = "https://nominatim.openstreetmap.org/search?" +               f"format=jsonv2&limit=1&countrycodes=am&q={quote(query)}"
+        req = Request(url, headers={"User-Agent": "RESTARAN/1.0 order-map"})
+        with urlopen(req, timeout=5) as response:
+            data = json.loads(response.read().decode("utf-8"))
+        if data:
+            return float(data[0]["lat"]), float(data[0]["lon"])
+    except Exception as e:
+        print("GEOCODE:", e)
+    return None, None
+
+
+def calculate_courier_bonus(weight_kg):
+    weight = float(weight_kg or 0)
+    return HEAVY_ORDER_BONUS_AMD if weight > HEAVY_WEIGHT_KG else 0
+
+
+def courier_active_order_count(conn, courier_id):
+    return conn.execute("""
+        SELECT COUNT(*)
+        FROM orders
+        WHERE courier_id=?
+        AND status IN ('assigned','accepted','delivering')
+    """, (courier_id,)).fetchone()[0]
+
+
+def batch_distance_to_existing(conn, courier_id, new_order):
+    """Returns the shortest known delivery-point distance in km."""
+    if new_order["lat"] is None or new_order["lon"] is None:
+        return None
+    rows = conn.execute("""
+        SELECT lat, lon
+        FROM orders
+        WHERE courier_id=?
+        AND status IN ('assigned','accepted','delivering')
+        AND lat IS NOT NULL AND lon IS NOT NULL
+    """, (courier_id,)).fetchall()
+    if not rows:
+        return None
+    return min(
+        haversine_km(new_order["lat"], new_order["lon"], r["lat"], r["lon"])
+        for r in rows
+    )
+
+
 # =========================================================
 # TELEGRAM WEBAPP VALIDATION
 # =========================================================
@@ -356,6 +434,7 @@ class OrderCreate(BaseModel):
     title: str
     address: str
     price: float = 0
+    weight_kg: float = 0
 
 
 class AssignData(BaseModel):
@@ -901,6 +980,125 @@ async def fire_courier(
 # ORDERS
 # =========================================================
 
+@app.get("/api/admin/map-orders")
+async def admin_map_orders(
+    authorization: str = Header(default="")
+):
+    require_admin(authorization)
+    cleanup_old_closed()
+    conn = db()
+    rows = conn.execute("""
+        SELECT o.id, o.title, o.address, o.price, o.status,
+               o.weight_kg, o.courier_bonus_amd, o.lat, o.lon,
+               u.name AS customer_name,
+               co.name AS courier_name
+        FROM orders o
+        JOIN users u ON u.id=o.customer_id
+        LEFT JOIN couriers c ON c.id=o.courier_id
+        LEFT JOIN users co ON co.id=c.user_id
+        WHERE o.status!='closed'
+        AND o.lat IS NOT NULL AND o.lon IS NOT NULL
+        ORDER BY o.id DESC
+    """).fetchall()
+    conn.close()
+    return [dict(x) for x in rows]
+
+
+@app.post("/api/admin/ai")
+async def admin_ai(
+    payload: dict,
+    authorization: str = Header(default="")
+):
+    require_admin(authorization)
+    question = str(payload.get("message", "")).strip()
+    if not question:
+        raise HTTPException(status_code=400, detail="Введите вопрос")
+
+    # Optional real AI integration. If OPENAI_API_KEY is not configured,
+    # the assistant still works in local operational mode.
+    api_key = os.getenv("OPENAI_API_KEY", "").strip()
+    model = os.getenv("OPENAI_MODEL", "gpt-5-mini")
+    if api_key:
+        try:
+            conn = db()
+            summary = conn.execute("""
+                SELECT
+                    COUNT(*) AS total,
+                    SUM(CASE WHEN status='new' THEN 1 ELSE 0 END) AS new_count,
+                    SUM(CASE WHEN status IN ('assigned','accepted','delivering') THEN 1 ELSE 0 END) AS active_count,
+                    SUM(CASE WHEN status='delivered' THEN 1 ELSE 0 END) AS delivered_count,
+                    COALESCE(SUM(courier_bonus_amd),0) AS heavy_bonus
+                FROM orders
+                WHERE status!='closed'
+            """).fetchone()
+            conn.close()
+
+            prompt = (
+                "Ты ИИ-помощник админ-панели RESTARAN в Ереване. "
+                "Отвечай кратко и по делу на русском. "
+                f"Текущая статистика: {dict(summary)}. "
+                f"Вопрос администратора: {question}"
+            )
+            body = json.dumps({
+                "model": model,
+                "input": prompt
+            }).encode("utf-8")
+            req = Request(
+                "https://api.openai.com/v1/responses",
+                data=body,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {api_key}"
+                },
+                method="POST"
+            )
+            with urlopen(req, timeout=25) as response:
+                result = json.loads(response.read().decode("utf-8"))
+            answer = result.get("output_text")
+            if not answer:
+                parts = []
+                for item in result.get("output", []):
+                    for content in item.get("content", []):
+                        if content.get("type") == "output_text":
+                            parts.append(content.get("text", ""))
+                answer = "\n".join(parts).strip()
+            if answer:
+                return {"answer": answer, "mode": "ai"}
+        except Exception as e:
+            print("AI:", e)
+
+    # Local fallback: useful without an external API key.
+    q = question.lower()
+    conn = db()
+    stats = conn.execute("""
+        SELECT
+            COUNT(*) AS total,
+            SUM(CASE WHEN status='new' THEN 1 ELSE 0 END) AS new_count,
+            SUM(CASE WHEN status IN ('assigned','accepted','delivering') THEN 1 ELSE 0 END) AS active_count,
+            SUM(CASE WHEN status='delivered' THEN 1 ELSE 0 END) AS delivered_count,
+            COALESCE(SUM(courier_bonus_amd),0) AS heavy_bonus
+        FROM orders WHERE status!='closed'
+    """).fetchone()
+    conn.close()
+
+    if any(x in q for x in ("статист", "заказ", "сколько", "заказы")):
+        answer = (
+            f"📦 Всего активных заказов: {stats['total'] or 0}\n"
+            f"🆕 Новых: {stats['new_count'] or 0}\n"
+            f"🚚 В работе: {stats['active_count'] or 0}\n"
+            f"✅ Доставлено: {stats['delivered_count'] or 0}\n"
+            f"⚖️ Доплат за тяжёлые заказы: {stats['heavy_bonus'] or 0} AMD"
+        )
+    elif "правил" in q or "вес" in q or "4 кг" in q or "8 кг" in q:
+        answer = "Правила: до 4 кг — обычная оплата; больше 4 до 8 кг — +600 AMD курьеру; больше 8 кг — заказ не создаётся."
+    elif "2" in q or "килом" in q or "км" in q:
+        answer = "Курьер может иметь максимум 2 активных заказа. Второй допускается, если известные точки выполнения находятся не дальше 1 км."
+    else:
+        answer = "Я могу помочь со статистикой заказов, правилами веса, доплатами и проверкой условий для второго заказа."
+
+    return {"answer": answer, "mode": "local"}
+
+
 @app.get("/api/admin/orders")
 async def admin_orders(
     authorization: str = Header(default="")
@@ -968,22 +1166,33 @@ async def admin_create_order(
             detail="Клиент с таким номером не найден"
         )
 
+    weight = float(data.weight_kg or 0)
+    if weight < 0:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Вес не может быть отрицательным")
+    if weight > MAX_ORDER_WEIGHT_KG:
+        conn.close()
+        raise HTTPException(status_code=400, detail=f"Максимальный вес заказа — {MAX_ORDER_WEIGHT_KG:g} кг")
+
+    lat, lon = geocode_yerevan(data.address)
+    bonus = calculate_courier_bonus(weight)
+
     cur = conn.execute("""
         INSERT INTO orders(
-            customer_id,
-            title,
-            address,
-            price,
-            status,
-            created_at
+            customer_id, title, address, price, status, created_at,
+            weight_kg, courier_bonus_amd, lat, lon
         )
-        VALUES(?,?,?,?,'new',?)
+        VALUES(?,?,?,?, 'new',?,?,?,?,?)
     """, (
         customer["id"],
         data.title.strip(),
         data.address.strip(),
         float(data.price),
-        int(time.time())
+        int(time.time()),
+        weight,
+        bonus,
+        lat,
+        lon
     ))
 
     conn.commit()
@@ -1034,6 +1243,20 @@ async def assign_order(
             status_code=404,
             detail="Заказ не найден"
         )
+
+    active_count = courier_active_order_count(conn, data.courier_id)
+    if active_count >= BATCH_MAX_ORDERS:
+        conn.close()
+        raise HTTPException(status_code=400, detail="У курьера уже максимальные 2 активных заказа")
+
+    if active_count == 1:
+        distance = batch_distance_to_existing(conn, data.courier_id, order)
+        if distance is not None and distance > BATCH_MAX_DISTANCE_KM:
+            conn.close()
+            raise HTTPException(
+                status_code=400,
+                detail=f"Второй заказ можно взять только если точки выполнения не дальше {BATCH_MAX_DISTANCE_KM:g} км (сейчас {distance:.2f} км)"
+            )
 
     conn.execute("""
         UPDATE orders
@@ -1253,6 +1476,51 @@ async def courier_orders(
     }
 
 
+@app.get("/api/courier/batch-options")
+async def courier_batch_options(
+    authorization: str = Header(default="")
+):
+    user = require_user(authorization)
+    if user["role"] != "courier":
+        raise HTTPException(status_code=403, detail="Нет доступа")
+
+    conn = db()
+    courier = conn.execute(
+        "SELECT * FROM couriers WHERE user_id=? AND active=1",
+        (user["user_id"],)
+    ).fetchone()
+    if not courier:
+        conn.close()
+        raise HTTPException(status_code=403, detail="Курьер не активен")
+
+    active_count = courier_active_order_count(conn, courier["id"])
+    rows = conn.execute("""
+        SELECT o.*, u.name AS customer_name, u.phone AS customer_phone
+        FROM orders o
+        JOIN users u ON u.id=o.customer_id
+        WHERE o.status='assigned' AND o.courier_id=?
+        ORDER BY o.id DESC
+    """, (courier["id"],)).fetchall()
+
+    options = []
+    for row in rows:
+        d = batch_distance_to_existing(conn, courier["id"], row)
+        options.append({
+            **dict(row),
+            "batch_allowed": active_count < BATCH_MAX_ORDERS and (
+                active_count == 0 or d is None or d <= BATCH_MAX_DISTANCE_KM
+            ),
+            "distance_km": d
+        })
+    conn.close()
+    return {
+        "active_orders": active_count,
+        "max_orders": BATCH_MAX_ORDERS,
+        "max_distance_km": BATCH_MAX_DISTANCE_KM,
+        "options": options
+    }
+
+
 @app.post("/api/courier/online")
 async def courier_online(
     data: OnlineData,
@@ -1321,6 +1589,29 @@ async def courier_accept(
             status_code=403,
             detail="Курьер не активен"
         )
+
+    order = conn.execute(
+        "SELECT * FROM orders WHERE id=? AND courier_id=?",
+        (order_id, courier["id"])
+    ).fetchone()
+
+    if not order or order["status"] != "assigned":
+        conn.close()
+        raise HTTPException(status_code=400, detail="Заказ нельзя принять")
+
+    active_count = courier_active_order_count(conn, courier["id"])
+    if active_count >= BATCH_MAX_ORDERS:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Можно одновременно иметь максимум 2 активных заказа")
+
+    if active_count == 1:
+        distance = batch_distance_to_existing(conn, courier["id"], order)
+        if distance is not None and distance > BATCH_MAX_DISTANCE_KM:
+            conn.close()
+            raise HTTPException(
+                status_code=400,
+                detail=f"Второй заказ нельзя принять: точки дальше 1 км ({distance:.2f} км)"
+            )
 
     cur = conn.execute("""
         UPDATE orders
@@ -1710,4 +2001,4 @@ if __name__ == "__main__":
         app,
         host="0.0.0.0",
         port=int(os.getenv("PORT", "10000"))
-)
+    )
