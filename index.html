@@ -7,6 +7,8 @@
 <title>RESTARAN</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
 :root{
@@ -146,6 +148,12 @@ background:rgba(255,255,255,.09)
 }
 
 .map{width:100%;height:220px;border:0;border-radius:18px;margin-top:12px}
+#adminCityMap{width:100%;height:460px;border-radius:20px;overflow:hidden;border:1px solid var(--border);margin-top:12px}
+.aiChat{max-height:320px;overflow:auto;display:grid;gap:8px;margin-bottom:10px}
+.aiMsg{padding:11px 13px;border-radius:15px;line-height:1.45}
+.aiUser{background:rgba(255,255,255,.07);justify-self:end;max-width:88%}
+.aiBot{background:rgba(77,163,255,.12);justify-self:start;max-width:92%}
+.weightNote{font-size:12px;color:var(--muted);line-height:1.5;margin-top:-4px}
 
 .toast{
 position:fixed;left:50%;bottom:25px;
@@ -284,12 +292,22 @@ RESTARAN
 📊 Статистика
 </button>
 
+<button class="tab" onclick="adminTab('map',this)">
+🗺 Карта
+</button>
+
+<button class="tab" onclick="adminTab('ai',this)">
+🤖 ИИ
+</button>
+
 </div>
 
 <div id="adminOrdersArea"></div>
 <div id="adminCustomersArea" class="hidden"></div>
 <div id="adminCouriersArea" class="hidden"></div>
 <div id="adminStatsArea" class="hidden"></div>
+<div id="adminMapArea" class="hidden"></div>
+<div id="adminAiArea" class="hidden"></div>
 
 </div>
 
@@ -331,6 +349,10 @@ RESTARAN
 <div class="hero glass">
 <h1>Кабинет курьера</h1>
 <p>Управляйте доставками и передавайте геопозицию.</p>
+<div class="weightNote" style="margin-top:10px">
+📦 Можно взять до 2 заказов одновременно, если между точками выполнения не более 1 км.<br>
+⚖️ До 4 кг — обычная оплата; 4.1–8 кг — +600 AMD курьеру. Более 8 кг запрещено.
+</div>
 </div>
 
 <div class="section glass">
@@ -1012,7 +1034,9 @@ function adminTab(tab,button){
         "adminOrdersArea",
         "adminCustomersArea",
         "adminCouriersArea",
-        "adminStatsArea"
+        "adminStatsArea",
+        "adminMapArea",
+        "adminAiArea"
     ].forEach(id =>
         document
             .getElementById(id)
@@ -1023,7 +1047,9 @@ function adminTab(tab,button){
         orders:"adminOrdersArea",
         customers:"adminCustomersArea",
         couriers:"adminCouriersArea",
-        stats:"adminStatsArea"
+        stats:"adminStatsArea",
+        map:"adminMapArea",
+        ai:"adminAiArea"
     };
 
     document
@@ -1042,6 +1068,12 @@ function adminTab(tab,button){
 
     if(tab === "stats")
         loadAdminStatsPage();
+
+    if(tab === "map")
+        loadAdminMap();
+
+    if(tab === "ai")
+        loadAdminAI();
 }
 
 
@@ -1174,6 +1206,20 @@ function adminOrderCreateForm(){
                 min="0"
                 placeholder="Цена"
             >
+
+            <input
+                id="orderWeight"
+                type="number"
+                step="0.1"
+                min="0"
+                max="8"
+                placeholder="Вес заказа, кг"
+            >
+
+            <div class="weightNote">
+                ⚖️ До 4 кг — без доплаты. От 4.1 до 8 кг — +600 AMD курьеру.
+                Максимальный вес: 8 кг.
+            </div>
 
             <button
                 class="primary"
@@ -1362,6 +1408,13 @@ async function createOrder(){
             ?.value || 0
         );
 
+    const weight =
+        Number(
+            document
+            .getElementById("orderWeight")
+            ?.value || 0
+        );
+
 
     if(!phone){
         toast("Введите номер клиента");
@@ -1389,7 +1442,8 @@ async function createOrder(){
                     phone,
                     title,
                     address,
-                    price
+                    price,
+                    weight_kg:weight
                 })
             }
         );
@@ -2131,6 +2185,106 @@ async function loadAdminStatsPage(){
 
 
 /* =========================================================
+   ADMIN MAP + AI
+========================================================= */
+
+let adminMap = null;
+let adminMapMarkers = [];
+
+async function loadAdminMap(){
+    const area = document.getElementById("adminMapArea");
+    if(!area) return;
+
+    const center = [40.1872, 44.5152];
+
+    if(!adminMap){
+        area.innerHTML = `
+            <div class="sectionTitle">🗺 Карта заказов — Ереван</div>
+            <div class="itemSub">Новые заказы с координатами появляются на карте автоматически.</div>
+            <div id="adminCityMap"></div>
+        `;
+
+        adminMap = L.map("adminCityMap").setView(center, 12);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution: "&copy; OpenStreetMap"
+        }).addTo(adminMap);
+    }else{
+        adminMap.invalidateSize();
+    }
+
+    try{
+        const orders = await api("/api/admin/map-orders");
+        adminMapMarkers.forEach(m => adminMap.removeLayer(m));
+        adminMapMarkers = [];
+
+        orders.forEach(order => {
+            if(order.lat == null || order.lon == null) return;
+
+            const status = statusInfo(order.status);
+            const marker = L.marker([Number(order.lat), Number(order.lon)])
+                .addTo(adminMap)
+                .bindPopup(`
+                    <b>#${order.id} — ${escapeHtml(order.title)}</b><br>
+                    📍 ${escapeHtml(order.address || "")}<br>
+                    ⚖️ ${Number(order.weight_kg || 0).toFixed(1)} кг<br>
+                    ${status.icon} ${status.text}
+                    ${Number(order.courier_bonus_amd || 0) > 0
+                        ? `<br>💵 +${Number(order.courier_bonus_amd)} AMD курьеру`
+                        : ""}
+                `);
+            adminMapMarkers.push(marker);
+        });
+    }catch(error){
+        toast(formatError(error.message));
+    }
+}
+
+async function loadAdminAI(){
+    const area = document.getElementById("adminAiArea");
+    if(!area) return;
+
+    area.innerHTML = `
+        <div class="sectionTitle">🤖 ИИ-помощник</div>
+        <div class="itemSub">Помощник анализирует заказы, вес, доплаты и правила группировки.</div>
+        <div id="aiChat" class="aiChat">
+            <div class="aiMsg aiBot">Привет! Спроси, например: «Сколько сейчас заказов?» или «Какие правила для второго заказа?»</div>
+        </div>
+        <div class="form">
+            <input id="aiQuestion" placeholder="Задайте вопрос...">
+            <button class="primary" onclick="askAdminAI()">Спросить ИИ</button>
+        </div>
+    `;
+}
+
+async function askAdminAI(){
+    const input = document.getElementById("aiQuestion");
+    const chat = document.getElementById("aiChat");
+    const message = input?.value.trim();
+    if(!message) return;
+
+    chat.insertAdjacentHTML("beforeend",
+        `<div class="aiMsg aiUser">${escapeHtml(message)}</div>`
+    );
+    input.value = "";
+
+    try{
+        const data = await api("/api/admin/ai", {
+            method:"POST",
+            body:JSON.stringify({message})
+        });
+        chat.insertAdjacentHTML("beforeend",
+            `<div class="aiMsg aiBot">${escapeHtml(data.answer || "Нет ответа").replaceAll("\n","<br>")}</div>`
+        );
+        chat.scrollTop = chat.scrollHeight;
+    }catch(error){
+        chat.insertAdjacentHTML("beforeend",
+            `<div class="aiMsg aiBot">❌ ${escapeHtml(formatError(error.message))}</div>`
+        );
+    }
+}
+
+/* =========================================================
    CUSTOMER
 ========================================================= */
 
@@ -2415,6 +2569,13 @@ function courierOrder(order){
                     💰 $${Number(
                         order.price || 0
                     ).toFixed(2)}
+                    <br>
+                    ⚖️ ${Number(order.weight_kg || 0).toFixed(1)} кг
+                    ${
+                        Number(order.courier_bonus_amd || 0) > 0
+                        ? `<br>💵 +${Number(order.courier_bonus_amd)} AMD к оплате курьеру`
+                        : ""
+                    }
 
                 </div>
 
@@ -2867,4 +3028,4 @@ boot();
 </script>
 
 </body>
-      </html>
+  </html>
