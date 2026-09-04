@@ -289,6 +289,38 @@ input{background:#0d0d0d!important;color:#fff;border:1px solid rgba(255,255,255,
 
 .marketHero{display:flex;justify-content:space-between;gap:16px;align-items:center}.marketHeroText h1{margin:0 0 7px}.restaurantCard{padding:18px;border-radius:24px;background:linear-gradient(145deg,#151515,#0c0c0c);border:1px solid rgba(212,175,55,.14);margin-bottom:12px}.restaurantHead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.restaurantName{font-size:18px;font-weight:950}.menuGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}.menuItem{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid rgba(255,255,255,.07);border-radius:18px;background:#111;cursor:pointer}.menuItem input{width:20px;min-height:20px;margin-top:2px;accent-color:#d4af37}.menuItem b{font-size:13px}.menuItem small{display:block;color:var(--muted);margin-top:4px;line-height:1.35}.price{color:#f3d36a;font-weight:900;white-space:nowrap}.cartBar{position:sticky;bottom:12px;z-index:30;margin-top:14px;padding:12px;border-radius:20px;background:rgba(15,15,15,.96);border:1px solid rgba(212,175,55,.22);backdrop-filter:blur(18px);display:flex;justify-content:space-between;align-items:center;gap:10px}.cartTotal{font-size:17px;font-weight:950}.paymentChoices{display:grid;grid-template-columns:1fr 1fr;gap:9px}.paymentChoice{padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:#111;color:var(--text);text-align:left}.paymentChoice.active{border-color:#d4af37;background:rgba(212,175,55,.1)}@media(max-width:650px){.menuGrid{grid-template-columns:1fr}.marketHero{align-items:flex-start;flex-direction:column}.paymentChoices{grid-template-columns:1fr}}
 </style>
+
+<style>
+/* === SERTAL DELIVERY / CONCEPT 2 — LUXURY & PREMIUM === */
+:root{--bg:#050505;--panel:#0d0c0a;--panel2:#15120d;--line:rgba(212,175,55,.24);--text:#fffaf0;--muted:#aaa08b;--accent:#d4af37;--accent2:#ffe6a0;--green:#65d68a;--shadow:0 25px 90px rgba(0,0,0,.65)}
+html,body{background:#030303!important;color:var(--text)}
+body:before{background:radial-gradient(circle at 50% -10%,rgba(212,175,55,.16),transparent 32%),radial-gradient(circle at 80% 55%,rgba(212,175,55,.06),transparent 26%)}
+.app{width:min(1180px,100%);padding:12px 14px 96px}
+.topbar{height:62px;border-radius:20px;background:linear-gradient(180deg,rgba(16,14,10,.96),rgba(7,7,7,.88));border:1px solid rgba(212,175,55,.20);box-shadow:0 14px 50px rgba(0,0,0,.45)}
+.logo{font-family:Georgia,'Times New Roman',serif;font-size:21px;letter-spacing:.08em;text-transform:uppercase}.logoIcon{width:42px;height:42px;border-radius:14px;background:#0b0a08!important;border:1px solid rgba(212,175,55,.35);overflow:hidden}.logoIcon img{width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.hero{border-radius:25px;background:linear-gradient(145deg,rgba(18,16,12,.98),rgba(7,7,7,.94));border:1px solid rgba(212,175,55,.25);box-shadow:0 20px 70px rgba(0,0,0,.55)}
+#customerView>.hero{background:radial-gradient(circle at 80% 30%,rgba(212,175,55,.13),transparent 28%),linear-gradient(145deg,#15120c,#070707);padding:24px;border-color:rgba(212,175,55,.34)}
+#customerView>.hero h1{font-family:Georgia,'Times New Roman',serif;font-size:36px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+#customerView>.hero p{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#b6aa91}
+.serviceGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:13px}
+.serviceCard{min-height:108px;border-radius:19px;background:linear-gradient(145deg,#17140e,#0c0b09);border:1px solid rgba(212,175,55,.25);color:#fff8e8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;box-shadow:inset 0 1px rgba(255,255,255,.04),0 10px 30px rgba(0,0,0,.25)}
+.serviceCard:hover{border-color:#d4af37;transform:translateY(-1px)}.serviceIcon{font-size:28px;color:#e7c35d}.serviceCard b{display:block;font-size:12px}.serviceCard small{display:block;color:#8f8778;font-size:10px;margin-top:4px}
+#customerOrdersArea,.section{background:linear-gradient(145deg,rgba(18,16,12,.96),rgba(8,8,8,.94));border-color:rgba(212,175,55,.18)}
+.item{background:linear-gradient(145deg,#12110f,#0a0a09);border-color:rgba(212,175,55,.14)}.itemTitle{letter-spacing:.01em}.primary{background:linear-gradient(135deg,#9d761a,#d4af37 45%,#ffe9a5);color:#171105;border:1px solid #f0cf63}.secondary{background:#100f0c;border-color:rgba(212,175,55,.22)}
+input,select{background:#080806!important;border-color:rgba(212,175,55,.20)!important;color:#fff8e8!important}.tab.active{background:linear-gradient(135deg,#b78920,#f0cf63);color:#140f04;border-color:#f0cf63}
+.price{color:#f0cf63!important}.cartBar{background:rgba(11,10,8,.97)!important;border-color:rgba(212,175,55,.35)!important}
+.loginCard{background:radial-gradient(circle at 50% 0%,rgba(212,175,55,.12),transparent 32%),linear-gradient(145deg,#15120d,#080808);border:1px solid rgba(212,175,55,.3);box-shadow:0 30px 100px rgba(0,0,0,.75)}.loginLogo{width:90px;height:90px;border-radius:28px;background:#0b0a08!important;border:1px solid rgba(212,175,55,.38);overflow:hidden}.loginLogo img{width:100%;height:100%;object-fit:cover}.loginCard h1{font-family:Georgia,'Times New Roman',serif;letter-spacing:.12em;text-transform:uppercase}
+.clientPickerRow{display:grid;grid-template-columns:1fr 1.3fr;gap:9px}.luxuryCreateOrder{border-color:rgba(212,175,55,.28)}
+/* mobile: visual hierarchy like the luxury reference */
+@media(max-width:650px){.app{padding:8px 10px 92px}.topbar{margin-bottom:10px}.topbar .logo{font-size:16px}.serviceGrid{grid-template-columns:repeat(2,1fr);gap:8px}.serviceCard{min-height:92px}.serviceCard small{display:none}#customerView>.hero{padding:21px}.hero h1{font-size:27px!important}.clientPickerRow{grid-template-columns:1fr}.tabs{background:#0b0a08;border-color:rgba(212,175,55,.18)}#customerView:after{content:'SERTAL  •  DELIVERY';position:fixed;left:12px;right:12px;bottom:10px;height:62px;z-index:40;border:1px solid rgba(212,175,55,.28);border-radius:22px;background:rgba(8,7,6,.96);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center;color:#e7c35d;font-family:Georgia,serif;letter-spacing:.16em;font-size:11px;box-shadow:0 15px 50px rgba(0,0,0,.65)}}
+</style>
+
+<style>
+/* === LUXURY HOME — REFERENCE #2 === */
+.luxuryBrandHero{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px 16px 18px;margin:2px 0 12px;border-radius:28px;min-height:190px;overflow:hidden;background:radial-gradient(circle at 50% 5%,rgba(212,175,55,.18),transparent 34%),linear-gradient(145deg,#12100b,#050505 72%);border:1px solid rgba(212,175,55,.28);box-shadow:0 20px 70px rgba(0,0,0,.62),inset 0 1px rgba(255,255,255,.035)}
+.luxuryBrandHero:before{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 25%,rgba(255,232,165,.035) 45%,transparent 62%);pointer-events:none}.luxuryBrandLogo{width:72px;height:72px;border-radius:24px;overflow:hidden;border:1px solid rgba(212,175,55,.48);box-shadow:0 0 35px rgba(212,175,55,.16);z-index:1}.luxuryBrandLogo img{width:100%;height:100%;object-fit:cover}.luxuryBrandName{margin-top:9px;font-family:Georgia,'Times New Roman',serif;font-size:30px;line-height:1;color:#e9c95e;letter-spacing:.14em;z-index:1}.luxuryBrandSub{font-family:Georgia,'Times New Roman',serif;font-size:11px;color:#fff4d3;letter-spacing:.46em;margin-left:.46em;margin-top:6px;z-index:1}.luxuryGoldLine{width:155px;height:1px;background:linear-gradient(90deg,transparent,#d4af37,transparent);margin:12px 0 7px}.luxuryBrandTag{font-size:8px;letter-spacing:.32em;color:#938873}
+@media(max-width:650px){.luxuryBrandHero{min-height:178px;padding-top:16px}.luxuryBrandLogo{width:64px;height:64px}.luxuryBrandName{font-size:27px}.luxuryBrandTag{font-size:7px}.serviceGrid{margin-bottom:10px}}
+</style>
 </head>
 
 <body>
@@ -427,6 +459,14 @@ SERTAL DELIVERY
 <!-- CUSTOMER -->
 
 <div id="customerView" class="hidden">
+
+<div class="luxuryBrandHero">
+  <div class="luxuryBrandLogo"><img src="https://i.ibb.co/9k5Z0FtT/IMG-20260904-183452-458.jpg" alt="SERTAL DELIVERY"></div>
+  <div class="luxuryBrandName">SERTAL</div>
+  <div class="luxuryBrandSub">DELIVERY</div>
+  <div class="luxuryGoldLine"></div>
+  <div class="luxuryBrandTag">ПРЕМИАЛЬНАЯ ДОСТАВКА</div>
+</div>
 
 <div class="serviceGrid">
   <button class="serviceCard" onclick="document.getElementById('customerOrdersArea').scrollIntoView({behavior:'smooth'})">
@@ -1361,6 +1401,7 @@ async function loadAdminOrders(){
             ? list
             : []
         );
+        await loadOrderClients();
 
     }catch(error){
 
@@ -1418,84 +1459,72 @@ function renderAdminOrders(list){
 
 
 function adminOrderCreateForm(){
-
     return `
-    <div class="item">
-
-        <div class="itemTitle">
-            ➕ Создать заказ
-        </div>
-
-        <div class="itemSub">
-            Введите номер телефона клиента.
+    <div class="item luxuryCreateOrder">
+        <div class="itemTop">
+            <div>
+                <div class="itemTitle">＋ Новый заказ</div>
+                <div class="itemSub">Только адрес, что доставить и зарегистрированный клиент.</div>
+            </div>
+            <span class="badge blue">№ заказа создаётся автоматически</span>
         </div>
 
         <div class="form" style="margin-top:12px">
-
-            <input
-                id="orderPhone"
-                type="tel"
-                placeholder="Номер телефона клиента"
-            >
-
-            <input
-                id="orderTitle"
-                placeholder="Что заказали?"
-            >
-
-            <input
-                id="orderAddress"
-                placeholder="Адрес доставки"
-            >
-
-            <input id="orderRestaurantName" placeholder="Название ресторана">
-            <input id="orderRestaurantAddress" placeholder="Адрес ресторана">
-            <input id="orderDeadline" placeholder="Доставить до, например 00:50">
-            <input id="orderFloor" placeholder="Этаж">
-            <input id="orderEntrance" placeholder="Подъезд">
-            <input id="orderApartment" placeholder="Кв/офис">
-            <input id="orderIntercom" placeholder="Домофон">
-            <input id="orderRecipient" placeholder="Получатель, например Алексей">
-            <input id="orderNote" placeholder="Комментарий: Позвоните, я встречу">
-            <input id="orderPayment" placeholder="Оплата: Без сдачи">
-            <input id="orderChange" type="number" min="0" step="1" placeholder="Сдача">
-            <input id="orderItems" placeholder="Состав: 1 × Двойной цыпленок 30 см">
-
-            <div class="weightNote">🔴 Красная метка — ресторан. 🟢 Зелёная — точка доставки.</div>
-
-            <input
-                id="orderPrice"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="Цена"
-            >
-
-            <input
-                id="orderWeight"
-                type="number"
-                step="0.1"
-                min="0"
-                max="8"
-                placeholder="Вес заказа, кг"
-            >
-
-            <div class="weightNote">
-                ⚖️ До 4 кг — без доплаты. От 4.1 до 8 кг — +600 AMD курьеру.
-                Максимальный вес: 8 кг.
+            <div class="clientPickerRow">
+                <input id="orderPhone" type="tel" placeholder="Номер клиента · +374…" oninput="filterOrderClients()">
+                <select id="orderClientSelect" onchange="selectOrderClient(this.value)">
+                    <option value="">Выбрать зарегистрированного клиента</option>
+                </select>
             </div>
+            <div id="orderClientHint" class="itemSub"></div>
 
-            <button
-                class="primary"
-                onclick="createOrder()"
-            >
-                Создать заказ
-            </button>
+            <input id="orderAddress" placeholder="Куда доставлять · адрес">
+            <input id="orderTitle" placeholder="Что доставить">
 
+            <input id="orderPrice" type="hidden" value="0">
+            <input id="orderWeight" type="hidden" value="0">
+            <input id="orderRestaurantName" type="hidden" value="">
+            <input id="orderRestaurantAddress" type="hidden" value="">
+            <input id="orderDeadline" type="hidden" value="">
+            <input id="orderFloor" type="hidden" value="">
+            <input id="orderEntrance" type="hidden" value="">
+            <input id="orderApartment" type="hidden" value="">
+            <input id="orderIntercom" type="hidden" value="">
+            <input id="orderRecipient" type="hidden" value="">
+            <input id="orderNote" type="hidden" value="">
+            <input id="orderPayment" type="hidden" value="">
+            <input id="orderChange" type="hidden" value="0">
+            <input id="orderItems" type="hidden" value="">
+
+            <button class="primary" onclick="createOrder()">Создать заказ</button>
         </div>
+    </div>`;
+}
 
-    </div>
-    `;
+async function loadOrderClients(){
+    const select=document.getElementById('orderClientSelect');
+    if(!select) return;
+    try{
+        const list=await api('/api/admin/customers');
+        const customers=Array.isArray(list)?list:(list.customers||[]);
+        window.orderClients=customers.filter(c=>c.active!==0);
+        select.innerHTML='<option value="">Выбрать зарегистрированного клиента</option>'+window.orderClients.map(c=>`<option value="${escapeAttr(c.id)}">${escapeHtml(c.name||'Клиент')} · ${escapeHtml(c.phone||'')}</option>`).join('');
+    }catch(e){ console.log('clients',e); }
+}
+function selectOrderClient(id){
+    const c=(window.orderClients||[]).find(x=>String(x.id)===String(id));
+    if(!c)return;
+    const phone=document.getElementById('orderPhone');
+    if(phone)phone.value=c.phone||'';
+    const hint=document.getElementById('orderClientHint');
+    if(hint)hint.textContent=`Выбран: ${c.name||'Клиент'} · ${c.phone||''}`;
+}
+function filterOrderClients(){
+    const q=(document.getElementById('orderPhone')?.value||'').replace(/\D/g,'');
+    const select=document.getElementById('orderClientSelect');
+    if(!select)return;
+    const list=(window.orderClients||[]).filter(c=>!q || String(c.phone||'').replace(/\D/g,'').includes(q));
+    select.innerHTML='<option value="">Выбрать зарегистрированного клиента</option>'+list.slice(0,30).map(c=>`<option value="${escapeAttr(c.id)}">${escapeHtml(c.name||'Клиент')} · ${escapeHtml(c.phone||'')}</option>`).join('');
 }
 
 
@@ -1646,105 +1675,18 @@ function adminOrder(order){
 ========================================================= */
 
 async function createOrder(){
-
-    const phone =
-        document
-        .getElementById("orderPhone")
-        ?.value
-        .trim();
-
-    const title =
-        document
-        .getElementById("orderTitle")
-        ?.value
-        .trim();
-
-    const address =
-        document
-        .getElementById("orderAddress")
-        ?.value
-        .trim();
-
-    const restaurantAddress =
-        document
-        .getElementById("orderRestaurantAddress")
-        ?.value
-        .trim();
-
-    const price =
-        Number(
-            document
-            .getElementById("orderPrice")
-            ?.value || 0
-        );
-
-    const weight =
-        Number(
-            document
-            .getElementById("orderWeight")
-            ?.value || 0
-        );
-
-
-    if(!phone){
-        toast("Введите номер клиента");
-        return;
-    }
-
-    if(!title){
-        toast("Введите название заказа");
-        return;
-    }
-
-    if(!address){
-        toast("Введите адрес");
-        return;
-    }
-
-
+    const phone=document.getElementById('orderPhone')?.value.trim();
+    const title=document.getElementById('orderTitle')?.value.trim();
+    const address=document.getElementById('orderAddress')?.value.trim();
+    if(!phone){toast('Введите или выберите номер клиента');return;}
+    if(!title){toast('Введите, что доставить');return;}
+    if(!address){toast('Введите адрес доставки');return;}
     try{
-
-        await api(
-            "/api/admin/orders",
-            {
-                method:"POST",
-                body:JSON.stringify({
-                    phone,
-                    title,
-                    address,
-                    restaurant_address: restaurantAddress || "",
-                    restaurant_name: document.getElementById("orderRestaurantName")?.value.trim() || "",
-                    price,
-                    weight_kg:weight,
-                    delivery_deadline: document.getElementById("orderDeadline")?.value.trim() || "",
-                    floor: document.getElementById("orderFloor")?.value.trim() || "",
-                    entrance: document.getElementById("orderEntrance")?.value.trim() || "",
-                    apartment: document.getElementById("orderApartment")?.value.trim() || "",
-                    intercom: document.getElementById("orderIntercom")?.value.trim() || "",
-                    recipient_name: document.getElementById("orderRecipient")?.value.trim() || "",
-                    delivery_note: document.getElementById("orderNote")?.value.trim() || "",
-                    payment_note: document.getElementById("orderPayment")?.value.trim() || "",
-                    items_text: document.getElementById("orderItems")?.value.trim() || "",
-                    change_amount: Number(document.getElementById("orderChange")?.value || 0)
-                })
-            }
-        );
-
-        toast(
-            "✅ Заказ создан"
-        );
-
+        const r=await api('/api/admin/orders',{method:'POST',body:JSON.stringify({phone,title,address,price:0,weight_kg:0,restaurant_address:'',restaurant_name:'',delivery_deadline:'',floor:'',entrance:'',apartment:'',intercom:'',recipient_name:'',delivery_note:'',payment_note:'',items_text:title,change_amount:0})});
+        toast(`✅ Заказ #${r.id} создан${r.receipt_sent?' · чек отправлен':''}`);
         await loadAdminOrders();
         await loadAdminStats();
-
-    }catch(error){
-
-        toast(
-            formatError(
-                error.message
-            )
-        );
-    }
+    }catch(error){toast(formatError(error.message));}
 }
 
 
@@ -2162,13 +2104,13 @@ function renderCartBar(){
 
 function openCartCheckout(){
  const area=document.getElementById("restaurantShopArea"); const items=[...cart.items.values()]; if(!items.length)return; const total=items.reduce((a,x)=>a+x.price*x.quantity,0);
- area.innerHTML=`<div class="sectionTitle">🛒 Корзина — ${escapeHtml(cart.restaurantName)}</div>${items.map(x=>`<div class="item"><div class="itemTop"><div><b>${escapeHtml(x.name)}</b><div class="itemSub">Количество: ${x.quantity}</div></div><span class="price">֏${(x.price*x.quantity).toFixed(0)}</span></div></div>`).join("")}<div class="hero glass"><div class="statLabel">Итого</div><div class="statValue">֏${total.toFixed(0)}</div></div><div class="form"><input id="cartAddress" placeholder="Адрес доставки"><textarea id="cartNote" placeholder="Комментарий к доставке" style="min-height:90px;width:100%;border-radius:15px;background:#0d0d0d;color:#fff;border:1px solid rgba(255,255,255,.09);padding:14px"></textarea><div class="sectionTitle" style="font-size:14px">Способ оплаты</div><div class="paymentChoices"><button type="button" id="payCash" class="paymentChoice active" onclick="selectPayment('cash')">💵 Наличные при получении</button><button type="button" id="payOnline" class="paymentChoice" onclick="selectPayment('online')">💳 Онлайн</button></div><button class="primary" onclick="submitCartOrder()">Оформить заказ · ֏${total.toFixed(0)}</button><button class="secondary" onclick="openRestaurantShop()">← Вернуться к ресторанам</button></div>`;
+ area.innerHTML=`<div class="sectionTitle">🛒 Корзина — ${escapeHtml(cart.restaurantName)}</div>${items.map(x=>`<div class="item"><div class="itemTop"><div><b>${escapeHtml(x.name)}</b><div class="itemSub">Количество: ${x.quantity}</div></div><span class="price">֏${(x.price*x.quantity).toFixed(0)}</span></div></div>`).join("")}<div class="hero glass"><div class="statLabel">Итого</div><div class="statValue">֏${total.toFixed(0)}</div></div><div class="form"><input id="cartAddress" placeholder="Куда доставлять · адрес"><div class="sectionTitle" style="font-size:14px">Способ оплаты</div><div class="paymentChoices"><button type="button" id="payCash" class="paymentChoice active" onclick="selectPayment('cash')">💵 Наличные при получении</button><button type="button" id="payOnline" class="paymentChoice" onclick="selectPayment('online')">💳 Онлайн</button></div><button class="primary" onclick="submitCartOrder()">Оформить заказ · ֏${total.toFixed(0)}</button><button class="secondary" onclick="openRestaurantShop()">← Вернуться к ресторанам</button></div>`;
  window.selectedPayment="cash"; area.scrollIntoView({behavior:"smooth",block:"start"});
 }
 function selectPayment(method){window.selectedPayment=method;document.getElementById("payCash")?.classList.toggle("active",method==="cash");document.getElementById("payOnline")?.classList.toggle("active",method==="online")}
 async function submitCartOrder(){
  const address=document.getElementById("cartAddress")?.value.trim(); if(!address){toast("Введите адрес доставки");return} const items=[...cart.items.values()].map(x=>({menu_item_id:x.menu_item_id,quantity:x.quantity}));
- try{const r=await api("/api/customer/orders/from-cart",{method:"POST",body:JSON.stringify({restaurant_id:cart.restaurantId,items,address,payment_method:window.selectedPayment||"cash",delivery_note:document.getElementById("cartNote")?.value.trim()||""})}); toast(`✅ Заказ #${r.order_id} оформлен · ֏${Number(r.total).toFixed(0)}`); cart={restaurantId:null,restaurantName:"",items:new Map()}; await loadCustomer();}catch(e){toast(formatError(e.message))}
+ try{const r=await api("/api/customer/orders/from-cart",{method:"POST",body:JSON.stringify({restaurant_id:cart.restaurantId,items,address,payment_method:window.selectedPayment||"cash",delivery_note:""})}); toast(`✅ Заказ #${r.order_id} оформлен · ֏${Number(r.total).toFixed(0)}`); cart={restaurantId:null,restaurantName:"",items:new Map()}; await loadCustomer();}catch(e){toast(formatError(e.message))}
 }
 
 /* =========================================================
@@ -3370,6 +3312,8 @@ function statusInfo(status){
 /* =========================================================
    ESCAPE
 ========================================================= */
+
+function escapeAttr(value){ return escapeHtml(value).replace(/`/g,'&#96;'); }
 
 function escapeHtml(value){
 
