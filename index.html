@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 
-<title>RESTARAN</title>
+<title>SERTAL DELIVERY</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -232,6 +232,48 @@ input{background:#090c11;border-color:var(--line);border-radius:13px}input:focus
 .form input{min-height:46px}
 .form button{transition:transform .15s ease}.form button:active{transform:scale(.98)}
 @media(max-width:650px){.mapDashboard{height:auto}.mapSide{height:280px}.mapCanvas{height:55vh;min-height:390px}}
+
+<style>
+/* === BLACK & GOLD DESIGN === */
+:root{--bg:#050505;--panel:#0b0b0b;--panel2:#11100d;--line:rgba(212,175,55,.18);--text:#f8f3e6;--muted:#a79f8c;--accent:#d4af37;--accent2:#f0cf63;--green:#d4af37;--red:#df6464;--blue:#c7a94b;--shadow:0 22px 80px rgba(0,0,0,.62)}
+html,body{background:#050505;color:var(--text)}
+body:before{background:radial-gradient(circle at 50% -10%,rgba(212,175,55,.12),transparent 35%),radial-gradient(circle at 100% 100%,rgba(212,175,55,.05),transparent 28%)}
+.glass{background:linear-gradient(145deg,rgba(212,175,55,.055),rgba(255,255,255,.018));border-color:var(--line)}
+.logoIcon,.loginLogo,.primary,.tap{background:linear-gradient(135deg,#80620f,#d4af37 48%,#ffe9a1);color:#120f06}
+.primary{box-shadow:0 10px 30px rgba(212,175,55,.14)}
+.tab.active{background:var(--accent);border-color:var(--accent);color:#120f06;box-shadow:0 0 28px rgba(212,175,55,.18)}
+input{background:#090909;border-color:var(--line)}input:focus{border-color:rgba(212,175,55,.65);box-shadow:0 0 0 3px rgba(212,175,55,.08)}
+.success{color:#f0cf63;background:rgba(212,175,55,.1)}.item:hover{border-color:rgba(212,175,55,.3)}
+.chatBox{display:grid;gap:8px;max-height:430px;overflow:auto;padding:4px}.chatBubble{padding:11px 13px;border-radius:16px;max-width:88%;line-height:1.45;border:1px solid var(--line)}.chatMine{justify-self:end;background:rgba(212,175,55,.12)}.chatAdmin{justify-self:start;background:#11100d}.fileRow{display:flex;gap:8px;align-items:center}
+</style>
+<style>
+/* === SERTAL DELIVERY / CONCEPT 1: MINIMAL & MODERN === */
+:root{
+  --bg:#050505;--panel:#101010;--panel2:#171717;--line:rgba(212,175,55,.18);
+  --text:#f8f6ef;--muted:#9a978e;--accent:#d4af37;--accent2:#f3d36a;
+  --green:#63c77b;--red:#e36d6d;--shadow:0 18px 55px rgba(0,0,0,.42)
+}
+body{background:#050505!important;overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 50% -8%,rgba(212,175,55,.10),transparent 30%),radial-gradient(circle at 100% 50%,rgba(212,175,55,.045),transparent 28%);z-index:-1}
+.app{width:min(1080px,100%);padding:12px 14px 92px}
+.topbar{position:sticky;top:8px;border-radius:22px;padding:12px 14px;background:rgba(12,12,12,.88);border:1px solid rgba(255,255,255,.07);box-shadow:0 12px 40px rgba(0,0,0,.34);backdrop-filter:blur(24px);z-index:50}
+.logo{font-size:17px;letter-spacing:.2px}.logoIcon{width:40px;height:40px;border-radius:13px;background:linear-gradient(145deg,#8b6b14,#d4af37 55%,#ffe9a0);font-size:0;position:relative;box-shadow:0 8px 25px rgba(212,175,55,.16)}
+.logoIcon:after{content:'SD';font-size:12px;font-weight:1000;color:#14110a;letter-spacing:-.5px}
+.login{min-height:100vh;display:grid;place-items:center}.loginCard{width:min(440px,100%);padding:30px 22px;border-radius:30px;text-align:center;background:linear-gradient(160deg,#101010,#080808);border:1px solid rgba(212,175,55,.18);box-shadow:0 30px 90px rgba(0,0,0,.58)}
+.loginLogo{width:76px;height:76px;margin:0 auto 18px;border-radius:25px;display:grid;place-items:center;background:linear-gradient(145deg,#8b6b14,#d4af37 55%,#ffe9a0);font-size:0;box-shadow:0 15px 35px rgba(212,175,55,.16)}
+.loginLogo:after{content:'SD';font-size:22px;font-weight:1000;color:#14110a}
+.loginCard h1{font-size:28px;letter-spacing:1.5px;margin:0 0 8px}.loginCard p{color:var(--muted);line-height:1.5}
+.hero{border-radius:28px;padding:24px;margin:14px 0;background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018));border:1px solid rgba(255,255,255,.07);box-shadow:var(--shadow)}
+.hero h1{font-size:28px;letter-spacing:-.6px}.section{border-radius:25px;background:rgba(12,12,12,.78);border:1px solid rgba(255,255,255,.065);box-shadow:var(--shadow)}
+.grid{gap:10px}.stat{border-radius:21px;padding:17px;background:#101010;border:1px solid rgba(255,255,255,.06)}.statValue{font-size:27px}.statLabel{color:#8e8a81}
+.serviceGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}.serviceCard{min-height:102px;padding:15px;border-radius:22px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;gap:14px;background:linear-gradient(145deg,#151515,#0d0d0d);color:var(--text);border:1px solid rgba(255,255,255,.065);box-shadow:0 12px 32px rgba(0,0,0,.26);transition:transform .16s,border-color .16s,box-shadow .16s}.serviceCard:active{transform:scale(.975)}.serviceCard:hover{border-color:rgba(212,175,55,.32);box-shadow:0 14px 38px rgba(0,0,0,.38)}.serviceIcon{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;background:rgba(212,175,55,.11);color:var(--accent2);font-size:18px}.serviceCard b{display:block;font-size:14px}.serviceCard small{display:block;color:var(--muted);font-size:11px;margin-top:4px}
+.primary{background:linear-gradient(135deg,#987719,#d4af37 52%,#ffe8a0)!important;color:#151108!important;border-radius:15px;font-weight:900;min-height:48px;box-shadow:0 10px 28px rgba(212,175,55,.15)}
+.secondary,.tab{background:#121212!important;color:#ddd7c8!important;border:1px solid rgba(255,255,255,.07)!important;border-radius:14px}.tab.active{background:var(--accent)!important;color:#151108!important;border-color:var(--accent)!important}
+input{background:#0d0d0d!important;color:#fff;border:1px solid rgba(255,255,255,.09)!important;border-radius:15px!important;min-height:48px}.item{border-radius:19px;background:#111!important;border-color:rgba(255,255,255,.06)!important}
+.chatBubble{border-radius:18px}.chatMine{background:rgba(212,175,55,.13)}.chatAdmin{background:#141414}
+@media(max-width:720px){.serviceGrid{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:repeat(2,1fr)}.hero{padding:20px}.tabs{overflow-x:auto;flex-wrap:nowrap!important;padding-bottom:4px}.tab{white-space:nowrap}}
+@media(max-width:430px){.app{padding-left:10px;padding-right:10px}.serviceCard{min-height:96px;padding:13px}.logo{font-size:15px}.userPill{font-size:11px}.hero h1{font-size:25px}}
+</style>
 </style>
 </head>
 
@@ -249,10 +291,10 @@ input{background:#090c11;border-color:var(--line);border-radius:13px}input:focus
 
 <div class="loginLogo">🍽</div>
 
-<h1>RESTARAN</h1>
+<h1>SERTAL DELIVERY</h1>
 
 <p>
-Введите номер телефона и PIN,
+Введите номер телефона, который добавил администратор,
 чтобы открыть личный кабинет.
 </p>
 
@@ -260,10 +302,8 @@ input{background:#090c11;border-color:var(--line);border-radius:13px}input:focus
 
 <input id="loginPhone" type="tel" placeholder="+374 XX XX XX XX">
 
-<input id="loginPin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN">
 
 <button class="primary" onclick="login()">Войти</button>
-<button class="secondary" onclick="showRegister()">📝 Регистрация клиента</button>
 
 </div>
 
@@ -277,7 +317,7 @@ input{background:#090c11;border-color:var(--line);border-radius:13px}input:focus
 
 <div class="logo">
 <div class="logoIcon">🍽</div>
-RESTARAN
+SERTAL DELIVERY
 </div>
 
 <div id="userPill" class="userPill"></div>
@@ -319,7 +359,7 @@ RESTARAN
 
 <div class="stat glass">
 <div class="statLabel">Выручка</div>
-<div id="statRevenue" class="statValue">$0</div>
+<div id="statRevenue" class="statValue">֏0</div>
 </div>
 
 </div>
@@ -330,6 +370,8 @@ RESTARAN
 <div id="adminMapArea"></div>
 
 <div class="tabs">
+
+<button class="tab" onclick="adminTab('map',this)">🗺 Карта</button>
 
 <button class="tab active" onclick="adminTab('orders',this)">
 📦 Заказы
@@ -348,7 +390,7 @@ RESTARAN
 </button>
 
 <button class="tab" onclick="adminTab('ai',this)">🤖 ИИ</button>
-<button class="tab" onclick="downloadExcel()">📊 Excel A4</button>
+<button class="tab" onclick="downloadExcel()">📊 Excel A4</button><button class="tab" onclick="sendExcelToTelegram()">📤 Excel в бот</button>
 
 </div>
 
@@ -366,6 +408,21 @@ RESTARAN
 <!-- CUSTOMER -->
 
 <div id="customerView" class="hidden">
+
+<div class="serviceGrid">
+  <button class="serviceCard" onclick="document.getElementById('customerOrdersArea').scrollIntoView({behavior:'smooth'})">
+    <span class="serviceIcon">▣</span><span><b>Мои заказы</b><small>Текущие доставки</small></span>
+  </button>
+  <button class="serviceCard" onclick="contactAdmin()">
+    <span class="serviceIcon">◌</span><span><b>Поддержка</b><small>Связаться с админом</small></span>
+  </button>
+  <button class="serviceCard" onclick="loadCustomerHistory()">
+    <span class="serviceIcon">↺</span><span><b>История</b><small>Все ваши заказы</small></span>
+  </button>
+  <button class="serviceCard" onclick="window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})">
+    <span class="serviceIcon">★</span><span><b>SERTAL</b><small>Сервис доставки</small></span>
+  </button>
+</div>
 
 <div class="hero glass">
 <h1>Мои заказы</h1>
@@ -398,6 +455,21 @@ RESTARAN
 <!-- COURIER -->
 
 <div id="courierView" class="hidden">
+
+<div class="serviceGrid">
+  <button class="serviceCard" onclick="document.getElementById('courierOrdersArea').scrollIntoView({behavior:'smooth'})">
+    <span class="serviceIcon">▣</span><span><b>Доставки</b><small>Активные заказы</small></span>
+  </button>
+  <button class="serviceCard" onclick="loadCourierSchedule()">
+    <span class="serviceIcon">◷</span><span><b>График</b><small>Ваше расписание</small></span>
+  </button>
+  <button class="serviceCard" onclick="loadCourierHistory()">
+    <span class="serviceIcon">↺</span><span><b>История</b><small>Выполненные заказы</small></span>
+  </button>
+  <button class="serviceCard" onclick="contactAdmin()">
+    <span class="serviceIcon">◌</span><span><b>Поддержка</b><small>Связь с админом</small></span>
+  </button>
+</div>
 
 <div class="hero glass">
 <h1>Кабинет курьера</h1>
@@ -475,7 +547,7 @@ const ADMIN_IDS = new Set([
    GLOBAL
 ========================================================= */
 
-let token = localStorage.getItem("restaran_token") || "";
+let token = localStorage.getItem("sertal_delivery_token") || "";
 let role = "";
 let currentUser = null;
 
@@ -686,7 +758,7 @@ async function adminAutoLogin(){
         token = "";
 
         localStorage.removeItem(
-            "restaran_token"
+            "sertal_delivery_token"
         );
 
         const response =
@@ -743,7 +815,7 @@ async function adminAutoLogin(){
             data.token;
 
         localStorage.setItem(
-            "restaran_token",
+            "sertal_delivery_token",
             token
         );
 
@@ -804,7 +876,6 @@ function showAdminError(message){
 }
 
 
-function showRegister(){document.getElementById("registerBox")?.classList.remove("hidden")}
 function hideRegister(){document.getElementById("registerBox")?.classList.add("hidden")}
 async function registerCustomer(){
   const name=document.getElementById("regName")?.value.trim();
@@ -813,7 +884,7 @@ async function registerCustomer(){
   if(!name||!phone||!pin){toast("Заполните все поля");return}
   try{
     const r=await api("/api/register",{method:"POST",body:JSON.stringify({name,phone,pin})});
-    token=r.token; localStorage.setItem("restaran_token",token); hideRegister();
+    token=r.token; localStorage.setItem("sertal_delivery_token",token); hideRegister();
     await bootAfterLogin(); toast("✅ Аккаунт создан");
   }catch(e){toast(formatError(e.message))}
 }
@@ -826,14 +897,76 @@ async function downloadExcel(){
     toast("📊 Excel сформирован");
   }catch(e){toast(formatError(e.message))}
 }
-async function contactAdmin(){
-  try{
-    const d=await api("/api/contact-admin");
-    const id=d.admins?.[0]?.telegram_id;
-    if(id){ window.open("tg://user?id="+id,"_blank"); return; }
-  }catch(e){}
-  toast("Связь с админом доступна через Telegram");
+async function sendExcelToTelegram(){
+    try{
+        await api("/api/admin/export-xlsx/telegram",{method:"POST"});
+        toast("📤 Excel отправлен администраторам в Telegram");
+    }catch(e){toast(formatError(e.message))}
 }
+
+async function contactAdmin(){ openSupportChat(); }
+
+async function openSupportChat(){
+    const area=role==="customer"
+        ? document.getElementById("customerOrdersArea")
+        : document.getElementById("courierOrdersArea");
+    if(!area)return;
+    area.innerHTML=`
+      <div class="sectionTitle">💬 Чат с администратором</div>
+      <div id="supportChat" class="chatBox"></div>
+      <div class="form">
+        <input id="supportText" placeholder="Напишите администратору..." onkeydown="if(event.key==='Enter'){event.preventDefault();sendSupportMessage()}">
+        <div class="fileRow">
+          <input id="supportFile" type="file" style="flex:1">
+          <button class="secondary" type="button" onclick="uploadSupportFile()">📎 Файл</button>
+        </div>
+        <button class="primary" type="button" onclick="sendSupportMessage()">Отправить</button>
+      </div>`;
+    await refreshSupportChat();
+}
+
+async function refreshSupportChat(){
+    const box=document.getElementById("supportChat");
+    if(!box)return;
+    try{
+        const list=await api("/api/chat/messages");
+        box.innerHTML=list.length?list.map(m=>{
+            const mine=m.sender_role!=="admin";
+            return `<div class="chatBubble ${mine?"chatMine":"chatAdmin"}">
+                <b>${mine?"Вы":"Администратор"}</b><br>
+                ${escapeHtml(m.text||"")}
+                ${m.file_name?`<div>📎 ${escapeHtml(m.file_name)}</div>`:""}
+            </div>`;
+        }).join(""):'<div class="empty">Сообщений пока нет</div>';
+        box.scrollTop=box.scrollHeight;
+    }catch(e){toast(formatError(e.message))}
+}
+
+async function sendSupportMessage(){
+    const input=document.getElementById("supportText");
+    const text=input?.value.trim();
+    if(!text)return;
+    try{
+        await api("/api/chat/send",{method:"POST",body:JSON.stringify({text})});
+        input.value="";
+        await refreshSupportChat();
+    }catch(e){toast(formatError(e.message))}
+}
+
+async function uploadSupportFile(){
+    const input=document.getElementById("supportFile");
+    const file=input?.files?.[0];
+    if(!file){toast("Выберите файл");return}
+    try{
+        const fd=new FormData();
+        fd.append("file",file);
+        await api("/api/chat/upload",{method:"POST",body:fd});
+        input.value="";
+        await refreshSupportChat();
+        toast("📎 Файл отправлен администратору");
+    }catch(e){toast(formatError(e.message))}
+}
+
 async function loadCustomerHistory(){
   try{ const d=await api("/api/customer/history"); renderCustomerOrders(d); }
   catch(e){toast(formatError(e.message))}
@@ -872,58 +1005,17 @@ function renderCourierOrders(list){
 ========================================================= */
 
 async function login(){
-
-    const phone =
-        document
-        .getElementById("loginPhone")
-        .value
-        .trim();
-
-    const pin =
-        document
-        .getElementById("loginPin")
-        .value
-        .trim();
-
-    if(!phone || !pin){
-
-        toast(
-            "Введите номер и PIN"
-        );
-
-        return;
-    }
-
+    const phone=document.getElementById("loginPhone").value.trim();
+    if(!phone){toast("Введите номер телефона");return}
     try{
-
-        const data =
-            await api(
-                "/api/login",
-                {
-                    method:"POST",
-                    body:JSON.stringify({
-                        phone,
-                        pin
-                    })
-                }
-            );
-
-        token =
-            data.token;
-
-        localStorage.setItem(
-            "restaran_token",
-            token
-        );
-
+        const data=await api("/api/login",{
+            method:"POST",
+            body:JSON.stringify({phone})
+        });
+        token=data.token;
+        localStorage.setItem("sertal_delivery_token",token);
         await boot();
-
-    }catch(error){
-
-        toast(
-            formatError(error.message)
-        );
-    }
+    }catch(error){toast(formatError(error.message))}
 }
 
 
@@ -1016,10 +1108,6 @@ async function boot(){
 
             await loadAdmin();
 
-            // Для админа сразу открываем главный LIVE MAP dashboard
-            const mapTab = document.querySelector('.tab[onclick*="adminTab(\'map\'"]');
-            adminTab("map", mapTab);
-
         }else if(role === "customer"){
 
             show("customerView");
@@ -1052,7 +1140,7 @@ async function boot(){
         token = "";
 
         localStorage.removeItem(
-            "restaran_token"
+            "sertal_delivery_token"
         );
 
         document
@@ -1456,7 +1544,7 @@ function adminOrder(order){
 
                     <br>
 
-                    💰 $${Number(
+                    💰 ֏${Number(
                         order.price || 0
                     ).toFixed(2)}
 
@@ -1846,7 +1934,15 @@ async function loadAdminCustomers(){
                         ${
                             c.active
                             ? "🟢 Активен"
-                            : "🔴 Неактивен"
+                            : "🔴 Удалён (логи сохранены)"
+                        }
+                    </div>
+
+                    <div class="itemActions">
+                        ${
+                            c.active
+                            ? `<button class="danger" onclick="deleteCustomer(${Number(c.id)})">Удалить клиента</button>`
+                            : `<span class="badge">Логи сохранены</span>`
                         }
                     </div>
 
@@ -1868,6 +1964,17 @@ async function loadAdminCustomers(){
             )
         );
     }
+}
+
+
+async function deleteCustomer(id){
+    if(!confirm("Удалить клиента? Доступ будет закрыт, но заказы и переписка останутся в логах.")) return;
+    try{
+        await api(`/api/admin/customers/${id}/delete`,{method:"POST"});
+        toast("Клиент удалён. Логи сохранены.");
+        await loadAdminCustomers();
+        await loadAdminStats();
+    }catch(e){toast(formatError(e.message))}
 }
 
 
@@ -1913,7 +2020,7 @@ async function createCustomer(){
                     })
                 }
             );
-        toast(`✅ Клиент ${data.name} создан · PIN: ${data.pin}`);
+        toast(`✅ Клиент ${data.name} добавлен. Вход — по номеру телефона.`);
 
 
         await loadAdminCustomers();
@@ -2163,7 +2270,7 @@ async function createCourier(){
                     })
                 }
             );
-        toast(`✅ Курьер ${data.name} создан · PIN: ${data.pin} · требуется одобрение`);
+        toast(`✅ Курьер ${data.name} добавлен. Вход — по номеру телефона · требуется одобрение`);
 
 
         await loadAdminCouriers();
@@ -2306,7 +2413,7 @@ async function loadAdminStatsPage(){
                     Выручка
                 </div>
                 <div class="statValue">
-                    $${Number(
+                    ֏${Number(
                         data.revenue || 0
                     ).toFixed(2)}
                 </div>
@@ -2343,8 +2450,8 @@ function initAdminMap(){
     const el=document.getElementById("adminCityMap");
     if(!el||adminMap)return;
     adminMap=L.map(el,{zoomControl:true,attributionControl:true,preferCanvas:true}).setView([40.1872,44.5152],12);
-    L.tileLayer(`https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png?key=${encodeURIComponent(CARTO_BASEMAP_KEY)}`,{
-        maxZoom:20,subdomains:"abcd",attribution:"&copy; OpenStreetMap &copy; CARTO"
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+        maxZoom:19,subdomains:["a","b","c"],attribution:"&copy; OpenStreetMap contributors"
     }).addTo(adminMap);
 }
 
@@ -2377,18 +2484,26 @@ async function refreshLiveMap(){
         const listArea=document.getElementById("mapOrderList");
         document.getElementById("mapOrdersCount")?.replaceChildren(document.createTextNode(String(orders.length)));
         document.getElementById("mapCourierCount")?.replaceChildren(document.createTextNode(String(couriers.length)));
-        adminMapMarkers.forEach(m=>adminMap.removeLayer(m));adminMapMarkers=[];
-        const restaurantIcon=L.divIcon({className:"",html:'<div style="width:18px;height:18px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#ff3b4d;border:3px solid #fff;box-shadow:0 0 0 3px rgba(255,59,77,.18),0 6px 18px rgba(0,0,0,.55)"></div>',iconSize:[18,18],iconAnchor:[9,18]});
-        const deliveryIcon=L.divIcon({className:"",html:'<div style="width:16px;height:16px;border-radius:50%;background:#b9ff45;border:3px solid #071000;box-shadow:0 0 0 3px rgba(185,255,69,.16),0 4px 15px rgba(0,0,0,.5)"></div>',iconSize:[16,16],iconAnchor:[8,8]});
-        const courierIcon=L.divIcon({className:"",html:'<div style="width:18px;height:18px;border-radius:50%;background:#55b8ff;border:3px solid #071019;box-shadow:0 0 0 4px rgba(85,184,255,.16),0 4px 18px rgba(0,0,0,.5)"></div>',iconSize:[18,18],iconAnchor:[9,9]});
-        if(listArea)listArea.innerHTML=orders.length?orders.map(o=>{const st=statusInfo(o.status);return `<div class="mapOrder" onclick="focusMapOrder(${Number(o.id)})"><div class="mapOrderTop"><span class="mapOrderId">#${Number(o.id)}</span><span class="badge ${st.class}">${st.icon} ${st.text}</span></div><div class="mapOrderTitle">${escapeHtml(o.title||"Заказ")}</div><div class="mapOrderMeta">📍 ${escapeHtml(o.address||"Адрес не указан")}<br>🛵 ${escapeHtml(o.courier_name||"Не назначен")}</div></div>`}).join(""):"<div class=\"empty\">Активных заказов нет</div>";
-        orders.forEach(o=>{
-            if(o.lat!=null&&o.lon!=null){const m=L.marker([+o.lat,+o.lon],{icon:deliveryIcon}).addTo(adminMap).bindPopup(`<b>#${+o.id} — ${escapeHtml(o.title||"Заказ")}</b><br>📍 ${escapeHtml(o.address||"")}<br>${statusInfo(o.status).icon} ${statusInfo(o.status).text}`);m.__orderId=+o.id;adminMapMarkers.push(m)}
-            if(o.restaurant_lat!=null&&o.restaurant_lon!=null){const m=L.marker([+o.restaurant_lat,+o.restaurant_lon],{icon:restaurantIcon}).addTo(adminMap).bindPopup(`<b>🔴 Ресторан</b><br>${escapeHtml(o.restaurant_address||"")}`);m.__orderId=+o.id;adminMapMarkers.push(m)}
-        });
-        const ids=new Set();
-        couriers.forEach(c=>{if(c.lat==null||c.lon==null)return;const id=+c.id;ids.add(id);let m=courierMapMarkers.get(id);if(!m){m=L.marker([+c.lat,+c.lon],{icon:courierIcon}).addTo(adminMap);courierMapMarkers.set(id,m)}m.setLatLng([+c.lat,+c.lon]).bindPopup(`<b>🛵 ${escapeHtml(c.name||"Курьер")}</b><br>${c.online?"🟢 Онлайн":"⚪ Офлайн"}<br><small>GPS обновляется автоматически</small>`) });
-        for(const [id,m] of courierMapMarkers)if(!ids.has(id)){adminMap.removeLayer(m);courierMapMarkers.delete(id)}
+
+        // Пины отключены полностью. Карта используется как отдельная вкладка,
+        // а заказы и курьеры показываются в списке слева.
+        adminMapMarkers.forEach(m=>adminMap.removeLayer(m));
+        adminMapMarkers=[];
+        courierMapMarkers.forEach(m=>adminMap.removeLayer(m));
+        courierMapMarkers.clear();
+
+        if(listArea){
+            listArea.innerHTML=orders.length
+              ? orders.map(o=>{
+                  const st=statusInfo(o.status);
+                  return `<div class="mapOrder" onclick="focusMapOrder(${Number(o.id)})">
+                    <div class="mapOrderTop"><span class="mapOrderId">#${Number(o.id)}</span><span class="badge ${st.class}">${st.icon} ${st.text}</span></div>
+                    <div class="mapOrderTitle">${escapeHtml(o.title||"Заказ")}</div>
+                    <div class="mapOrderMeta">📍 ${escapeHtml(o.address||"Адрес не указан")}<br>🛵 ${escapeHtml(o.courier_name||"Не назначен")}</div>
+                  </div>`;
+                }).join("")
+              : '<div class="empty">Активных заказов нет</div>';
+        }
     }catch(e){console.log("Live map:",e?.message||e)}
 }
 function centerYerevan(){adminMap?.setView([40.1872,44.5152],12,{animate:true})}
@@ -2546,7 +2661,7 @@ function customerOrder(order){
                         order.address || ""
                     )}
                     <br>
-                    💰 $${Number(
+                    💰 ֏${Number(
                         order.price || 0
                     ).toFixed(2)}
                 </div>
@@ -2720,7 +2835,7 @@ function courierOrder(order){
 
                     <br>
 
-                    💰 $${Number(
+                    💰 ֏${Number(
                         order.price || 0
                     ).toFixed(2)}
                     <br>
@@ -3158,6 +3273,10 @@ setInterval(
             }else if(role === "courier"){
 
                 await loadCourier();
+            }
+
+            if(document.getElementById("supportChat")){
+                await refreshSupportChat();
             }
 
         }catch(error){
