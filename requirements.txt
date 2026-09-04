@@ -1,5 +1,6 @@
 fastapi
-uvicorn
-python-telegram-bot
-openpyxl>=3.1,<4
+uvicorn[standard]
 pydantic
+openpyxl
+python-telegram-bot
+python-multipart
