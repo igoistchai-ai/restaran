@@ -3,5 +3,6 @@ uvicorn[standard]
 pydantic
 openpyxl
 reportlab
+Pillow
 python-telegram-bot
 python-multipart
