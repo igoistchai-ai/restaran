@@ -400,7 +400,32 @@ input,select{background:#080806!important;border-color:rgba(212,175,55,.20)!impo
   .liveService{min-height:190px}
 }
 </style>
-</head>
+<style>
+/* =========================================================
+   SERTAL DELIVERY — FULL REDESIGN / BLACK GOLD CONTROL UI
+========================================================= */
+:root{--gold:#d4af37;--gold2:#f4d675;--ink:#070809;--panel:#0d0f11;--panel2:#121417;--line:rgba(212,175,55,.16);--soft:rgba(255,255,255,.055);--muted:#8e8a80}
+html,body{background:#050607;color:#f7f4ec}body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.005em}
+body:after{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background:radial-gradient(circle at 50% -12%,rgba(212,175,55,.12),transparent 34%),linear-gradient(180deg,#050607 0%,#080a0b 55%,#050607 100%)}
+.app{width:min(1240px,100%);padding:16px 16px 32px}.glass{background:linear-gradient(145deg,rgba(19,21,23,.95),rgba(8,10,11,.94));border:1px solid var(--line);box-shadow:0 22px 70px rgba(0,0,0,.45);backdrop-filter:blur(24px)}
+.topbar{height:72px;border-radius:24px;padding:10px 14px 10px 16px;position:sticky;top:8px;background:rgba(6,8,9,.93);border-color:rgba(212,175,55,.18)}.logo{font-size:17px;letter-spacing:.12em}.logoIcon{background:#0e0f10;border:1px solid rgba(212,175,55,.35);overflow:hidden}.logoIcon img{width:100%;height:100%;object-fit:cover;border-radius:inherit}.userPill{color:#bdb7a9}
+.goldBtn,.primary{background:linear-gradient(135deg,#9d781b,#d4af37 45%,#f4d675);color:#100e07!important;border:0;box-shadow:0 10px 30px rgba(212,175,55,.12);font-weight:950}.secondary{background:#101214;color:#eee9dd;border:1px solid rgba(255,255,255,.09)}input,textarea,select{background:#090b0c!important;color:#f7f4ec!important;border:1px solid rgba(255,255,255,.09)!important;border-radius:15px;outline:none}input:focus,textarea:focus,select:focus{border-color:rgba(212,175,55,.55)!important;box-shadow:0 0 0 3px rgba(212,175,55,.07)}
+.hero,.section{border-radius:24px}.hero{background:radial-gradient(circle at 100% 0,rgba(212,175,55,.09),transparent 35%),linear-gradient(145deg,#111315,#090a0b);border-color:var(--line)}.hero h1{font-family:Georgia,serif;font-weight:500}.sectionTitle{font-family:Georgia,serif;color:#f3dfaa}.item{background:#0b0d0f;border-color:rgba(255,255,255,.07);border-radius:18px}.itemSub{color:#8f8a80}.badge.green{color:#bde88c;background:rgba(185,255,69,.08)}
+/* public */
+.publicHome{min-height:100vh;background:#050607;color:#f5f0e5}.publicNav{border-bottom:1px solid rgba(212,175,55,.12);background:rgba(5,6,7,.78);backdrop-filter:blur(20px)}.publicHero{background:radial-gradient(circle at 75% 30%,rgba(212,175,55,.15),transparent 28%)}.publicHero h1{font-family:Georgia,serif;letter-spacing:.08em}.publicHero h1 em{color:#d4af37;font-style:normal}.publicIcon{color:#d4af37}
+/* customer */
+#customerView{max-width:920px;margin:auto}.luxuryBrandHero{margin:10px 0 14px;padding:30px 22px;border-radius:30px;text-align:center;background:radial-gradient(circle at 50% 0,rgba(212,175,55,.15),transparent 40%),linear-gradient(145deg,#11130f,#080909);border:1px solid rgba(212,175,55,.2);box-shadow:0 28px 75px rgba(0,0,0,.5)}.luxuryBrandLogo{width:68px;height:68px;margin:0 auto 12px;border-radius:22px;overflow:hidden;border:1px solid rgba(212,175,55,.45);box-shadow:0 0 35px rgba(212,175,55,.12)}.luxuryBrandLogo img{width:100%;height:100%;object-fit:cover}.luxuryBrandName{font-family:Georgia,serif;font-size:34px;letter-spacing:.2em}.luxuryBrandSub{font-size:11px;letter-spacing:.48em;color:#bcae8b;margin-top:2px}.luxuryGoldLine{height:1px;width:86px;background:linear-gradient(90deg,transparent,#d4af37,transparent);margin:15px auto}.luxuryBrandTag{font-size:9px;letter-spacing:.28em;color:#8e8777}.buyerWelcome{background:radial-gradient(circle at 90% 0,rgba(212,175,55,.15),transparent 36%),linear-gradient(145deg,#15120c,#0a0b0c);border:1px solid rgba(212,175,55,.22);box-shadow:0 20px 60px rgba(0,0,0,.4)}.buyerWelcome h2{font-family:Georgia,serif;color:#f4e5bd}.buyerSearch{background:#090b0c;border:1px solid rgba(212,175,55,.13);padding:7px;border-radius:20px}.buyerSearch button{background:linear-gradient(135deg,#a17b20,#d4af37);color:#100e08}.addressCard{background:linear-gradient(145deg,#15130f,#090a0b);border-color:rgba(212,175,55,.2)}.sertalActionGrid{grid-template-columns:repeat(3,1fr);gap:10px}.sertalActionGrid .serviceCard{min-height:118px;background:linear-gradient(145deg,#151311,#0a0b0c)!important;background-image:none!important;border:1px solid rgba(212,175,55,.14);box-shadow:0 14px 40px rgba(0,0,0,.3)}.sertalActionGrid .serviceCard:after{display:none}.sertalActionGrid .serviceIcon{color:#d4af37;font-size:25px}.sertalActionGrid .serviceCard b{color:#f3ead8}.sertalActionGrid .serviceCard small{color:#817c72}.buyerBottomNav{background:rgba(7,8,9,.97);border-color:rgba(212,175,55,.22)}.buyerBottomNav button.active{background:rgba(212,175,55,.13);color:#f4d675}.buyerBottomNav span{font-weight:900}.profileAvatar{width:54px;height:54px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(135deg,#8f6a17,#d4af37,#f4d675);color:#0b0a07;font-weight:950;font-size:22px}.profileHero{display:flex;align-items:center;gap:15px}.profileLinks{display:grid;gap:8px}.profileLinks .sectionTitle{margin-bottom:2px}
+/* modal */
+.directModal{position:fixed;inset:0;z-index:2000;display:grid;place-items:center;padding:18px;background:rgba(0,0,0,.76);backdrop-filter:blur(16px)}.directCard{width:min(720px,100%);max-height:94vh;overflow:auto;border-radius:30px;background:linear-gradient(145deg,#14110c,#080909);border:1px solid rgba(212,175,55,.28);box-shadow:0 40px 120px rgba(0,0,0,.75);padding:22px}.directHead{display:flex;justify-content:space-between;gap:16px}.directHead h2{font-family:Georgia,serif;font-size:30px;margin:4px 0}.directHead p{color:#938b7c;font-size:12px;margin:0;max-width:520px}.directForm{display:grid;gap:11px;margin-top:14px}.directForm label{display:grid;gap:6px;color:#c8bfad;font-size:11px;font-weight:850}.directForm textarea{resize:vertical}.twoCols{display:grid;grid-template-columns:1fr 1fr;gap:10px}.promoInput{display:flex;gap:8px}.promoInput input{flex:1}.directPromoInfo{min-height:20px;color:#d9c36f;font-size:12px}.directSummary{display:flex;justify-content:space-between;align-items:center;padding:15px 2px;border-top:1px solid rgba(255,255,255,.07);margin-top:4px}.directSummary span{color:#8f897d}.directSummary strong{font-size:25px;color:#f4d675}.directSubmit{width:100%;min-height:50px}.routeLine{height:28px;display:flex;align-items:center;gap:8px;margin:8px 0 2px}.routeLine span{width:9px;height:9px;border:2px solid #d4af37;border-radius:50%}.routeLine i{height:1px;flex:1;background:linear-gradient(90deg,#d4af37,transparent,#d4af37);opacity:.5}
+/* promo */
+.promoHero{display:flex;align-items:center;gap:16px}.promoOrb{width:64px;height:64px;border-radius:22px;display:grid;place-items:center;background:linear-gradient(135deg,#8f6b17,#f0cf63);color:#0c0a05;font-size:30px;font-weight:950;flex:none}.promoSteps{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.promoSteps div{padding:15px;border-radius:17px;background:#0b0d0f;border:1px solid rgba(255,255,255,.06)}.promoSteps b{display:block;color:#d4af37;font-size:11px}.promoSteps span{display:block;margin-top:8px;font-weight:800;font-size:12px}
+/* admin */
+#adminView>.grid{grid-template-columns:repeat(4,1fr)!important}.tabs{background:#090b0c;border-color:rgba(212,175,55,.12)}.tab.active{background:#d4af37;color:#0a0906;border-color:#d4af37;box-shadow:0 8px 25px rgba(212,175,55,.15)}#adminView .stat{background:linear-gradient(145deg,#101214,#090a0b);border-color:rgba(212,175,55,.12)}#adminView .statValue{color:#f2d26e}.promoAdminCreate{display:grid;grid-template-columns:1.2fr .8fr .8fr .9fr .9fr auto;gap:8px;padding:13px;border-radius:18px;background:#090b0c;border:1px solid rgba(212,175,55,.12);margin-bottom:12px}.promoAdminRow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:10px}.promoAdminList{display:grid;gap:8px}
+/* remove old restaurant visual language */
+#restaurantShopArea{display:none!important}.restaurantCard{display:none!important}.publicServiceGrid article:first-child{display:none!important}
+@media(max-width:900px){.sertalActionGrid{grid-template-columns:repeat(2,1fr)}#adminView>.grid{grid-template-columns:repeat(2,1fr)!important}.promoAdminCreate{grid-template-columns:1fr 1fr}.promoAdminCreate button{grid-column:1/-1}}
+@media(max-width:650px){.app{padding:10px 10px 25px}.sertalActionGrid{grid-template-columns:repeat(2,1fr)}.sertalActionGrid .serviceCard{min-height:108px;padding:14px}.twoCols{grid-template-columns:1fr}.promoHero{align-items:flex-start}.promoSteps{grid-template-columns:1fr}.directCard{padding:17px;border-radius:25px}.directHead h2{font-size:26px}.promoAdminCreate{grid-template-columns:1fr}.promoAdminRow{grid-template-columns:1fr}.promoAdminRow button{width:100%}.buyerBottomNav{bottom:5px}.buyerWelcome h2{font-size:25px}}
+</style>\n</head>
 
 <body>
 
@@ -421,7 +446,7 @@ input,select{background:#080806!important;border-color:rgba(212,175,55,.20)!impo
       <button class="publicLogin" onclick="openLogin()">Войти</button>
     </div>
     <div id="publicMenu" class="publicMenu">
-      <button onclick="scrollToPublic('services');togglePublicMenu(false)">🍽 Сервисы</button>
+      <button onclick="scrollToPublic('services');togglePublicMenu(false)">▦ Сервисы</button>
       <button onclick="scrollToPublic('how');togglePublicMenu(false)">✦ Как работает</button>
       <button onclick="openRegister();togglePublicMenu(false)">✦ Регистрация</button>
       <button onclick="openAdminLogin();togglePublicMenu(false)">⌘ Кабинет администратора</button>
@@ -434,7 +459,7 @@ input,select{background:#080806!important;border-color:rgba(212,175,55,.20)!impo
       <div class="publicHeroCopy">
         <div class="eyebrow">ПРЕМИАЛЬНАЯ ДОСТАВКА</div>
         <h1>SERTAL<br><em>DELIVERY</em></h1>
-        <p>Еда, покупки и доставка по городу — в одном стильном сервисе.</p>
+        <p>Курьерская доставка по городу — от отправки до получения под контролем.</p>
         <div class="publicHeroActions">
           <button class="goldBtn" onclick="openRegister()">Начать пользоваться →</button>
           <button class="darkBtn" onclick="document.getElementById('aboutPublic').scrollIntoView({behavior:'smooth'})">О сервисе</button>
@@ -450,7 +475,7 @@ input,select{background:#080806!important;border-color:rgba(212,175,55,.20)!impo
     <section class="publicServices" id="aboutPublic">
       <div class="publicSectionHead"><span>01</span><div><div class="eyebrow">ЧТО МЫ ДЕЛАЕМ</div><h2>Всё необходимое<br>для доставки</h2></div></div>
       <div class="publicServiceGrid">
-        <article><div class="publicIcon">🍽</div><h3>Рестораны</h3><p>Выбирайте блюда из ассортимента подключённых ресторанов и оформляйте заказ.</p></article>
+        <article><div class="publicIcon">🍽</div><h3>Доставка</h3><p>Оформляйте курьерскую доставку из одного понятного кабинета.</p></article>
         <article><div class="publicIcon">📦</div><h3>Доставка</h3><p>Передайте нам адрес и описание того, что нужно доставить — остальное организуем.</p></article>
         <article><div class="publicIcon">🛵</div><h3>Курьеры</h3><p>Заказ проходит через систему назначения курьера и контроля маршрута.</p></article>
         <article><div class="publicIcon">💬</div><h3>Поддержка</h3><p>Связь с администратором прямо внутри Web App и через Telegram.</p></article>
@@ -459,12 +484,12 @@ input,select{background:#080806!important;border-color:rgba(212,175,55,.20)!impo
 
     <section class="publicStory">
       <div><div class="eyebrow">О SERTAL</div><h2>Сервис, который<br><em>выглядит дорого</em><br>и работает просто.</h2></div>
-      <div class="publicStoryText"><p>SERTAL DELIVERY создан как единая цифровая точка для покупателей, ресторанов, курьеров и администраторов.</p><p>Один номер телефона — один личный кабинет. Заказы, история, рестораны, корзина, поддержка и статусы доставки собраны в одном месте.</p></div>
+      <div class="publicStoryText"><p>SERTAL DELIVERY создан как единая цифровая точка для клиентов, курьеров и администраторов.</p><p>Один номер телефона — один личный кабинет. Доставки, история, адреса, промокоды, поддержка и статусы собраны в одном месте.</p></div>
     </section>
 
     <section id="how" class="publicHow">
       <div class="publicSectionHead"><span>02</span><div><div class="eyebrow">КАК ЭТО РАБОТАЕТ</div><h2>Три шага<br>до доставки</h2></div></div>
-      <div class="steps"><div><b>01</b><h3>Зарегистрируйтесь</h3><p>Введите имя и номер телефона.</p></div><div><b>02</b><h3>Оформите заказ</h3><p>Выберите ресторан или укажите, что нужно доставить.</p></div><div><b>03</b><h3>Получите заказ</h3><p>Следите за статусом и общайтесь с поддержкой.</p></div></div>
+      <div class="steps"><div><b>01</b><h3>Зарегистрируйтесь</h3><p>Введите имя и номер телефона.</p></div><div><b>02</b><h3>Оформите заказ</h3><p>Укажите адреса, получателя и то, что нужно доставить.</p></div><div><b>03</b><h3>Получите заказ</h3><p>Следите за статусом и общайтесь с поддержкой.</p></div></div>
     </section>
 
     <section class="publicCta">
@@ -502,6 +527,25 @@ input,select{background:#080806!important;border-color:rgba(212,175,55,.20)!impo
   </div>
 </div>
 
+
+<div id="directDeliveryModal" class="directModal hidden" onclick="if(event.target===this)closeDirectDelivery()">
+  <div class="directCard">
+    <div class="directHead"><div><div class="eyebrow">SERTAL DELIVERY</div><h2>Новая доставка</h2><p>Заполните маршрут — курьер получит заказ после оформления.</p></div><button class="authClose" onclick="closeDirectDelivery()">×</button></div>
+    <div class="routeLine"><span></span><i></i><span></span></div>
+    <div class="directForm">
+      <label>Откуда<input id="directFrom" placeholder="Адрес отправления"></label>
+      <label>Куда<input id="directAddress" placeholder="Адрес получателя"></label>
+      <div class="twoCols"><label>Получатель<input id="directRecipient" placeholder="Имя получателя"></label><label>Телефон<input id="directRecipientPhone" type="tel" placeholder="Телефон"></label></div>
+      <label>Что доставить<textarea id="directTitle" rows="3" placeholder="Например: документы, коробка, покупка"></textarea></label>
+      <div class="twoCols"><label>Вес, кг<input id="directWeight" type="number" min="0" max="8" step="0.1" placeholder="0"></label><label>Стоимость доставки<input id="directPrice" type="number" min="0" step="100" placeholder="Стоимость в AMD"></label></div>
+      <label>Промокод<div class="promoInput"><input id="directPromo" placeholder="SERTAL10"><button class="secondary" onclick="checkDirectPromo()">Проверить</button></div></label>
+      <div id="directPromoInfo" class="directPromoInfo"></div>
+      <label>Комментарий<textarea id="directNote" rows="2" placeholder="Подъезд, этаж, код домофона и т.п."></textarea></label>
+      <div class="directSummary"><span>Итого</span><strong id="directTotal">0 AMD</strong></div>
+      <button class="goldBtn directSubmit" onclick="submitDirectDelivery()">Оформить доставку →</button>
+    </div>
+  </div>
+</div>
 
 <div id="app" class="app hidden">
 
@@ -573,8 +617,8 @@ SERTAL DELIVERY
 👤 Покупатели
 </button>
 
-<button class="tab" onclick="adminTab('restaurants',this)">
-🍽 Рестораны
+<button class="tab" onclick="adminTab('promos',this)">
+% Промокоды
 </button>
 
 <button class="tab" onclick="adminTab('couriers',this)">
@@ -593,6 +637,7 @@ SERTAL DELIVERY
 <div id="adminOrdersArea"></div>
 <div id="adminCustomersArea" class="hidden"></div>
 <div id="adminRestaurantsArea" class="hidden"></div>
+<div id="adminPromosArea" class="hidden"></div>
 <div id="adminCouriersArea" class="hidden"></div>
 <div id="adminStatsArea" class="hidden"></div>
 <div id="adminAiArea" class="hidden"></div>
@@ -607,7 +652,7 @@ SERTAL DELIVERY
 <div id="customerView" class="hidden">
 
 <div id="buyerHomePanel">
-<div class="buyerWelcome"><h2>Добро пожаловать в SERTAL</h2><p>Еда, магазины и доставка — всё в одном приложении.</p></div>
+<div class="buyerWelcome"><h2>Добро пожаловать в SERTAL</h2><p>Отправляйте посылки, документы и покупки — всё в одном кабинете.</p></div>
 <div class="buyerSearch"><input id="buyerGoogleSearch" placeholder="Спросите что угодно — поиск по интернету..." onkeydown="if(event.key==='Enter'){event.preventDefault();searchGoogle()}" oninput="saveBuyerSearchDraft()"><button class="goldBtn" onclick="searchGoogle()">⌕</button></div>
 <div id="buyerAddressCard" class="addressCard"><div class="sectionTitle">📍 Мой адрес доставки</div><div class="addressRow"><input id="buyerAddress" placeholder="Введите адрес, например: Ереван, ул. ..."><button class="secondary locationBtn" onclick="useCurrentLocation()">📍 GPS</button></div><div class="itemActions" style="margin-top:8px"><button class="goldBtn" onclick="saveDefaultAddress()">Сохранить адрес</button></div></div>
 <div class="searchOnlyInfo section glass">
@@ -620,6 +665,7 @@ SERTAL DELIVERY
 
 <div id="buyerDiscoverPanel" class="hidden"></div>
 <div id="buyerProfilePanel" class="hidden"></div>
+<div id="buyerPromoPanel" class="hidden"></div>
 
 <div class="luxuryBrandHero">
   <div class="luxuryBrandLogo"><img src="https://i.ibb.co/9k5Z0FtT/IMG-20260904-183452-458.jpg" alt="SERTAL DELIVERY"></div>
@@ -629,22 +675,13 @@ SERTAL DELIVERY
   <div class="luxuryBrandTag">ПРЕМИАЛЬНАЯ ДОСТАВКА</div>
 </div>
 
-<div class="serviceGrid">
-  <button class="serviceCard" onclick="document.getElementById('customerOrdersArea').scrollIntoView({behavior:'smooth'})">
-    <span class="serviceIcon">▣</span><span><b>Мои заказы</b><small>Текущие доставки</small></span>
-  </button>
-  <button class="serviceCard" onclick="openRestaurantShop()">
-    <span class="serviceIcon">🍽</span><span><b>Рестораны</b><small>Выбрать еду и заказать</small></span>
-  </button>
-  <button class="serviceCard" onclick="contactAdmin()">
-    <span class="serviceIcon">◌</span><span><b>Поддержка</b><small>Связаться с админом</small></span>
-  </button>
-  <button class="serviceCard" onclick="loadCustomerHistory()">
-    <span class="serviceIcon">↺</span><span><b>История</b><small>Все ваши заказы</small></span>
-  </button>
-  <button class="serviceCard" onclick="window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})">
-    <span class="serviceIcon">★</span><span><b>SERTAL</b><small>Сервис доставки</small></span>
-  </button>
+<div class="serviceGrid sertalActionGrid">
+  <button class="serviceCard" onclick="openDirectDelivery()"><span class="serviceIcon">＋</span><span><b>Новая доставка</b><small>Создать заказ за минуту</small></span></button>
+  <button class="serviceCard" onclick="document.getElementById('customerOrdersArea').scrollIntoView({behavior:'smooth'})"><span class="serviceIcon">▣</span><span><b>Мои заказы</b><small>Текущие доставки</small></span></button>
+  <button class="serviceCard" onclick="loadCustomerHistory()"><span class="serviceIcon">↺</span><span><b>История</b><small>Все завершённые</small></span></button>
+  <button class="serviceCard" onclick="buyerPage('promos',document.querySelector('#buyerBottomNav button:nth-child(3)'))"><span class="serviceIcon">%</span><span><b>Промокоды</b><small>Скидки SERTAL</small></span></button>
+  <button class="serviceCard" onclick="contactAdmin()"><span class="serviceIcon">◌</span><span><b>Поддержка</b><small>Связь с командой</small></span></button>
+  <button class="serviceCard" onclick="buyerPage('profile',document.querySelector('#buyerBottomNav button:nth-child(4)'))"><span class="serviceIcon">♙</span><span><b>Профиль</b><small>Адрес и аккаунт</small></span></button>
 </div>
 
 <div id="restaurantShopArea" class="section glass hidden"></div>
@@ -662,8 +699,8 @@ SERTAL DELIVERY
 <div id="customerSupportArea" class="section glass supportPanel hidden"></div>
 <div class="buyerBottomNav" id="buyerBottomNav">
 <button class="active" onclick="buyerPage('home',this)"><span>⌂</span><small>Главная</small></button>
-<button onclick="buyerPage('discover',this)"><span>⌕</span><small>Интересное</small></button>
-<button onclick="openRestaurantShop();buyerPage('discover',this)"><span>▣</span><small>Заказы</small></button>
+<button onclick="buyerPage('orders',this)"><span>▣</span><small>Заказы</small></button>
+<button onclick="buyerPage('promos',this)"><span>%</span><small>Промо</small></button>
 <button onclick="buyerPage('profile',this)"><span>♙</span><small>Профиль</small></button>
 </div>
 
@@ -1130,6 +1167,7 @@ function adminTab(tab,button){
         "adminOrdersArea",
         "adminCustomersArea",
         "adminRestaurantsArea",
+        "adminPromosArea",
         "adminCouriersArea",
         "adminStatsArea",
         "adminMapArea",
@@ -1144,6 +1182,7 @@ function adminTab(tab,button){
         orders:"adminOrdersArea",
         customers:"adminCustomersArea",
         restaurants:"adminRestaurantsArea",
+        promos:"adminPromosArea",
         couriers:"adminCouriersArea",
         stats:"adminStatsArea",
         map:"adminMapArea",
@@ -1163,6 +1202,9 @@ function adminTab(tab,button){
 
     if(tab === "restaurants")
         loadAdminRestaurants();
+
+    if(tab === "promos")
+        loadAdminPromos();
 
     if(tab === "couriers")
         loadAdminCouriers();
@@ -1644,6 +1686,16 @@ async function closeOrder(orderId){
    CUSTOMERS
 ========================================================= */
 
+async function loadAdminPromos(){
+ const area=document.getElementById('adminPromosArea'); if(!area)return;
+ try{
+  const data=await api('/api/admin/promos'); const rows=Array.isArray(data.promos)?data.promos:[];
+  area.innerHTML=`<div class="sectionTitle">Промокоды SERTAL</div><div class="promoAdminCreate"><input id="promoAdminCode" placeholder="Код, например SERTAL10"><select id="promoAdminKind"><option value="percent">Процент</option><option value="fixed">Фиксированная сумма</option></select><input id="promoAdminValue" type="number" placeholder="Значение"><input id="promoAdminMin" type="number" placeholder="Мин. заказ"><input id="promoAdminMax" type="number" placeholder="Лимит использований"><button class="primary" onclick="createAdminPromo()">Создать</button></div><div class="promoAdminList">${rows.length?rows.map(r=>`<div class="item promoAdminRow"><div><b>${escapeHtml(r.code)}</b><div class="itemSub">${r.kind==='percent'?Number(r.value).toFixed(0)+'%':Number(r.value).toFixed(0)+' AMD'} · от ${Number(r.min_order||0).toFixed(0)} AMD · использовано ${Number(r.used_count||0)}${r.max_uses!=null?' / '+Number(r.max_uses):''}</div></div><span class="badge ${r.active?'green':'red'}">${r.active?'АКТИВЕН':'ВЫКЛ'}</span><button class="secondary" onclick="toggleAdminPromo('${escapeAttr(r.code)}',${r.active?0:1})">${r.active?'Выключить':'Включить'}</button></div>`).join(''):'<div class="empty">Промокодов пока нет.</div>'}</div>`;
+ }catch(e){area.innerHTML=`<div class="empty">${escapeHtml(formatError(e.message))}</div>`}
+}
+async function createAdminPromo(){const code=document.getElementById('promoAdminCode')?.value.trim(),kind=document.getElementById('promoAdminKind')?.value||'percent',value=Number(document.getElementById('promoAdminValue')?.value||0),min_order=Number(document.getElementById('promoAdminMin')?.value||0),max_uses=Number(document.getElementById('promoAdminMax')?.value||0)||null;if(!code||value<=0){toast('Введите код и значение');return;}try{await api('/api/admin/promos',{method:'POST',body:JSON.stringify({code,kind,value,min_order,max_uses})});toast('Промокод создан');loadAdminPromos();}catch(e){toast(formatError(e.message))}}
+async function toggleAdminPromo(code,active){try{await api('/api/admin/promos/toggle',{method:'POST',body:JSON.stringify({code,active:!!active})});loadAdminPromos();}catch(e){toast(formatError(e.message))}}
+
 async function loadAdminCustomers(){
 
     const area =
@@ -1868,7 +1920,7 @@ async function createCustomer(){
 
 async function loadAdminRestaurants(){
   const area=document.getElementById("adminRestaurantsArea"); if(!area)return;
-  area.innerHTML=`<div class="sectionTitle">🍽 Рестораны</div>
+  area.innerHTML=`<div class="sectionTitle">▦ Доставка</div>
   <div class="item"><div class="form">
     <input id="newRestaurantName" placeholder="Название ресторана">
     <input id="newRestaurantAddress" placeholder="Адрес ресторана">
@@ -1904,7 +1956,7 @@ async function toggleRestaurant(id){try{await api(`/api/admin/restaurants/${id}/
 let cart={restaurantId:null,restaurantName:"",items:new Map()};
 
 async function openRestaurantShop(){
- const area=document.getElementById("restaurantShopArea"); if(!area)return; area.classList.remove("hidden"); area.innerHTML=`<div class="marketHero"><div class="marketHeroText"><h1>🍽 Рестораны</h1><p class="itemSub">Выберите ресторан и товары. Отметьте позиции галочками и добавьте их в корзину.</p></div><button class="secondary" onclick="loadCustomerRestaurants()">↻ Обновить</button></div><div id="customerRestaurantsList" style="margin-top:14px">Загрузка...</div>`; area.scrollIntoView({behavior:"smooth",block:"start"}); await loadCustomerRestaurants();
+ const area=document.getElementById("restaurantShopArea"); if(!area)return; area.classList.remove("hidden"); area.innerHTML=`<div class="marketHero"><div class="marketHeroText"><h1>▦ Доставка</h1><p class="itemSub">Выберите ресторан и товары. Отметьте позиции галочками и добавьте их в корзину.</p></div><button class="secondary" onclick="loadCustomerRestaurants()">↻ Обновить</button></div><div id="customerRestaurantsList" style="margin-top:14px">Загрузка...</div>`; area.scrollIntoView({behavior:"smooth",block:"start"}); await loadCustomerRestaurants();
 }
 
 async function loadCustomerRestaurants(){
@@ -2551,7 +2603,7 @@ async function loadCustomerHistory(){
 async function loadCourierHistory(){
     try{
         const orders=await api("/api/courier/history");
-        const area=document.getElementById("courierOrdersArea"); if(!area)return;
+        const area=document.getElementById("adminOrdersArea"); if(!area)return;
         area.innerHTML=`<div class="sectionTitle">История доставок</div>${orders?.length?orders.map(courierOrder).join(""):`<div class="empty">История пока пуста.</div>`}`;
         area.scrollIntoView({behavior:"smooth",block:"start"});
     }catch(e){toast(formatError(e.message))}
@@ -2589,24 +2641,58 @@ function restoreBuyerSearchDraft(){
     if(el) el.value=localStorage.getItem(BUYER_SEARCH_KEY)||"";
 }
 function buyerPage(page,btn){
-    const home=document.getElementById("buyerHomePanel"), disc=document.getElementById("buyerDiscoverPanel"), prof=document.getElementById("buyerProfilePanel");
-    [home,disc,prof].forEach(x=>x?.classList.add("hidden"));
+    const home=document.getElementById("buyerHomePanel"), disc=document.getElementById("buyerDiscoverPanel"), prof=document.getElementById("buyerProfilePanel"), promo=document.getElementById("buyerPromoPanel");
+    [home,disc,prof,promo].forEach(x=>x?.classList.add("hidden"));
     document.querySelectorAll("#buyerBottomNav button").forEach(x=>x.classList.remove("active"));
     if(btn) btn.classList.add("active");
     if(page==="home"){home?.classList.remove("hidden");return;}
+    if(page==="orders"){
+        home?.classList.remove("hidden");
+        document.getElementById("customerOrdersArea")?.scrollIntoView({behavior:"smooth",block:"start"});
+        loadCustomer(); return;
+    }
+    if(page==="promos"){
+        promo?.classList.remove("hidden");
+        if(promo && !promo.dataset.loaded){
+            promo.innerHTML=`<div class="buyerWelcome promoHero"><div class="promoOrb">%</div><div><div class="eyebrow">SERTAL REWARDS</div><h2>Промокоды</h2><p>Введите код перед оформлением доставки и получите доступную скидку.</p></div></div><div class="section glass promoBox"><div class="sectionTitle">Применить промокод</div><div class="promoRow"><input id="standalonePromo" placeholder="Например, SERTAL10"><button class="goldBtn" onclick="previewStandalonePromo()">Проверить</button></div><div id="standalonePromoInfo" class="directPromoInfo"></div></div><div class="section glass"><div class="sectionTitle">Как получить скидку</div><div class="promoSteps"><div><b>01</b><span>Введите код</span></div><div><b>02</b><span>Проверьте условия</span></div><div><b>03</b><span>Используйте при доставке</span></div></div></div>`;
+            promo.dataset.loaded="1";
+        }
+        return;
+    }
     if(page==="discover"){
         disc?.classList.remove("hidden");
         if(disc && !disc.dataset.loaded){
-            disc.innerHTML=`<div class="buyerWelcome"><h2>Интересное</h2><p>Задайте любой вопрос — ИИ может искать актуальную информацию в интернете.</p></div><div class="buyerSearch"><input id="buyerDiscoverSearch" placeholder="Что ищем?" onkeydown="if(event.key==='Enter'){event.preventDefault();searchGoogle(document.getElementById('buyerDiscoverSearch').value)}"><button class="goldBtn" onclick="searchGoogle(document.getElementById('buyerDiscoverSearch').value)">⌕</button></div><div id="buyerDiscoverResults" class="buyerSearchResults"></div>`;
+            disc.innerHTML=`<div class="buyerWelcome"><h2>Интернет-поиск</h2><p>ИИ SERTAL может найти актуальную информацию в интернете.</p></div><div class="buyerSearch"><input id="buyerDiscoverSearch" placeholder="Что ищем?" onkeydown="if(event.key==='Enter'){event.preventDefault();searchGoogle(document.getElementById('buyerDiscoverSearch').value)}"><button class="goldBtn" onclick="searchGoogle(document.getElementById('buyerDiscoverSearch').value)">⌕</button></div><div id="buyerDiscoverResults" class="buyerSearchResults"></div>`;
             disc.dataset.loaded="1";
         }
         return;
     }
     if(page==="profile"){
         prof?.classList.remove("hidden");
-        if(prof) prof.innerHTML=`<div class="buyerWelcome"><h2>${escapeHtml(currentUser?.name||"Профиль")}</h2><p>Номер: ${escapeHtml(currentUser?.phone||"—")}</p></div><div class="addressCard"><div class="sectionTitle">📍 Адрес по умолчанию</div><div class="addressRow"><input id="profileAddress" placeholder="Ваш адрес"><button class="secondary locationBtn" onclick="useCurrentLocation('profileAddress')">📍 GPS</button></div><button class="goldBtn" style="margin-top:9px;width:100%" onclick="saveDefaultAddress('profileAddress')">Сохранить адрес</button></div><div class="section glass"><div class="sectionTitle">Аккаунт</div><div class="item">🔐 Вход сохранён в браузере и привязан к серверной сессии SERTAL DELIVERY.</div><button class="secondary" onclick="contactAdmin()">💬 Поддержка</button><button class="secondary" onclick="logout()">Выйти</button></div>`; loadDefaultAddress('profileAddress');
+        if(prof) prof.innerHTML=`<div class="buyerWelcome profileHero"><div class="profileAvatar">${escapeHtml((currentUser?.name||"S").slice(0,1).toUpperCase())}</div><div><div class="eyebrow">ЛИЧНЫЙ КАБИНЕТ</div><h2>${escapeHtml(currentUser?.name||"Профиль")}</h2><p>${escapeHtml(currentUser?.phone||"—")}</p></div></div><div class="addressCard"><div class="sectionTitle">📍 Адрес по умолчанию</div><div class="addressRow"><input id="profileAddress" placeholder="Ваш адрес"><button class="secondary locationBtn" onclick="useCurrentLocation('profileAddress')">GPS</button></div><button class="goldBtn" style="margin-top:9px;width:100%" onclick="saveDefaultAddress('profileAddress')">Сохранить адрес</button></div><div class="section glass profileLinks"><div class="sectionTitle">Аккаунт</div><button class="secondary" onclick="contactAdmin()">💬 Поддержка</button><button class="secondary" onclick="logout()">↪ Выйти</button></div>`; loadDefaultAddress('profileAddress');
     }
 }
+function openDirectDelivery(){
+  document.getElementById('directDeliveryModal')?.classList.remove('hidden');
+  loadDefaultAddress('directAddress');
+  const price=document.getElementById('directPrice'); if(price && !price.value) price.value='1500'; updateDirectTotal();
+}
+function closeDirectDelivery(){document.getElementById('directDeliveryModal')?.classList.add('hidden')}
+function updateDirectTotal(){const base=Number(document.getElementById('directPrice')?.value||0); const discount=Number(window.directPromoDiscount||0); const el=document.getElementById('directTotal'); if(el)el.textContent=Math.max(0,base-discount).toFixed(0)+' AMD';}
+async function checkDirectPromo(){
+ const code=document.getElementById('directPromo')?.value.trim(); const total=Number(document.getElementById('directPrice')?.value||0); if(!code){toast('Введите промокод');return;}
+ try{const r=await api('/api/customer/promo/check',{method:'POST',body:JSON.stringify({code,total})}); window.directPromoCode=r.code; window.directPromoDiscount=Number(r.discount||0); document.getElementById('directPromoInfo').innerHTML=`✓ ${escapeHtml(r.code)} · скидка ${Number(r.discount||0).toFixed(0)} AMD`; updateDirectTotal(); toast('Промокод применён');}catch(e){window.directPromoCode='';window.directPromoDiscount=0;document.getElementById('directPromoInfo').textContent=formatError(e.message);updateDirectTotal();}
+}
+async function submitDirectDelivery(){
+ const from=document.getElementById('directFrom')?.value.trim(), address=document.getElementById('directAddress')?.value.trim(), title=document.getElementById('directTitle')?.value.trim();
+ if(!from||!address||!title){toast('Заполните адрес отправления, адрес получателя и описание');return;}
+ try{const r=await api('/api/customer/orders/direct',{method:'POST',body:JSON.stringify({from_address:from,address,recipient_name:document.getElementById('directRecipient')?.value.trim()||'',recipient_phone:document.getElementById('directRecipientPhone')?.value.trim()||'',title,weight_kg:Number(document.getElementById('directWeight')?.value||0),price:Number(document.getElementById('directPrice')?.value||0),promo_code:window.directPromoCode||'',delivery_note:document.getElementById('directNote')?.value.trim()||''})}); closeDirectDelivery(); toast(`✓ Заказ #${r.order_id} создан · ${Number(r.total||0).toFixed(0)} AMD`); window.directPromoCode='';window.directPromoDiscount=0; await loadCustomer(); }catch(e){toast(formatError(e.message));}
+}
+async function previewStandalonePromo(){
+ const code=document.getElementById('standalonePromo')?.value.trim(); if(!code){toast('Введите промокод');return;} const info=document.getElementById('standalonePromoInfo');
+ try{const r=await api('/api/customer/promo/check',{method:'POST',body:JSON.stringify({code,total:10000})}); info.innerHTML=`✓ <b>${escapeHtml(r.code)}</b> активен · на примере 10 000 AMD скидка составит ${Number(r.discount||0).toFixed(0)} AMD. Минимальный заказ: ${Number(r.min_order||0).toFixed(0)} AMD.`;}catch(e){info.textContent=formatError(e.message);}
+}
+
 async function searchGoogle(forced){
     const q=String(forced??document.getElementById("buyerGoogleSearch")?.value??document.getElementById("buyerDiscoverSearch")?.value??"").trim();
     if(!q){toast("Введите запрос для поиска");return;}
