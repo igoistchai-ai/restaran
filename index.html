@@ -178,6 +178,48 @@ width:130px;height:130px;border-radius:50%;
 background:linear-gradient(135deg,var(--accent),var(--accent2));
 font-size:42px
 }
+
+/* =========================================================
+   PREMIUM LOGISTICS CONTROL CENTER — DARK MAP STYLE
+========================================================= */
+:root{
+ --bg:#06070a;--panel:#0b0e13;--panel2:#0f131a;--line:rgba(255,255,255,.075);
+ --text:#f5f7fa;--muted:#737d8d;--lime:#b9ff45;--lime2:#8eea24;
+ --cyan:#45e7ff;--purple:#9d7cff;--orange:#ffb84d;
+ --shadow:0 18px 70px rgba(0,0,0,.45)
+}
+html,body{background:#06070a;color:var(--text)}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 65% -10%,rgba(185,255,69,.055),transparent 28%),radial-gradient(circle at 0% 100%,rgba(69,231,255,.035),transparent 25%);z-index:-1}
+.app{width:min(1500px,100%);padding:18px}
+.glass{background:rgba(10,13,18,.84);border:1px solid var(--line);box-shadow:var(--shadow);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+.topbar{height:66px;padding:10px 14px 10px 16px;border-radius:20px;margin-bottom:14px;background:rgba(8,10,14,.9)}
+.logo{font-size:18px;letter-spacing:.02em}.logoIcon{width:40px;height:40px;border-radius:13px;background:linear-gradient(135deg,var(--lime),#6fd51e);color:#071000}
+.userPill{font-size:12px}
+#adminView>.hero{padding:20px 22px;border-radius:22px;margin-bottom:12px;background:linear-gradient(120deg,rgba(15,19,25,.98),rgba(9,12,16,.92))}
+#adminView>.hero h1{font-size:25px;letter-spacing:-.02em;margin-bottom:4px}#adminView>.hero p{font-size:12px}
+#adminView>.grid{grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+#adminView>.grid .stat{padding:14px 16px;border-radius:18px;background:#0a0d12;border:1px solid var(--line)}
+#adminView>.grid .statLabel{font-size:11px;text-transform:uppercase;letter-spacing:.08em}.statValue{font-size:24px}
+#adminView>.section{padding:0;border-radius:22px;background:transparent;border:0;box-shadow:none}
+.tabs{display:flex;gap:6px;padding:8px;margin:0 0 10px;background:#0a0d12;border:1px solid var(--line);border-radius:18px;overflow:auto}
+.tab{font-size:12px;padding:10px 13px;border-radius:12px;background:transparent;color:#697384;border:1px solid transparent}
+.tab:hover{color:#cbd2dc;background:rgba(255,255,255,.035)}
+.tab.active{color:#071000;background:var(--lime);border-color:var(--lime);box-shadow:0 0 22px rgba(185,255,69,.13)}
+.sectionTitle{font-size:16px;letter-spacing:-.01em}.item{background:#0a0d12;border-color:var(--line);border-radius:17px}.item:hover{border-color:rgba(185,255,69,.18)}
+.primary{background:var(--lime);color:#071000;box-shadow:0 8px 24px rgba(185,255,69,.12)}
+input{background:#090c11;border-color:var(--line);border-radius:13px}input:focus{border-color:rgba(185,255,69,.45);box-shadow:0 0 0 3px rgba(185,255,69,.06)}
+.success{color:var(--lime);background:rgba(185,255,69,.09)}
+#adminMapArea{margin-top:0}.mapDashboard{display:grid;grid-template-columns:340px minmax(0,1fr);height:650px;border:1px solid var(--line);border-radius:22px;overflow:hidden;background:#080b0f;box-shadow:var(--shadow)}
+.mapSide{display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line);background:rgba(8,11,15,.96)}
+.mapSideHead{padding:16px;border-bottom:1px solid var(--line)}.mapSideHead h3{margin:0;font-size:15px}.mapSideHead p{margin:5px 0 0;color:var(--muted);font-size:11px}
+.mapOrderList{overflow:auto;padding:8px}.mapOrder{padding:12px;border:1px solid transparent;border-radius:14px;margin-bottom:6px;background:rgba(255,255,255,.018);cursor:pointer}.mapOrder:hover{background:rgba(255,255,255,.04);border-color:var(--line)}
+.mapOrderTop{display:flex;justify-content:space-between;gap:8px}.mapOrderId{font-weight:900;font-size:12px}.mapOrderTitle{font-size:12px;font-weight:700;margin-top:5px}.mapOrderMeta{font-size:10px;color:var(--muted);line-height:1.55;margin-top:5px}
+.mapCanvas{position:relative;min-width:0}.mapCanvas #adminCityMap{height:100%;width:100%;margin:0;border:0;border-radius:0}.mapOverlay{position:absolute;left:16px;right:16px;top:14px;z-index:500;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none}.mapChip{padding:8px 11px;border:1px solid var(--line);background:rgba(7,10,14,.88);backdrop-filter:blur(14px);border-radius:999px;font-size:10px;color:#b7c0cc}.mapChip b{color:var(--text)}
+.leaflet-container{background:#07090d;border-radius:0}.leaflet-marker-icon{filter:drop-shadow(0 3px 7px rgba(0,0,0,.45))}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#0b0f14;color:#f7f8fb;border:1px solid rgba(255,255,255,.08);box-shadow:0 16px 50px rgba(0,0,0,.55)}.leaflet-popup-content{margin:12px 14px;font-size:12px;line-height:1.55}.leaflet-control-zoom a{background:#0b0f14!important;color:#dfe5ec!important;border-color:var(--line)!important}.leaflet-control-attribution{background:rgba(5,7,10,.75)!important;color:#697384!important}
+.aiChat{background:#080b0f;border:1px solid var(--line);padding:10px;border-radius:16px}.aiBot{background:rgba(185,255,69,.07);border:1px solid rgba(185,255,69,.09)}
+.weightNote{color:#8993a2}
+@media(max-width:900px){#adminView>.grid{grid-template-columns:repeat(2,1fr)}.mapDashboard{grid-template-columns:1fr;height:auto}.mapSide{height:330px;border-right:0;border-bottom:1px solid var(--line)}.mapCanvas{height:500px}}
+@media(max-width:650px){.app{padding:10px;padding-bottom:calc(14px + env(safe-area-inset-bottom))}.topbar{top:4px}.tabs{border-radius:15px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab{flex:0 0 auto;min-height:42px}.grid{grid-template-columns:1fr 1fr!important}.statValue{font-size:21px}.mapDashboard{border-radius:18px}.mapSide{height:285px}.mapCanvas{height:55vh;min-height:390px}.mapOverlay{left:10px;right:10px;top:10px}.mapChip{font-size:9px;padding:7px 9px}.leaflet-control-zoom{display:none}.aiChat{max-height:48vh}.primary,button{min-height:42px}}
 </style>
 </head>
 
@@ -893,6 +935,10 @@ async function boot(){
 
             await loadAdmin();
 
+            // Для админа сразу открываем главный LIVE MAP dashboard
+            const mapTab = document.querySelector('.tab[onclick*="adminTab(\'map\'"]');
+            adminTab("map", mapTab);
+
         }else if(role === "customer"){
 
             show("customerView");
@@ -1200,6 +1246,13 @@ function adminOrderCreateForm(){
             >
 
             <input
+                id="orderRestaurantAddress"
+                placeholder="Адрес ресторана"
+            >
+
+            <div class="weightNote">🔴 Красная метка — ресторан. 🟢 Зелёная — точка доставки.</div>
+
+            <input
                 id="orderPrice"
                 type="number"
                 step="0.01"
@@ -1401,6 +1454,12 @@ async function createOrder(){
         ?.value
         .trim();
 
+    const restaurantAddress =
+        document
+        .getElementById("orderRestaurantAddress")
+        ?.value
+        .trim();
+
     const price =
         Number(
             document
@@ -1442,6 +1501,7 @@ async function createOrder(){
                     phone,
                     title,
                     address,
+                    restaurant_address: restaurantAddress || "",
                     price,
                     weight_kg:weight
                 })
@@ -2195,49 +2255,90 @@ async function loadAdminMap(){
     const area = document.getElementById("adminMapArea");
     if(!area) return;
 
-    const center = [40.1872, 44.5152];
-
-    if(!adminMap){
+    if(!area.dataset.ready){
         area.innerHTML = `
-            <div class="sectionTitle">🗺 Карта заказов — Ереван</div>
-            <div class="itemSub">Новые заказы с координатами появляются на карте автоматически.</div>
-            <div id="adminCityMap"></div>
-        `;
+        <div class="mapDashboard">
+            <aside class="mapSide">
+                <div class="mapSideHead">
+                    <h3>LIVE DISPATCH</h3>
+                    <p>Заказы Еревана обновляются автоматически</p>
+                </div>
+                <div id="mapOrderList" class="mapOrderList">
+                    <div class="empty">Загрузка заказов...</div>
+                </div>
+            </aside>
+            <main class="mapCanvas">
+                <div class="mapOverlay">
+                    <div class="mapChip">📦 <b id="mapOrdersCount">0</b> заказов</div>
+                    <div class="mapChip">🛵 <b id="mapCourierCount">—</b> курьеров</div>
+                    <div class="mapChip">📍 <b>Ереван</b></div>
+                </div>
+                <div id="adminCityMap"></div>
+            </main>
+        </div>`;
 
-        adminMap = L.map("adminCityMap").setView(center, 12);
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            maxZoom: 19,
-            attribution: "&copy; OpenStreetMap"
+        const center = [40.1872, 44.5152];
+        adminMap = L.map("adminCityMap", {zoomControl:true, attributionControl:true, preferCanvas:true}).setView(center, 12);
+        L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+            maxZoom: 20,
+            subdomains: "abcd",
+            attribution: "&copy; OpenStreetMap &copy; CARTO"
         }).addTo(adminMap);
-    }else{
+        area.dataset.ready = "1";
+    } else {
         adminMap.invalidateSize();
     }
 
     try{
-        const orders = await api("/api/admin/map-orders");
+        const payload = await api("/api/admin/map-orders");
+        const list = Array.isArray(payload) ? payload : (payload.orders || []);
+        const couriers = Array.isArray(payload?.couriers) ? payload.couriers : [];
+        const listArea = document.getElementById("mapOrderList");
+        const count = document.getElementById("mapOrdersCount");
+        const courierCount = document.getElementById("mapCourierCount");
+        if(count) count.textContent = list.length;
+        if(courierCount) courierCount.textContent = couriers.length;
+
         adminMapMarkers.forEach(m => adminMap.removeLayer(m));
         adminMapMarkers = [];
 
-        orders.forEach(order => {
-            if(order.lat == null || order.lon == null) return;
+        listArea.innerHTML = list.length ? list.map(order => {
+            const st = statusInfo(order.status);
+            return `<div class="mapOrder" onclick="focusMapOrder(${Number(order.id)})"><div class="mapOrderTop"><span class="mapOrderId">#${Number(order.id)}</span><span class="badge ${st.class}">${st.icon} ${st.text}</span></div><div class="mapOrderTitle">${escapeHtml(order.title || "Заказ")}</div><div class="mapOrderMeta">📍 ${escapeHtml(order.address || "Адрес не указан")}<br>${order.restaurant_address ? `🔴 ${escapeHtml(order.restaurant_address)}<br>` : ""}⚖️ ${Number(order.weight_kg || 0).toFixed(1)} кг${Number(order.courier_bonus_amd || 0) > 0 ? ` · 💵 +${Number(order.courier_bonus_amd)} AMD` : ""}</div></div>`;
+        }).join("") : `<div class="empty">Активных заказов нет</div>`;
 
-            const status = statusInfo(order.status);
-            const marker = L.marker([Number(order.lat), Number(order.lon)])
-                .addTo(adminMap)
-                .bindPopup(`
-                    <b>#${order.id} — ${escapeHtml(order.title)}</b><br>
-                    📍 ${escapeHtml(order.address || "")}<br>
-                    ⚖️ ${Number(order.weight_kg || 0).toFixed(1)} кг<br>
-                    ${status.icon} ${status.text}
-                    ${Number(order.courier_bonus_amd || 0) > 0
-                        ? `<br>💵 +${Number(order.courier_bonus_amd)} AMD курьеру`
-                        : ""}
-                `);
-            adminMapMarkers.push(marker);
+        const restaurantIcon = L.divIcon({className:"", html:'<div style="width:18px;height:18px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#ff3b4d;border:3px solid #fff;box-shadow:0 0 0 3px rgba(255,59,77,.18),0 6px 18px rgba(0,0,0,.55)"></div>', iconSize:[18,18], iconAnchor:[9,18], popupAnchor:[0,-18]});
+        const deliveryIcon = L.divIcon({className:"", html:'<div style="width:16px;height:16px;border-radius:50%;background:#b9ff45;border:3px solid #071000;box-shadow:0 0 0 3px rgba(185,255,69,.16),0 4px 15px rgba(0,0,0,.5)"></div>', iconSize:[16,16], iconAnchor:[8,8]});
+        const courierIcon = L.divIcon({className:"", html:'<div style="width:15px;height:15px;border-radius:50%;background:#55b8ff;border:3px solid #071019;box-shadow:0 0 0 3px rgba(85,184,255,.16),0 4px 15px rgba(0,0,0,.5)"></div>', iconSize:[15,15], iconAnchor:[7.5,7.5]});
+
+        list.forEach(order => {
+            if(order.lat != null && order.lon != null){
+                const status = statusInfo(order.status);
+                const marker = L.marker([Number(order.lat), Number(order.lon)], {icon:deliveryIcon}).addTo(adminMap).bindPopup(`<div style="min-width:190px"><b>#${Number(order.id)} — ${escapeHtml(order.title || "Заказ")}</b><br>📍 ${escapeHtml(order.address || "")}<br>${order.restaurant_address ? `🔴 Ресторан: ${escapeHtml(order.restaurant_address)}<br>` : ""}⚖️ ${Number(order.weight_kg || 0).toFixed(1)} кг<br>${status.icon} ${status.text}${Number(order.courier_bonus_amd || 0)>0 ? `<br>💵 +${Number(order.courier_bonus_amd)} AMD курьеру` : ""}</div>`);
+                marker.__orderId = Number(order.id);
+                adminMapMarkers.push(marker);
+            }
+            if(order.restaurant_lat != null && order.restaurant_lon != null){
+                const rm = L.marker([Number(order.restaurant_lat), Number(order.restaurant_lon)], {icon:restaurantIcon}).addTo(adminMap).bindPopup(`<b>🔴 Ресторан</b><br>${escapeHtml(order.restaurant_address || "")}`);
+                rm.__orderId = Number(order.id);
+                adminMapMarkers.push(rm);
+            }
+        });
+
+        couriers.forEach(c => {
+            if(c.lat == null || c.lon == null) return;
+            L.marker([Number(c.lat), Number(c.lon)], {icon:courierIcon}).addTo(adminMap).bindPopup(`<b>🛵 ${escapeHtml(c.name || "Курьер")}</b><br>${c.online ? "🟢 Онлайн" : "⚪ Офлайн"}`);
         });
     }catch(error){
         toast(formatError(error.message));
     }
+}
+
+function focusMapOrder(id){
+    const marker = adminMapMarkers.find(m => m.__orderId === Number(id));
+    if(!marker || !adminMap) return;
+    adminMap.setView(marker.getLatLng(), 15, {animate:true});
+    marker.openPopup();
 }
 
 async function loadAdminAI(){
