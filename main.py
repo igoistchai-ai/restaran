@@ -13,7 +13,7 @@ import math
 from urllib.parse import parse_qsl, unquote, quote
 from urllib.request import Request, urlopen
 
-from fastapi import FastAPI, HTTPException, Header, WebSocket
+from fastapi import FastAPI, HTTPException, Header, UploadFile, File
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import uvicorn
@@ -45,6 +45,8 @@ ADMIN_IDS = {
 DB_PATH = "restaran.db"
 EXPORT_DIR = Path("exports")
 EXPORT_DIR.mkdir(exist_ok=True)
+UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR.mkdir(exist_ok=True)
 MAX_ORDER_WEIGHT_KG = 8.0
 HEAVY_WEIGHT_KG = 4.0
 HEAVY_ORDER_BONUS_AMD = 600
@@ -121,6 +123,28 @@ def init_db():
         user_id INTEGER NOT NULL,
         role TEXT NOT NULL,
         created_at INTEGER NOT NULL
+    )
+    """)
+
+    conn.execute("""
+    CREATE TABLE IF NOT EXISTS chat_messages(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        sender_role TEXT NOT NULL,
+        text TEXT NOT NULL DEFAULT '',
+        file_name TEXT,
+        created_at INTEGER NOT NULL
+    )
+    """)
+
+    conn.execute("""
+    CREATE TABLE IF NOT EXISTS admin_message_bridge(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        admin_telegram_id INTEGER NOT NULL,
+        telegram_message_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        created_at INTEGER NOT NULL,
+        UNIQUE(admin_telegram_id, telegram_message_id)
     )
     """)
 
@@ -292,19 +316,8 @@ def require_admin(authorization):
 
 
 def cleanup_old_closed():
-    cutoff = int(time.time()) - 300
-
-    conn = db()
-
-    conn.execute("""
-        DELETE FROM orders
-        WHERE status='closed'
-        AND closed_at IS NOT NULL
-        AND closed_at <= ?
-    """, (cutoff,))
-
-    conn.commit()
-    conn.close()
+    # История заказов/логи не удаляются автоматически.
+    return
 
 
 def order_cutoff():
@@ -438,7 +451,6 @@ def validate_telegram_init_data(init_data):
 
 class LoginData(BaseModel):
     phone: str
-    pin: str
 
 
 class AdminWebLogin(BaseModel):
@@ -488,6 +500,10 @@ class LocationData(BaseModel):
     lon: float
 
 
+class ChatMessageData(BaseModel):
+    text: str = ""
+
+
 # =========================================================
 # WEB
 # =========================================================
@@ -508,65 +524,36 @@ async def head_index():
 
 @app.post("/api/login")
 async def login(data: LoginData):
+    # Авторизация только по номеру, заранее добавленному администратором.
     phone = normalize_phone(data.phone)
+    if len(phone) < 5:
+        raise HTTPException(status_code=400, detail="Введите корректный номер телефона")
 
     conn = db()
-
-    rows = conn.execute("""
+    user = conn.execute("""
         SELECT *
         FROM users
         WHERE role IN ('customer','courier')
-        AND active=1
-    """).fetchall()
+          AND active=1
+          AND phone=?
+    """, (phone,)).fetchone()
 
-    user = None
-
-    for row in rows:
-        if phones_equal(row["phone"], phone):
-            user = row
-            break
-
-    if not user or not check_pin(
-        data.pin,
-        user["pin_hash"]
-    ):
+    if not user:
         conn.close()
-        raise HTTPException(
-            status_code=401,
-            detail="Неверный номер или PIN"
-        )
+        raise HTTPException(status_code=401, detail="Этот номер не добавлен администратором")
 
     if user["role"] == "courier":
-        courier = conn.execute(
-            "SELECT * FROM couriers WHERE user_id=?",
-            (user["id"],)
-        ).fetchone()
-
+        courier = conn.execute("SELECT * FROM couriers WHERE user_id=?", (user["id"],)).fetchone()
         if not courier or not courier["approved"]:
             conn.close()
-            raise HTTPException(
-                status_code=403,
-                detail="Курьер ещё не одобрен администратором"
-            )
-
+            raise HTTPException(status_code=403, detail="Курьер ещё не одобрен администратором")
         if not courier["active"]:
             conn.close()
-            raise HTTPException(
-                status_code=403,
-                detail="Курьер деактивирован"
-            )
+            raise HTTPException(status_code=403, detail="Курьер деактивирован")
 
-    token = create_session(
-        user["id"],
-        user["role"]
-    )
-
+    token = create_session(user["id"], user["role"])
     conn.close()
-
-    return {
-        "token": token,
-        "role": user["role"]
-    }
+    return {"token": token, "role": user["role"]}
 
 
 # =========================================================
@@ -769,7 +756,7 @@ async def admin_customers(
         SELECT id,name,phone,active,created_at
         FROM users
         WHERE role='customer'
-        ORDER BY id DESC
+        ORDER BY active DESC, id DESC
     """).fetchall()
 
     conn.close()
@@ -792,8 +779,6 @@ async def admin_create_customer(
             detail="Неверный номер телефона"
         )
 
-    pin = new_pin()
-
     conn = db()
 
     try:
@@ -811,8 +796,8 @@ async def admin_create_customer(
         """, (
             data.name.strip(),
             phone,
-            hash_pin(pin),
-            pin,
+            "",
+            "",
             "customer",
             int(time.time())
         ))
@@ -823,7 +808,6 @@ async def admin_create_customer(
             "id": cur.lastrowid,
             "name": data.name.strip(),
             "phone": phone,
-            "pin": pin
         }
 
     except sqlite3.IntegrityError:
@@ -834,6 +818,30 @@ async def admin_create_customer(
 
     finally:
         conn.close()
+
+
+# =========================================================
+# CUSTOMER DEACTIVATION — SOFT DELETE
+# =========================================================
+
+@app.post("/api/admin/customers/{customer_id}/delete")
+async def admin_delete_customer(customer_id: int, authorization: str = Header(default="")):
+    require_admin(authorization)
+    conn = db()
+    customer = conn.execute(
+        "SELECT id FROM users WHERE id=? AND role='customer'",
+        (customer_id,)
+    ).fetchone()
+    if not customer:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Клиент не найден")
+
+    # Доступ закрываем, но заказы, чат и логи оставляем.
+    conn.execute("UPDATE users SET active=0 WHERE id=?", (customer_id,))
+    conn.execute("DELETE FROM sessions WHERE user_id=?", (customer_id,))
+    conn.commit()
+    conn.close()
+    return {"ok": True, "logs_preserved": True}
 
 
 # =========================================================
@@ -878,8 +886,8 @@ async def admin_create_courier(
     require_admin(authorization)
 
     phone = normalize_phone(data.phone)
-    pin = new_pin()
-
+    if len(phone) < 5:
+        raise HTTPException(status_code=400, detail="Неверный номер телефона")
     conn = db()
 
     try:
@@ -898,8 +906,8 @@ async def admin_create_courier(
         """, (
             data.name.strip(),
             phone,
-            hash_pin(pin),
-            pin,
+            "",
+            "",
             "courier",
             int(time.time())
         ))
@@ -922,7 +930,6 @@ async def admin_create_courier(
             "id": user_id,
             "name": data.name.strip(),
             "phone": phone,
-            "pin": pin
         }
 
     except sqlite3.IntegrityError:
@@ -1279,23 +1286,9 @@ class RegisterData(BaseModel):
     pin: str
 
 @app.post("/api/register")
-async def register_customer(data: RegisterData):
-    name, phone, pin = data.name.strip(), normalize_phone(data.phone), str(data.pin).strip()
-    if len(name) < 2 or len(phone) < 5 or not pin.isdigit() or not 4 <= len(pin) <= 8:
-        raise HTTPException(status_code=400, detail="Введите имя, телефон и PIN (4–8 цифр)")
-    conn = db()
-    try:
-        cur = conn.execute("""
-            INSERT INTO users(name,phone,pin_hash,pin_plain,role,created_at,active)
-            VALUES(?,?,?,?, 'customer',?,1)
-        """, (name, phone, hash_pin(pin), pin, int(time.time())))
-        conn.commit()
-        token = create_session(cur.lastrowid, "customer")
-        return {"ok": True, "token": token, "role": "customer"}
-    except sqlite3.IntegrityError:
-        raise HTTPException(status_code=400, detail="Клиент с таким номером уже зарегистрирован")
-    finally:
-        conn.close()
+async def register_disabled():
+    raise HTTPException(status_code=403, detail="Регистрация отключена. Номер добавляет администратор.")
+
 
 @app.get("/api/customer/history")
 async def customer_history(authorization: str = Header(default="")):
@@ -1427,6 +1420,30 @@ async def admin_export_xlsx(authorization: str = Header(default="")):
     path = export_orders_xlsx()
     return FileResponse(path, filename=path.name,
                         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+@app.post("/api/admin/export-xlsx/telegram")
+async def admin_export_xlsx_telegram(authorization: str = Header(default="")):
+    require_admin(authorization)
+    path = export_orders_xlsx()
+    if not telegram_app:
+        raise HTTPException(status_code=503, detail="Telegram-бот ещё не запущен")
+    sent = 0
+    for admin_id in ADMIN_IDS:
+        try:
+            with open(path, "rb") as fh:
+                await telegram_app.bot.send_document(
+                    chat_id=admin_id,
+                    document=fh,
+                    filename=path.name,
+                    caption=f"📊 RESTARAN · выгрузка заказов · {datetime.now().strftime('%d.%m.%Y %H:%M')}"
+                )
+            sent += 1
+        except Exception as e:
+            print("Telegram export:", admin_id, e)
+    if not sent:
+        raise HTTPException(status_code=502, detail="Не удалось отправить файл администраторам")
+    return {"ok": True, "sent": sent, "filename": path.name}
+
 
 async def export_loop():
     while True:
@@ -2011,6 +2028,100 @@ async def courier_location(
 
 
 # =========================================================
+# SUPPORT CHAT
+# =========================================================
+
+def add_chat_message(user_id, sender_role, text="", file_name=None):
+    conn = db()
+    cur = conn.execute("""
+        INSERT INTO chat_messages(user_id,sender_role,text,file_name,created_at)
+        VALUES(?,?,?,?,?)
+    """, (user_id, sender_role, text or "", file_name, int(time.time())))
+    conn.commit()
+    message_id = cur.lastrowid
+    conn.close()
+    return message_id
+
+
+@app.get("/api/chat/messages")
+async def get_chat_messages(authorization: str = Header(default="")):
+    user = require_user(authorization)
+    conn = db()
+    rows = conn.execute("""
+        SELECT id,user_id,sender_role,text,file_name,created_at
+        FROM chat_messages
+        WHERE user_id=?
+        ORDER BY id ASC
+    """, (user["user_id"],)).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+async def notify_admins_about_user_message(user, text, file_path=None, file_name=None):
+    if not telegram_app:
+        return
+    body = (
+        f"💬 RESTARAN\n"
+        f"👤 {user['name']}\n"
+        f"📱 {user['phone']}\n"
+        f"🆔 user_id: {user['user_id']}\n\n"
+        f"{text or '📎 Файл'}"
+    )
+    for admin_id in ADMIN_IDS:
+        try:
+            if file_path:
+                with open(file_path, "rb") as fh:
+                    sent = await telegram_app.bot.send_document(
+                        chat_id=admin_id,
+                        document=fh,
+                        filename=file_name or Path(file_path).name,
+                        caption=body
+                    )
+            else:
+                sent = await telegram_app.bot.send_message(chat_id=admin_id, text=body)
+
+            conn = db()
+            conn.execute("""
+                INSERT OR IGNORE INTO admin_message_bridge(
+                    admin_telegram_id,telegram_message_id,user_id,created_at
+                ) VALUES(?,?,?,?)
+            """, (admin_id, sent.message_id, user["user_id"], int(time.time())))
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print("Notify admin:", admin_id, e)
+
+
+@app.post("/api/chat/send")
+async def send_chat_message(data: ChatMessageData, authorization: str = Header(default="")):
+    user = require_user(authorization)
+    text = (data.text or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Введите сообщение")
+    msg_id = add_chat_message(user["user_id"], user["role"], text)
+    await notify_admins_about_user_message(user, text)
+    return {"ok": True, "id": msg_id}
+
+
+@app.post("/api/chat/upload")
+async def upload_chat_file(file: UploadFile = File(...), authorization: str = Header(default="")):
+    user = require_user(authorization)
+    original_name = Path(file.filename or "file").name
+    safe_name = re.sub(r"[^A-Za-z0-9А-Яа-я._-]+", "_", original_name)[:180]
+    path = UPLOAD_DIR / f"{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{safe_name}"
+    with open(path, "wb") as out:
+        while True:
+            chunk = await file.read(1024 * 1024)
+            if not chunk:
+                break
+            out.write(chunk)
+
+    msg_id = add_chat_message(user["user_id"], user["role"], "📎 Файл", original_name)
+    await notify_admins_about_user_message(user, "📎 Файл из веб-чата", str(path), original_name)
+    return {"ok": True, "id": msg_id, "file_name": original_name}
+
+
+# =========================================================
 # TELEGRAM BOT
 # =========================================================
 
@@ -2040,14 +2151,9 @@ async def start_command(
     )
 
 
-async def random_command(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
+async def random_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "📱 Отправьте свой Telegram-контакт.\n\n"
-        "Нажмите кнопку скрепки → Контакт."
+        "📱 Вход в RESTARAN выполняется по номеру телефона, который добавил администратор."
     )
 
 
@@ -2099,6 +2205,35 @@ async def contact_handler(
         f"PIN: {row['pin_plain']}\n\n"
         "Используйте эти данные для входа."
     )
+
+
+async def admin_reply_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    message = update.message
+    if not message or not message.text:
+        return
+    admin_id = update.effective_user.id
+    if admin_id not in ADMIN_IDS:
+        return
+
+    reply = message.reply_to_message
+    if not reply:
+        await message.reply_text("↩️ Ответьте на сообщение клиента/курьера из RESTARAN.")
+        return
+
+    conn = db()
+    bridge = conn.execute("""
+        SELECT user_id
+        FROM admin_message_bridge
+        WHERE admin_telegram_id=? AND telegram_message_id=?
+    """, (admin_id, reply.message_id)).fetchone()
+    conn.close()
+
+    if not bridge:
+        await message.reply_text("⚠️ Не найден получатель. Ответьте на сообщение, которое пришло из веб-чата.")
+        return
+
+    add_chat_message(bridge["user_id"], "admin", message.text.strip())
+    await message.reply_text("✅ Ответ отправлен в веб-чат.")
 
 
 async def location_handler(
@@ -2196,6 +2331,13 @@ async def startup():
         )
     )
 
+    telegram_app.add_handler(
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND,
+            admin_reply_handler
+        )
+    )
+
     await telegram_app.initialize()
     await telegram_app.start()
     await telegram_app.updater.start_polling()
@@ -2231,4 +2373,4 @@ if __name__ == "__main__":
         app,
         host="0.0.0.0",
         port=int(os.getenv("PORT", "10000"))
-    )
+            )
