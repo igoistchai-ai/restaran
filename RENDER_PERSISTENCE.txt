@@ -1,0 +1,7 @@
+SERTAL DELIVERY deployment
+
+For SQLite data persistence on Render, attach a Persistent Disk and mount it at /var/data.
+The backend defaults to /var/data/sertal_delivery.db when /var/data exists.
+If an older ./restaran.db exists on first startup, the backend migrates it into the persistent database path.
+
+For stronger multi-instance production storage, use Render Postgres instead of SQLite.
