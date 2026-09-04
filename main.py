@@ -44,6 +44,7 @@ WEB_APP_URL = os.getenv("RENDER_EXTERNAL_URL", "").rstrip("/")
 ADMIN_IDS = {
     8357023784,
     7003441441,
+    8861979502,
 }
 
 # Separate personal Web App logins for administrators.
