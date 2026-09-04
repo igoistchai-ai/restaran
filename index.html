@@ -220,6 +220,18 @@ input{background:#090c11;border-color:var(--line);border-radius:13px}input:focus
 .weightNote{color:#8993a2}
 @media(max-width:900px){#adminView>.grid{grid-template-columns:repeat(2,1fr)}.mapDashboard{grid-template-columns:1fr;height:auto}.mapSide{height:330px;border-right:0;border-bottom:1px solid var(--line)}.mapCanvas{height:500px}}
 @media(max-width:650px){.app{padding:10px;padding-bottom:calc(14px + env(safe-area-inset-bottom))}.topbar{top:4px}.tabs{border-radius:15px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab{flex:0 0 auto;min-height:42px}.grid{grid-template-columns:1fr 1fr!important}.statValue{font-size:21px}.mapDashboard{border-radius:18px}.mapSide{height:285px}.mapCanvas{height:55vh;min-height:390px}.mapOverlay{left:10px;right:10px;top:10px}.mapChip{font-size:9px;padding:7px 9px}.leaflet-control-zoom{display:none}.aiChat{max-height:48vh}.primary,button{min-height:42px}}
+
+/* === PREMIUM DISPATCH MAP === */
+#adminMapArea{margin-bottom:14px}
+.mapDashboard{height:610px;grid-template-columns:290px minmax(0,1fr)!important}
+.mapSideHead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.liveDot{width:8px;height:8px;border-radius:50%;background:var(--lime);box-shadow:0 0 14px var(--lime);display:inline-block;margin-right:6px}
+.mapToolbar{position:absolute;right:16px;top:14px;z-index:500;display:flex;gap:7px;flex-wrap:wrap}
+.mapTool{pointer-events:auto;padding:9px 11px;border:1px solid var(--line);background:rgba(7,10,14,.9);color:#dfe5ec;border-radius:12px;font-size:10px;font-weight:900;backdrop-filter:blur(14px)}
+.mapTool:hover{border-color:rgba(185,255,69,.35);color:var(--lime)}
+.form input{min-height:46px}
+.form button{transition:transform .15s ease}.form button:active{transform:scale(.98)}
+@media(max-width:650px){.mapDashboard{height:auto}.mapSide{height:280px}.mapCanvas{height:55vh;min-height:390px}}
 </style>
 </head>
 
@@ -250,9 +262,8 @@ input{background:#090c11;border-color:var(--line);border-radius:13px}input:focus
 
 <input id="loginPin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN">
 
-<button class="primary" onclick="login()">
-Войти
-</button>
+<button class="primary" onclick="login()">Войти</button>
+<button class="secondary" onclick="showRegister()">📝 Регистрация клиента</button>
 
 </div>
 
@@ -316,6 +327,8 @@ RESTARAN
 
 <div class="section glass">
 
+<div id="adminMapArea"></div>
+
 <div class="tabs">
 
 <button class="tab active" onclick="adminTab('orders',this)">
@@ -334,13 +347,8 @@ RESTARAN
 📊 Статистика
 </button>
 
-<button class="tab" onclick="adminTab('map',this)">
-🗺 Карта
-</button>
-
-<button class="tab" onclick="adminTab('ai',this)">
-🤖 ИИ
-</button>
+<button class="tab" onclick="adminTab('ai',this)">🤖 ИИ</button>
+<button class="tab" onclick="downloadExcel()">📊 Excel A4</button>
 
 </div>
 
@@ -348,7 +356,6 @@ RESTARAN
 <div id="adminCustomersArea" class="hidden"></div>
 <div id="adminCouriersArea" class="hidden"></div>
 <div id="adminStatsArea" class="hidden"></div>
-<div id="adminMapArea" class="hidden"></div>
 <div id="adminAiArea" class="hidden"></div>
 
 </div>
@@ -365,6 +372,10 @@ RESTARAN
 <p>Здесь отображаются ваши текущие и прошлые заказы.</p>
 </div>
 
+<div class="itemActions" style="margin-bottom:10px">
+  <button class="secondary" onclick="loadCustomerHistory()">🕘 История</button>
+  <button class="secondary" onclick="contactAdmin()">💬 Связь с админом</button>
+</div>
 <div id="customerOrdersArea" class="section glass"></div>
 
 <div class="section glass game">
@@ -422,6 +433,11 @@ onclick="toggleCourierOnline()">
 
 </div>
 
+<div class="itemActions" style="margin-bottom:10px">
+  <button class="secondary" onclick="loadCourierSchedule()">🗓 График</button>
+  <button class="secondary" onclick="loadCourierHistory()">🕘 История</button>
+  <button class="secondary" onclick="contactAdmin()">💬 Админ</button>
+</div>
 <div id="courierOrdersArea" class="section glass"></div>
 
 </div>
@@ -436,6 +452,8 @@ onclick="toggleCourierOnline()">
 ========================================================= */
 
 const tg = window.Telegram?.WebApp;
+
+const CARTO_BASEMAP_KEY = "cb1_2wl7_1_a3dda0328bfb85a1b22c9fac";
 
 if(tg){
     tg.ready();
@@ -786,6 +804,69 @@ function showAdminError(message){
 }
 
 
+function showRegister(){document.getElementById("registerBox")?.classList.remove("hidden")}
+function hideRegister(){document.getElementById("registerBox")?.classList.add("hidden")}
+async function registerCustomer(){
+  const name=document.getElementById("regName")?.value.trim();
+  const phone=document.getElementById("regPhone")?.value.trim();
+  const pin=document.getElementById("regPin")?.value.trim();
+  if(!name||!phone||!pin){toast("Заполните все поля");return}
+  try{
+    const r=await api("/api/register",{method:"POST",body:JSON.stringify({name,phone,pin})});
+    token=r.token; localStorage.setItem("restaran_token",token); hideRegister();
+    await bootAfterLogin(); toast("✅ Аккаунт создан");
+  }catch(e){toast(formatError(e.message))}
+}
+async function downloadExcel(){
+  try{
+    const r=await fetch("/api/admin/export-xlsx",{headers:{Authorization:"Bearer "+token}});
+    if(!r.ok) throw new Error("Не удалось создать Excel");
+    const blob=await r.blob(), url=URL.createObjectURL(blob), a=document.createElement("a");
+    a.href=url; a.download="orders_A4.xlsx"; a.click(); URL.revokeObjectURL(url);
+    toast("📊 Excel сформирован");
+  }catch(e){toast(formatError(e.message))}
+}
+async function contactAdmin(){
+  try{
+    const d=await api("/api/contact-admin");
+    const id=d.admins?.[0]?.telegram_id;
+    if(id){ window.open("tg://user?id="+id,"_blank"); return; }
+  }catch(e){}
+  toast("Связь с админом доступна через Telegram");
+}
+async function loadCustomerHistory(){
+  try{ const d=await api("/api/customer/history"); renderCustomerOrders(d); }
+  catch(e){toast(formatError(e.message))}
+}
+async function loadCourierHistory(){
+  try{ const d=await api("/api/courier/history"); renderCourierOrders(d); }
+  catch(e){toast(formatError(e.message))}
+}
+async function loadCourierSchedule(){
+  try{
+    const d=await api("/api/courier/schedule");
+    const area=document.getElementById("courierOrdersArea");
+    area.innerHTML='<div class="sectionTitle">🗓 График / маршруты</div>'+
+      (d.length?d.map(o=>`<div class="item"><b>#${o.id} · ${escapeHtml(o.title)}</b><div class="itemSub">До: ${escapeHtml(o.delivery_deadline||"—")} · Маршрут: ${o.route_no||"—"}<br>📍 ${escapeHtml(o.address)}</div></div>`).join(""):'<div class="empty">Активных маршрутов нет</div>');
+  }catch(e){toast(formatError(e.message))}
+}
+
+async function bootAfterLogin(){ return boot(); }
+function renderCustomerOrders(list){
+  const area=document.getElementById("customerOrdersArea");
+  if(!area)return;
+  area.innerHTML=`<div class="sectionTitle">Заказы</div>`+
+    (Array.isArray(list)&&list.length ? list.map(customerOrder).join("") :
+    `<div class="empty">Заказов пока нет</div>`);
+}
+function renderCourierOrders(list){
+  const area=document.getElementById("courierOrdersArea");
+  if(!area)return;
+  area.innerHTML=`<div class="sectionTitle">История заказов</div>`+
+    (Array.isArray(list)&&list.length ? list.map(courierOrder).join("") :
+    `<div class="empty">История пуста</div>`);
+}
+
 /* =========================================================
    LOGIN CUSTOMER / COURIER
 ========================================================= */
@@ -1024,7 +1105,8 @@ async function loadAdmin(){
 
     await Promise.all([
         loadAdminStats(),
-        loadAdminOrders()
+        loadAdminOrders(),
+        loadAdminMap()
     ]);
 }
 
@@ -1245,10 +1327,18 @@ function adminOrderCreateForm(){
                 placeholder="Адрес доставки"
             >
 
-            <input
-                id="orderRestaurantAddress"
-                placeholder="Адрес ресторана"
-            >
+            <input id="orderRestaurantName" placeholder="Название ресторана">
+            <input id="orderRestaurantAddress" placeholder="Адрес ресторана">
+            <input id="orderDeadline" placeholder="Доставить до, например 00:50">
+            <input id="orderFloor" placeholder="Этаж">
+            <input id="orderEntrance" placeholder="Подъезд">
+            <input id="orderApartment" placeholder="Кв/офис">
+            <input id="orderIntercom" placeholder="Домофон">
+            <input id="orderRecipient" placeholder="Получатель, например Алексей">
+            <input id="orderNote" placeholder="Комментарий: Позвоните, я встречу">
+            <input id="orderPayment" placeholder="Оплата: Без сдачи">
+            <input id="orderChange" type="number" min="0" step="1" placeholder="Сдача">
+            <input id="orderItems" placeholder="Состав: 1 × Двойной цыпленок 30 см">
 
             <div class="weightNote">🔴 Красная метка — ресторан. 🟢 Зелёная — точка доставки.</div>
 
@@ -1502,8 +1592,19 @@ async function createOrder(){
                     title,
                     address,
                     restaurant_address: restaurantAddress || "",
+                    restaurant_name: document.getElementById("orderRestaurantName")?.value.trim() || "",
                     price,
-                    weight_kg:weight
+                    weight_kg:weight,
+                    delivery_deadline: document.getElementById("orderDeadline")?.value.trim() || "",
+                    floor: document.getElementById("orderFloor")?.value.trim() || "",
+                    entrance: document.getElementById("orderEntrance")?.value.trim() || "",
+                    apartment: document.getElementById("orderApartment")?.value.trim() || "",
+                    intercom: document.getElementById("orderIntercom")?.value.trim() || "",
+                    recipient_name: document.getElementById("orderRecipient")?.value.trim() || "",
+                    delivery_note: document.getElementById("orderNote")?.value.trim() || "",
+                    payment_note: document.getElementById("orderPayment")?.value.trim() || "",
+                    items_text: document.getElementById("orderItems")?.value.trim() || "",
+                    change_amount: Number(document.getElementById("orderChange")?.value || 0)
                 })
             }
         );
@@ -1812,14 +1913,7 @@ async function createCustomer(){
                     })
                 }
             );
-
-
-        alert(
-            `Клиент создан!\n\n` +
-            `Имя: ${data.name}\n` +
-            `Телефон: ${data.phone}\n` +
-            `PIN: ${data.pin}`
-        );
+        toast(`✅ Клиент ${data.name} создан · PIN: ${data.pin}`);
 
 
         await loadAdminCustomers();
@@ -2069,15 +2163,7 @@ async function createCourier(){
                     })
                 }
             );
-
-
-        alert(
-            `Курьер создан!\n\n` +
-            `Имя: ${data.name}\n` +
-            `Телефон: ${data.phone}\n` +
-            `PIN: ${data.pin}\n\n` +
-            `После этого его нужно одобрить.`
-        );
+        toast(`✅ Курьер ${data.name} создан · PIN: ${data.pin} · требуется одобрение`);
 
 
         await loadAdminCouriers();
@@ -2250,96 +2336,63 @@ async function loadAdminStatsPage(){
 
 let adminMap = null;
 let adminMapMarkers = [];
+let courierMapMarkers = new Map();
+let mapRefreshTimer = null;
+
+function initAdminMap(){
+    const el=document.getElementById("adminCityMap");
+    if(!el||adminMap)return;
+    adminMap=L.map(el,{zoomControl:true,attributionControl:true,preferCanvas:true}).setView([40.1872,44.5152],12);
+    L.tileLayer(`https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png?key=${encodeURIComponent(CARTO_BASEMAP_KEY)}`,{
+        maxZoom:20,subdomains:"abcd",attribution:"&copy; OpenStreetMap &copy; CARTO"
+    }).addTo(adminMap);
+}
 
 async function loadAdminMap(){
-    const area = document.getElementById("adminMapArea");
-    if(!area) return;
-
+    const area=document.getElementById("adminMapArea");
+    if(!area)return;
     if(!area.dataset.ready){
-        area.innerHTML = `
-        <div class="mapDashboard">
+        area.innerHTML=`<div class="mapDashboard">
             <aside class="mapSide">
-                <div class="mapSideHead">
-                    <h3>LIVE DISPATCH</h3>
-                    <p>Заказы Еревана обновляются автоматически</p>
-                </div>
-                <div id="mapOrderList" class="mapOrderList">
-                    <div class="empty">Загрузка заказов...</div>
-                </div>
+                <div class="mapSideHead"><div><h3><span class="liveDot"></span>LIVE DISPATCH</h3><p>Курьеры и заказы в реальном времени</p></div><span class="badge green">LIVE</span></div>
+                <div id="mapOrderList" class="mapOrderList"><div class="empty">Загрузка...</div></div>
             </aside>
             <main class="mapCanvas">
-                <div class="mapOverlay">
-                    <div class="mapChip">📦 <b id="mapOrdersCount">0</b> заказов</div>
-                    <div class="mapChip">🛵 <b id="mapCourierCount">—</b> курьеров</div>
-                    <div class="mapChip">📍 <b>Ереван</b></div>
-                </div>
+                <div class="mapOverlay"><div class="mapChip">📦 <b id="mapOrdersCount">0</b> заказов</div><div class="mapChip">🛵 <b id="mapCourierCount">0</b> курьеров</div><div class="mapChip">📍 <b>Ереван</b></div></div>
+                <div class="mapToolbar"><button class="mapTool" type="button" onclick="centerYerevan()">⌖ Ереван</button><button class="mapTool" type="button" onclick="refreshLiveMap()">↻ Обновить</button></div>
                 <div id="adminCityMap"></div>
-            </main>
-        </div>`;
+            </main></div>`;
+        initAdminMap();area.dataset.ready="1";setTimeout(()=>adminMap?.invalidateSize(),80);
+    }else adminMap?.invalidateSize();
+    await refreshLiveMap();
+    if(!mapRefreshTimer)mapRefreshTimer=setInterval(()=>{if(document.visibilityState!=="hidden")refreshLiveMap()},5000);
+}
 
-        const center = [40.1872, 44.5152];
-        adminMap = L.map("adminCityMap", {zoomControl:true, attributionControl:true, preferCanvas:true}).setView(center, 12);
-        L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-            maxZoom: 20,
-            subdomains: "abcd",
-            attribution: "&copy; OpenStreetMap &copy; CARTO"
-        }).addTo(adminMap);
-        area.dataset.ready = "1";
-    } else {
-        adminMap.invalidateSize();
-    }
-
+async function refreshLiveMap(){
+    if(!adminMap)return;
     try{
-        const payload = await api("/api/admin/map-orders");
-        const list = Array.isArray(payload) ? payload : (payload.orders || []);
-        const couriers = Array.isArray(payload?.couriers) ? payload.couriers : [];
-        const listArea = document.getElementById("mapOrderList");
-        const count = document.getElementById("mapOrdersCount");
-        const courierCount = document.getElementById("mapCourierCount");
-        if(count) count.textContent = list.length;
-        if(courierCount) courierCount.textContent = couriers.length;
-
-        adminMapMarkers.forEach(m => adminMap.removeLayer(m));
-        adminMapMarkers = [];
-
-        listArea.innerHTML = list.length ? list.map(order => {
-            const st = statusInfo(order.status);
-            return `<div class="mapOrder" onclick="focusMapOrder(${Number(order.id)})"><div class="mapOrderTop"><span class="mapOrderId">#${Number(order.id)}</span><span class="badge ${st.class}">${st.icon} ${st.text}</span></div><div class="mapOrderTitle">${escapeHtml(order.title || "Заказ")}</div><div class="mapOrderMeta">📍 ${escapeHtml(order.address || "Адрес не указан")}<br>${order.restaurant_address ? `🔴 ${escapeHtml(order.restaurant_address)}<br>` : ""}⚖️ ${Number(order.weight_kg || 0).toFixed(1)} кг${Number(order.courier_bonus_amd || 0) > 0 ? ` · 💵 +${Number(order.courier_bonus_amd)} AMD` : ""}</div></div>`;
-        }).join("") : `<div class="empty">Активных заказов нет</div>`;
-
-        const restaurantIcon = L.divIcon({className:"", html:'<div style="width:18px;height:18px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#ff3b4d;border:3px solid #fff;box-shadow:0 0 0 3px rgba(255,59,77,.18),0 6px 18px rgba(0,0,0,.55)"></div>', iconSize:[18,18], iconAnchor:[9,18], popupAnchor:[0,-18]});
-        const deliveryIcon = L.divIcon({className:"", html:'<div style="width:16px;height:16px;border-radius:50%;background:#b9ff45;border:3px solid #071000;box-shadow:0 0 0 3px rgba(185,255,69,.16),0 4px 15px rgba(0,0,0,.5)"></div>', iconSize:[16,16], iconAnchor:[8,8]});
-        const courierIcon = L.divIcon({className:"", html:'<div style="width:15px;height:15px;border-radius:50%;background:#55b8ff;border:3px solid #071019;box-shadow:0 0 0 3px rgba(85,184,255,.16),0 4px 15px rgba(0,0,0,.5)"></div>', iconSize:[15,15], iconAnchor:[7.5,7.5]});
-
-        list.forEach(order => {
-            if(order.lat != null && order.lon != null){
-                const status = statusInfo(order.status);
-                const marker = L.marker([Number(order.lat), Number(order.lon)], {icon:deliveryIcon}).addTo(adminMap).bindPopup(`<div style="min-width:190px"><b>#${Number(order.id)} — ${escapeHtml(order.title || "Заказ")}</b><br>📍 ${escapeHtml(order.address || "")}<br>${order.restaurant_address ? `🔴 Ресторан: ${escapeHtml(order.restaurant_address)}<br>` : ""}⚖️ ${Number(order.weight_kg || 0).toFixed(1)} кг<br>${status.icon} ${status.text}${Number(order.courier_bonus_amd || 0)>0 ? `<br>💵 +${Number(order.courier_bonus_amd)} AMD курьеру` : ""}</div>`);
-                marker.__orderId = Number(order.id);
-                adminMapMarkers.push(marker);
-            }
-            if(order.restaurant_lat != null && order.restaurant_lon != null){
-                const rm = L.marker([Number(order.restaurant_lat), Number(order.restaurant_lon)], {icon:restaurantIcon}).addTo(adminMap).bindPopup(`<b>🔴 Ресторан</b><br>${escapeHtml(order.restaurant_address || "")}`);
-                rm.__orderId = Number(order.id);
-                adminMapMarkers.push(rm);
-            }
+        const payload=await api("/api/admin/map-orders");
+        const orders=Array.isArray(payload)?payload:(payload.orders||[]);
+        const couriers=Array.isArray(payload?.couriers)?payload.couriers:[];
+        const listArea=document.getElementById("mapOrderList");
+        document.getElementById("mapOrdersCount")?.replaceChildren(document.createTextNode(String(orders.length)));
+        document.getElementById("mapCourierCount")?.replaceChildren(document.createTextNode(String(couriers.length)));
+        adminMapMarkers.forEach(m=>adminMap.removeLayer(m));adminMapMarkers=[];
+        const restaurantIcon=L.divIcon({className:"",html:'<div style="width:18px;height:18px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#ff3b4d;border:3px solid #fff;box-shadow:0 0 0 3px rgba(255,59,77,.18),0 6px 18px rgba(0,0,0,.55)"></div>',iconSize:[18,18],iconAnchor:[9,18]});
+        const deliveryIcon=L.divIcon({className:"",html:'<div style="width:16px;height:16px;border-radius:50%;background:#b9ff45;border:3px solid #071000;box-shadow:0 0 0 3px rgba(185,255,69,.16),0 4px 15px rgba(0,0,0,.5)"></div>',iconSize:[16,16],iconAnchor:[8,8]});
+        const courierIcon=L.divIcon({className:"",html:'<div style="width:18px;height:18px;border-radius:50%;background:#55b8ff;border:3px solid #071019;box-shadow:0 0 0 4px rgba(85,184,255,.16),0 4px 18px rgba(0,0,0,.5)"></div>',iconSize:[18,18],iconAnchor:[9,9]});
+        if(listArea)listArea.innerHTML=orders.length?orders.map(o=>{const st=statusInfo(o.status);return `<div class="mapOrder" onclick="focusMapOrder(${Number(o.id)})"><div class="mapOrderTop"><span class="mapOrderId">#${Number(o.id)}</span><span class="badge ${st.class}">${st.icon} ${st.text}</span></div><div class="mapOrderTitle">${escapeHtml(o.title||"Заказ")}</div><div class="mapOrderMeta">📍 ${escapeHtml(o.address||"Адрес не указан")}<br>🛵 ${escapeHtml(o.courier_name||"Не назначен")}</div></div>`}).join(""):"<div class=\"empty\">Активных заказов нет</div>";
+        orders.forEach(o=>{
+            if(o.lat!=null&&o.lon!=null){const m=L.marker([+o.lat,+o.lon],{icon:deliveryIcon}).addTo(adminMap).bindPopup(`<b>#${+o.id} — ${escapeHtml(o.title||"Заказ")}</b><br>📍 ${escapeHtml(o.address||"")}<br>${statusInfo(o.status).icon} ${statusInfo(o.status).text}`);m.__orderId=+o.id;adminMapMarkers.push(m)}
+            if(o.restaurant_lat!=null&&o.restaurant_lon!=null){const m=L.marker([+o.restaurant_lat,+o.restaurant_lon],{icon:restaurantIcon}).addTo(adminMap).bindPopup(`<b>🔴 Ресторан</b><br>${escapeHtml(o.restaurant_address||"")}`);m.__orderId=+o.id;adminMapMarkers.push(m)}
         });
-
-        couriers.forEach(c => {
-            if(c.lat == null || c.lon == null) return;
-            L.marker([Number(c.lat), Number(c.lon)], {icon:courierIcon}).addTo(adminMap).bindPopup(`<b>🛵 ${escapeHtml(c.name || "Курьер")}</b><br>${c.online ? "🟢 Онлайн" : "⚪ Офлайн"}`);
-        });
-    }catch(error){
-        toast(formatError(error.message));
-    }
+        const ids=new Set();
+        couriers.forEach(c=>{if(c.lat==null||c.lon==null)return;const id=+c.id;ids.add(id);let m=courierMapMarkers.get(id);if(!m){m=L.marker([+c.lat,+c.lon],{icon:courierIcon}).addTo(adminMap);courierMapMarkers.set(id,m)}m.setLatLng([+c.lat,+c.lon]).bindPopup(`<b>🛵 ${escapeHtml(c.name||"Курьер")}</b><br>${c.online?"🟢 Онлайн":"⚪ Офлайн"}<br><small>GPS обновляется автоматически</small>`) });
+        for(const [id,m] of courierMapMarkers)if(!ids.has(id)){adminMap.removeLayer(m);courierMapMarkers.delete(id)}
+    }catch(e){console.log("Live map:",e?.message||e)}
 }
-
-function focusMapOrder(id){
-    const marker = adminMapMarkers.find(m => m.__orderId === Number(id));
-    if(!marker || !adminMap) return;
-    adminMap.setView(marker.getLatLng(), 15, {animate:true});
-    marker.openPopup();
-}
+function centerYerevan(){adminMap?.setView([40.1872,44.5152],12,{animate:true})}
+function focusMapOrder(id){const m=adminMapMarkers.find(x=>x.__orderId===Number(id));if(!m||!adminMap)return;adminMap.setView(m.getLatLng(),15,{animate:true});m.openPopup()}
 
 async function loadAdminAI(){
     const area = document.getElementById("adminAiArea");
@@ -2352,8 +2405,8 @@ async function loadAdminAI(){
             <div class="aiMsg aiBot">Привет! Спроси, например: «Сколько сейчас заказов?» или «Какие правила для второго заказа?»</div>
         </div>
         <div class="form">
-            <input id="aiQuestion" placeholder="Задайте вопрос...">
-            <button class="primary" onclick="askAdminAI()">Спросить ИИ</button>
+            <input id="aiQuestion" placeholder="Например: добавь клиента Арман +374..." onkeydown="if(event.key==='Enter'){event.preventDefault();askAdminAI()}">
+            <button type="button" class="primary" onclick="event.preventDefault();askAdminAI()">Спросить ИИ</button>
         </div>
     `;
 }
@@ -3129,4 +3182,4 @@ boot();
 </script>
 
 </body>
-  </html>
+   </html>
