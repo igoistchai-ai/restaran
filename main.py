@@ -44,7 +44,6 @@ WEB_APP_URL = os.getenv("RENDER_EXTERNAL_URL", "").rstrip("/")
 ADMIN_IDS = {
     8357023784,
     7003441441,
-    8861979502,
 }
 
 # Separate personal Web App logins for administrators.
@@ -55,7 +54,27 @@ ADMIN_ACCOUNTS = {
     "779": "администратор3",
 }
 
-DB_PATH = "restaran.db"
+# Persistent database location. On Render, mount a Persistent Disk at /var/data.
+# The env var allows the same code to run locally without changing the database.
+_default_db_dir = Path("/var/data") if Path("/var/data").exists() else Path("data")
+_default_db_dir.mkdir(parents=True, exist_ok=True)
+DB_PATH = os.getenv("DB_PATH", str(_default_db_dir / "sertal_delivery.db"))
+# If an older deploy used ./restaran.db, migrate it once into the persistent location.
+_legacy_db = Path("restaran.db")
+if not Path(DB_PATH).exists() and _legacy_db.exists() and Path(DB_PATH).resolve() != _legacy_db.resolve():
+    try:
+        import shutil
+        Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(_legacy_db, DB_PATH)
+        print(f"DB MIGRATED: {_legacy_db} -> {DB_PATH}")
+    except Exception as exc:
+        print("DB MIGRATION FAILED:", exc)
+SUPPORT_GROUP_CHAT_ID = os.getenv("SUPPORT_GROUP_CHAT_ID", "").strip()
+try:
+    SUPPORT_GROUP_CHAT_ID = int(SUPPORT_GROUP_CHAT_ID) if SUPPORT_GROUP_CHAT_ID else None
+except ValueError:
+    SUPPORT_GROUP_CHAT_ID = None
+
 EXPORT_DIR = Path("exports")
 EXPORT_DIR.mkdir(exist_ok=True)
 UPLOAD_DIR = Path("uploads")
@@ -73,9 +92,30 @@ app = FastAPI()
 # =========================================================
 
 def db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA busy_timeout=30000")
+    conn.execute("PRAGMA foreign_keys=ON")
     return conn
+
+
+def get_support_group_chat_id():
+    if SUPPORT_GROUP_CHAT_ID:
+        return SUPPORT_GROUP_CHAT_ID
+    try:
+        conn=db()
+        row=conn.execute("SELECT value FROM bot_settings WHERE key='support_group_chat_id'").fetchone()
+        conn.close()
+        return int(row["value"]) if row else None
+    except Exception:
+        return None
+
+
+def set_support_group_chat_id(chat_id):
+    conn=db()
+    conn.execute("INSERT INTO bot_settings(key,value) VALUES('support_group_chat_id',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", (str(int(chat_id)),))
+    conn.commit(); conn.close()
 
 
 def init_db():
@@ -185,6 +225,27 @@ def init_db():
     )
     """)
 
+    conn.execute("""
+    CREATE TABLE IF NOT EXISTS promos(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT UNIQUE NOT NULL,
+        kind TEXT NOT NULL DEFAULT 'percent',
+        value REAL NOT NULL DEFAULT 0,
+        min_order REAL NOT NULL DEFAULT 0,
+        max_uses INTEGER,
+        used_count INTEGER NOT NULL DEFAULT 0,
+        active INTEGER NOT NULL DEFAULT 1,
+        created_at INTEGER NOT NULL
+    )
+    """)
+
+    conn.execute("""
+    CREATE TABLE IF NOT EXISTS bot_settings(
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+    )
+    """)
+
     # migrations
     migrations = [
         ("users", "pin_plain", "TEXT"),
@@ -222,6 +283,11 @@ def init_db():
         ("orders", "payment_method", "TEXT NOT NULL DEFAULT 'cash'"),
         ("orders", "payment_status", "TEXT NOT NULL DEFAULT 'cash'"),
         ("orders", "receipt_file", "TEXT"),
+        ("orders", "promo_code", "TEXT"),
+        ("orders", "discount_amd", "REAL NOT NULL DEFAULT 0"),
+        ("users", "default_address", "TEXT"),
+        ("users", "default_lat", "REAL"),
+        ("users", "default_lon", "REAL"),
     ]
 
     for table, column, definition in migrations:
@@ -615,6 +681,12 @@ class CartOrderData(BaseModel):
     address: str
     payment_method: str = "cash"
     delivery_note: str = ""
+    promo_code: str = ""
+
+class CustomerAddressData(BaseModel):
+    address: str = ""
+    lat: float | None = None
+    lon: float | None = None
 
 
 # =========================================================
@@ -1828,6 +1900,17 @@ async def customer_confirm(
 # RESTAURANTS / MARKETPLACE
 # =========================================================
 
+@app.get("/api/customer/search")
+async def customer_search(q: str = "", authorization: str = Header(default="")):
+    user = require_user(authorization)
+    if user["role"] != "customer":
+        raise HTTPException(403, "Нет доступа")
+    query = str(q or "").strip()[:180]
+    if not query:
+        return {"configured": True, "items": [], "search_url": "https://duckduckgo.com/"}
+    items=internet_search(query,8)
+    return {"configured": bool(items), "items": items, "search_url": "https://duckduckgo.com/?q="+quote(query), "message": "Поиск выполнен автоматически в интернете." if items else "Интернет-поиск временно недоступен."}
+
 @app.get("/api/public")
 async def public_info():
     conn = db()
@@ -1858,32 +1941,79 @@ async def cart_order(data: CartOrderData, authorization: str = Header(default=""
         raise HTTPException(400, "Выберите товары и укажите адрес")
     payment = data.payment_method if data.payment_method in ("cash", "online") else "cash"
     conn = db()
-    restaurant = conn.execute("SELECT * FROM restaurants WHERE id=? AND active=1", (data.restaurant_id,)).fetchone()
-    if not restaurant:
-        conn.close(); raise HTTPException(404, "Ресторан не найден")
-    ids = [int(x.menu_item_id) for x in data.items]
-    placeholders = ",".join("?" for _ in ids)
-    rows = conn.execute(f"SELECT * FROM menu_items WHERE id IN ({placeholders}) AND restaurant_id=? AND active=1", (*ids, data.restaurant_id)).fetchall()
-    byid = {r["id"]: r for r in rows}
-    total = 0.0; parts = []
-    for item in data.items:
-        q = max(1, min(99, int(item.quantity)))
-        row = byid.get(item.menu_item_id)
-        if not row:
-            conn.close(); raise HTTPException(400, "Один из товаров недоступен")
-        total += float(row["price"]) * q
-        parts.append(f"{row['name']} x{q}")
-    lat, lon = geocode_yerevan(data.address)
-    cur = conn.execute("""
-        INSERT INTO orders(customer_id,restaurant_id,restaurant_name,title,items_text,address,restaurant_address,price,payment_method,payment_status,status,created_at,lat,lon,delivery_note)
-        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-    """, (user["user_id"], restaurant["id"], restaurant["name"], "Заказ из ресторана", ", ".join(parts), data.address.strip(), restaurant["address"], total, payment, "pending" if payment == "online" else "cash", "new", int(time.time()), lat, lon, data.delivery_note.strip()))
-    order_id = cur.lastrowid
-    conn.commit(); conn.close()
-    path = generate_receipt(order_id)
-    log_action(user["user_id"], "restaurant_order", str(order_id))
-    await send_receipt_to_customer(user, path, order_id)
-    return {"ok":True, "order_id":order_id, "total":total, "receipt":path.name if path else None}
+    try:
+        restaurant = conn.execute("SELECT * FROM restaurants WHERE id=? AND active=1", (data.restaurant_id,)).fetchone()
+        if not restaurant:
+            raise HTTPException(404, "Ресторан не найден")
+        ids = [int(x.menu_item_id) for x in data.items]
+        placeholders = ",".join("?" for _ in ids)
+        rows = conn.execute(f"SELECT * FROM menu_items WHERE restaurant_id=? AND active=1 AND id IN ({placeholders})", [data.restaurant_id, *ids]).fetchall()
+        by_id = {int(r["id"]): r for r in rows}
+        parts=[]; total=0.0
+        for item in data.items:
+            r=by_id.get(int(item.menu_item_id))
+            if not r or int(item.quantity) < 1:
+                continue
+            qty=min(int(item.quantity), 20)
+            amount=float(r["price"])*qty
+            total += amount
+            parts.append(f"{r['name']} x{qty}")
+        if not parts:
+            raise HTTPException(400, "Выберите корректные товары")
+
+        discount=0.0; promo_code=str(data.promo_code or "").strip().upper()
+        if promo_code:
+            promo=conn.execute("SELECT * FROM promos WHERE code=? AND active=1", (promo_code,)).fetchone()
+            if not promo:
+                raise HTTPException(400, "Промокод не найден или выключен")
+            if float(total) < float(promo["min_order"] or 0):
+                raise HTTPException(400, f"Минимальная сумма для промокода: {float(promo['min_order']):.0f} ֏")
+            if promo["max_uses"] is not None and int(promo["used_count"] or 0) >= int(promo["max_uses"]):
+                raise HTTPException(400, "Лимит использований промокода исчерпан")
+            if promo["kind"] == "fixed":
+                discount=min(total, float(promo["value"]))
+            else:
+                discount=min(total, total*float(promo["value"])/100.0)
+            conn.execute("UPDATE promos SET used_count=used_count+1 WHERE id=?", (promo["id"],))
+        final_total=max(0.0,total-discount)
+        lat, lon = geocode_yerevan(data.address)
+        cur=conn.execute("""
+            INSERT INTO orders(customer_id,restaurant_id,restaurant_name,title,items_text,address,restaurant_address,price,payment_method,payment_status,status,created_at,lat,lon,delivery_note,promo_code,discount_amd)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        """, (user["user_id"], restaurant["id"], restaurant["name"], "Заказ из ресторана", ", ".join(parts), data.address.strip(), restaurant["address"], final_total, payment, "pending" if payment == "online" else "cash", "new", int(time.time()), lat, lon, data.delivery_note.strip(), promo_code or None, discount))
+        conn.commit()
+        order_id=cur.lastrowid
+        return {"ok":True,"order_id":order_id,"total":final_total,"subtotal":total,"discount":discount,"promo_code":promo_code}
+    finally:
+        conn.close()
+
+@app.get("/api/customer/address")
+async def customer_address(authorization: str = Header(default="")):
+    user=require_user(authorization)
+    conn=db(); row=conn.execute("SELECT default_address,default_lat,default_lon FROM users WHERE id=?",(user["user_id"],)).fetchone(); conn.close()
+    return {"address":row["default_address"] if row else "","lat":row["default_lat"] if row else None,"lon":row["default_lon"] if row else None}
+
+@app.post("/api/customer/address")
+async def save_customer_address(data: CustomerAddressData, authorization: str = Header(default="")):
+    user=require_user(authorization)
+    address=str(data.address or "").strip()
+    if len(address)<2 and (data.lat is None or data.lon is None):
+        raise HTTPException(400,"Укажите адрес или разрешите геолокацию")
+    conn=db(); conn.execute("UPDATE users SET default_address=?,default_lat=?,default_lon=? WHERE id=?",(address,data.lat,data.lon,user["user_id"])); conn.commit(); conn.close()
+    return {"ok":True,"address":address,"lat":data.lat,"lon":data.lon}
+
+@app.post("/api/customer/promo/check")
+async def check_customer_promo(data: dict, authorization: str = Header(default="")):
+    user=require_user(authorization)
+    if user["role"]!="customer": raise HTTPException(403,"Нет доступа")
+    code=str(data.get("code") or "").strip().upper(); total=float(data.get("total") or 0)
+    if not code: raise HTTPException(400,"Введите промокод")
+    conn=db(); promo=conn.execute("SELECT * FROM promos WHERE code=? AND active=1",(code,)).fetchone(); conn.close()
+    if not promo: raise HTTPException(404,"Промокод не найден")
+    if total<float(promo["min_order"] or 0): raise HTTPException(400,f"Минимальная сумма: {float(promo['min_order']):.0f} ֏")
+    if promo["max_uses"] is not None and int(promo["used_count"] or 0)>=int(promo["max_uses"]): raise HTTPException(400,"Лимит использований исчерпан")
+    discount=min(total, float(promo["value"]) if promo["kind"]=="fixed" else total*float(promo["value"])/100.0)
+    return {"ok":True,"code":code,"discount":discount,"total":max(0,total-discount),"kind":promo["kind"],"value":promo["value"]}
 
 @app.get("/api/admin/restaurants")
 async def admin_restaurants(authorization: str = Header(default="")):
@@ -2346,29 +2476,36 @@ async def notify_admins_about_user_message(user, text, file_path=None, file_name
         f"🆔 user_id: {user['user_id']}\n\n"
         f"{text or '📎 Файл'}"
     )
-    for admin_id in ADMIN_IDS:
+
+    # Preferred mode: one dedicated Telegram support group.
+    # Admins answer by replying to the bot's message in that group.
+    support_group_id = get_support_group_chat_id()
+    targets = [support_group_id] if support_group_id else list(ADMIN_IDS)
+    for target_chat_id in targets:
+        if not target_chat_id:
+            continue
         try:
             if file_path:
                 with open(file_path, "rb") as fh:
                     sent = await telegram_app.bot.send_document(
-                        chat_id=admin_id,
+                        chat_id=target_chat_id,
                         document=fh,
                         filename=file_name or Path(file_path).name,
                         caption=body
                     )
             else:
-                sent = await telegram_app.bot.send_message(chat_id=admin_id, text=body)
+                sent = await telegram_app.bot.send_message(chat_id=target_chat_id, text=body)
 
             conn = db()
             conn.execute("""
                 INSERT OR IGNORE INTO admin_message_bridge(
                     admin_telegram_id,telegram_message_id,user_id,created_at
                 ) VALUES(?,?,?,?)
-            """, (admin_id, sent.message_id, user["user_id"], int(time.time())))
+            """, (int(target_chat_id), sent.message_id, user["user_id"], int(time.time())))
             conn.commit()
             conn.close()
         except Exception as e:
-            print("Notify admin:", admin_id, e)
+            print("Notify support target:", target_chat_id, e)
 
 
 @app.post("/api/chat/send")
@@ -2530,6 +2667,37 @@ def make_random_receipt_image():
     return path
 
 
+def internet_search(query, limit=6):
+    """No-key internet search for AI using DuckDuckGo HTML results."""
+    from html.parser import HTMLParser
+    class P(HTMLParser):
+        def __init__(self): super().__init__(); self.in_result=False; self.title=""; self.link=""; self.snippet=""; self.items=[]; self.mode=None
+        def handle_starttag(self, tag, attrs):
+            a=dict(attrs)
+            cls=a.get("class","")
+            if tag=="a" and "result__a" in cls:
+                self.in_result=True; self.mode="title"; self.link=a.get("href",""); self.title=""; self.snippet=""
+            elif self.in_result and tag in ("a","div") and "result__snippet" in cls:
+                self.mode="snippet"
+        def handle_data(self,data):
+            if not self.in_result: return
+            t=" ".join(data.split())
+            if self.mode=="title": self.title+=(" "+t)
+            elif self.mode=="snippet": self.snippet+=(" "+t)
+        def handle_endtag(self,tag):
+            if tag=="a" and self.in_result and self.mode=="title": self.mode=None
+            if tag=="div" and self.in_result and self.title:
+                self.items.append({"title":self.title.strip(),"link":self.link,"snippet":self.snippet.strip()}); self.in_result=False; self.mode=None
+    try:
+        url="https://html.duckduckgo.com/html/?q="+quote(str(query)[:200])
+        req=Request(url,headers={"User-Agent":"Mozilla/5.0 SERTAL DELIVERY AI"})
+        with urlopen(req,timeout=8) as r: html=r.read().decode("utf-8","ignore")
+        parser=P(); parser.feed(html)
+        return parser.items[:limit]
+    except Exception as exc:
+        print("WEB SEARCH:",exc); return []
+
+
 async def ai_group_answer(question):
     """Shared AI answer for admin Web App and Telegram group."""
     question=str(question or "").strip()
@@ -2548,6 +2716,10 @@ async def ai_group_answer(question):
     couriers=conn.execute("SELECT COUNT(*) n FROM couriers WHERE active=1 AND approved=1").fetchone()["n"]
     conn.close()
     context=(f"Активные данные SERTAL DELIVERY: заказов={stats['total'] or 0}, новых={stats['new_count'] or 0}, в работе={stats['active_count'] or 0}, доставлено={stats['delivered_count'] or 0}, сумма активных заказов={float(stats['revenue'] or 0):.0f} AMD, активных участников={customers}, одобренных курьеров={couriers}.")
+    web_results=internet_search(question,6)
+    web_context=""
+    if web_results:
+        web_context="\nИнтернет-результаты (проверяй по ссылкам, не выдумывай):\n"+"\n".join(f"- {x['title']} | {x['link']} | {x['snippet']}" for x in web_results)
     key=os.getenv("OPENAI_API_KEY","").strip()
     model=os.getenv("OPENAI_MODEL","gpt-5.6-luna")
     if key:
@@ -2576,7 +2748,9 @@ async def ai_group_answer(question):
         return f"Активных клиентов/курьеров в базе: {customers}."
     if "курьер" in q:
         return f"Одобренных активных курьеров: {couriers}."
-    return "ИИ подключён. Для расширенного ответа задайте вопрос после !ai."
+    if web_results:
+        return "Нашёл в интернете:\n\n"+"\n\n".join(f"• {x['title']}\n{x['snippet']}\n{x['link']}" for x in web_results)
+    return "ИИ подключён, но интернет-поиск сейчас недоступен. Попробуйте ещё раз."
 
 # =========================================================
 # TELEGRAM BOT
@@ -2641,6 +2815,56 @@ async def logsfile_direct(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"Ошибка выгрузки: {e}")
 
 
+async def promo_group_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    message=update.message
+    if not message or not update.effective_user or update.effective_user.id not in ADMIN_IDS:
+        return
+    if message.chat.type == "private":
+        await message.reply_text("Команды промокодов предназначены для рабочей Telegram-группы.")
+        return
+    text=(message.text or "").strip()
+    parts=text.split()
+    low=parts[0].lower() if parts else ""
+    conn=db()
+    try:
+        if low in ("!promos","!promo_list","!промокоды"):
+            rows=conn.execute("SELECT code,kind,value,min_order,max_uses,used_count,active FROM promos ORDER BY id DESC").fetchall()
+            if not rows:
+                await message.reply_text("Промокодов пока нет.\nПример: !promo SERTAL10 10%")
+                return
+            lines=[f"{r['code']} — {'скидка '+str(r['value'])+'%' if r['kind']=='percent' else '−'+str(r['value'])+' ֏'} — мин. {float(r['min_order'] or 0):.0f} ֏ — {'ON' if r['active'] else 'OFF'} — {r['used_count'] or 0}/{r['max_uses'] if r['max_uses'] is not None else '∞'}" for r in rows]
+            await message.reply_text("🎟 ПРОМОКОДЫ\n\n"+"\n".join(lines))
+            return
+        if low in ("!delpromo","!deletepromo","!удалитьпромо"):
+            if len(parts)<2: await message.reply_text("Формат: !delpromo CODE"); return
+            code=parts[1].upper(); cur=conn.execute("UPDATE promos SET active=0 WHERE code=?",(code,)); conn.commit()
+            await message.reply_text("✅ Промокод выключен." if cur.rowcount else "❌ Код не найден.")
+            return
+        if low in ("!promo","!промо"):
+            if len(parts)<3:
+                await message.reply_text("Форматы:\n!promo SERTAL10 10%\n!promo BONUS2000 2000\nМожно: !promo CODE 10% 5000 100")
+                return
+            code=parts[1].upper(); raw=parts[2].replace(",",".")
+            kind="percent" if raw.endswith("%") else "fixed"
+            try: value=float(raw.rstrip("%"))
+            except: await message.reply_text("❌ Скидка должна быть числом, например 10% или 2000"); return
+            min_order=0.0; max_uses=None
+            if len(parts)>=4:
+                try:min_order=float(parts[3].replace(",","."))
+                except: pass
+            if len(parts)>=5:
+                try:max_uses=int(parts[4])
+                except: pass
+            if kind=="percent" and not (0<value<=100): await message.reply_text("❌ Процент: от 1 до 100"); return
+            if kind=="fixed" and value<=0: await message.reply_text("❌ Сумма скидки должна быть больше 0"); return
+            conn.execute("INSERT INTO promos(code,kind,value,min_order,max_uses,used_count,active,created_at) VALUES(?,?,?,?,?,?,1,?) ON CONFLICT(code) DO UPDATE SET kind=excluded.kind,value=excluded.value,min_order=excluded.min_order,max_uses=excluded.max_uses,active=1",(code,kind,value,min_order,max_uses,0,int(time.time())))
+            conn.commit()
+            await message.reply_text(f"✅ Промокод {code} создан/обновлён. Скидка: {'%g%%'%value if kind=='percent' else '%g ֏'%value}. Мин.: {min_order:.0f} ֏. Лимит: {max_uses if max_uses is not None else 'без лимита'}.")
+            return
+    finally:
+        conn.close()
+
+
 async def admin_reply_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
     if not message or not message.text or not update.effective_user:
@@ -2651,6 +2875,22 @@ async def admin_reply_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
     text = message.text.strip()
     chat_type = message.chat.type if message.chat else "private"
     low = text.lower()
+
+    if low in ("!help","!помощь"):
+        await message.reply_text("SERTAL DELIVERY — команды админа\n\n!logsfile — база клиентов\n!excel — заказы Excel\n!ai вопрос — ИИ + интернет-поиск\n!promo CODE 10% — процентная скидка\n!promo CODE 2000 — скидка 2000 ֏\n!promo CODE 10% 5000 100 — 10%, мин. 5000 ֏, до 100 использований\n!promos — список промокодов\n!delpromo CODE — выключить промокод\n!supportgroup — назначить эту группу поддержкой")
+        return
+
+    if low.startswith("!promo") or low.startswith("!promos") or low.startswith("!delpromo") or low.startswith("!deletepromo") or low.startswith("!промо") or low.startswith("!промокоды"):
+        await promo_group_command(update, context)
+        return
+
+    if low == "!supportgroup":
+        if chat_type == "private":
+            await message.reply_text("Эту команду нужно выполнить внутри рабочей Telegram-группы поддержки.")
+        else:
+            set_support_group_chat_id(message.chat.id)
+            await message.reply_text(f"✅ Эта группа назначена рабочей поддержкой SERTAL DELIVERY.\nID группы: {message.chat.id}")
+        return
 
     # Explicit admin tools are allowed in groups and private chats.
     if low == "!logsfile":
@@ -2692,16 +2932,16 @@ async def admin_reply_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
             await message.reply_text(f"Ошибка генерации чека: {e}")
         return
 
-    # In groups, all ordinary admin messages are ignored.
-    if chat_type != "private":
-        return
-
-    # Private chat: admin replies to a forwarded Web App message.
+    # Support replies work both in the dedicated support group and in private admin chat.
     reply = message.reply_to_message
     if not reply:
         return
+    bridge_chat_id = message.chat.id if chat_type != "private" else admin_id
+    support_group_id = get_support_group_chat_id()
+    if chat_type != "private" and support_group_id and bridge_chat_id != support_group_id:
+        return
     conn = db()
-    bridge = conn.execute("SELECT user_id FROM admin_message_bridge WHERE admin_telegram_id=? AND telegram_message_id=?", (admin_id, reply.message_id)).fetchone()
+    bridge = conn.execute("SELECT user_id FROM admin_message_bridge WHERE admin_telegram_id=? AND telegram_message_id=?", (bridge_chat_id, reply.message_id)).fetchone()
     conn.close()
     if not bridge:
         return
@@ -2853,4 +3093,4 @@ if __name__ == "__main__":
         app,
         host="0.0.0.0",
         port=int(os.getenv("PORT", "10000"))
-            )
+    )
