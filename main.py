@@ -39,6 +39,10 @@ from telegram.ext import (
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 WEB_APP_URL = os.getenv("RENDER_EXTERNAL_URL", "").rstrip("/")
+# Gemini is optional, but when configured it gives SERTAL a real-time Google Search
+# grounding tool. Keep the key server-side in Render Environment Variables.
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip() or os.getenv("GOOGLE_API_KEY", "").strip()
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash").strip()
 
 # Telegram IDs are used for bot-side admin permissions and message delivery.
 ADMIN_IDS = {
@@ -1900,16 +1904,260 @@ async def customer_confirm(
 # RESTAURANTS / MARKETPLACE
 # =========================================================
 
+CATEGORY_SEARCHES = {
+    "pizza": [
+        "пицца доставка Ереван",
+        "пицца рестораны Ереван заказать",
+        "pizza delivery Yerevan Armenia",
+        "pizza restaurants Yerevan Armenia",
+    ],
+    "sushi": [
+        "суши доставка Ереван",
+        "суши рестораны Ереван заказать",
+        "sushi delivery Yerevan Armenia",
+        "sushi restaurants Yerevan Armenia",
+    ],
+    "burgers": [
+        "бургеры доставка Ереван",
+        "бургер рестораны Ереван заказать",
+        "burger delivery Yerevan Armenia",
+    ],
+    "shawarma": [
+        "шаверма доставка Ереван",
+        "шаурма рестораны Ереван заказать",
+        "shawarma delivery Yerevan Armenia",
+    ],
+    "grocery": [
+        "супермаркеты доставка Ереван",
+        "продукты доставка Ереван",
+        "grocery delivery Yerevan Armenia",
+    ],
+    "pharmacy": [
+        "аптеки Ереван доставка",
+        "pharmacy delivery Yerevan Armenia",
+    ],
+    "flowers": [
+        "цветы доставка Ереван",
+        "flower delivery Yerevan Armenia",
+    ],
+    "desserts": [
+        "десерты доставка Ереван",
+        "кондитерские Ереван доставка",
+        "dessert delivery Yerevan Armenia",
+    ],
+    "coffee": [
+        "кофе доставка Ереван",
+        "кофейни Ереван доставка",
+        "coffee delivery Yerevan Armenia",
+    ],
+}
+
+CATEGORY_LABELS = {
+    "pizza": "Пицца", "sushi": "Суши", "burgers": "Бургеры",
+    "shawarma": "Шаурма", "grocery": "Супермаркеты",
+    "pharmacy": "Аптеки", "flowers": "Цветы",
+    "desserts": "Десерты", "coffee": "Кофе",
+}
+
+
+def _normalise_web_results(items):
+    seen=set()
+    out=[]
+    for item in items or []:
+        title=str(item.get("title") or "").strip()
+        link=str(item.get("link") or "").strip()
+        if not title or not link:
+            continue
+        key=re.sub(r"[^a-z0-9а-яё]+", "", (title+link).lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        host=link.split("//",1)[-1].split("/",1)[0]
+        out.append({
+            "title": title[:180],
+            "link": link[:700],
+            "snippet": str(item.get("snippet") or "").strip()[:500],
+            "displayLink": host[:160],
+            "source": "internet",
+        })
+    return out
+
+
+def gemini_google_search(query, limit=12, location="Yerevan, Armenia"):
+    """Ask Gemini to search the live web through Google's built-in Search grounding.
+
+    This is intentionally server-side: the browser never receives the Gemini key.
+    If Gemini is unavailable or the key is absent, callers can fall back to the
+    existing keyless DuckDuckGo discovery path.
+    """
+    key=GEMINI_API_KEY
+    if not key:
+        return {"ok": False, "text": "", "items": [], "queries": [], "error": "GEMINI_API_KEY not configured"}
+    prompt=(
+        "Ты поисковый агент SERTAL DELIVERY. Используй Google Search grounding и ищи в интернете прямо сейчас. "
+        f"Локация: {location or 'Yerevan, Armenia'}. Запрос: {str(query or '').strip()[:500]}. "
+        f"Найди до {max(3, min(int(limit or 12), 15))} реально существующих сервисов/заведений. "
+        "Не выдумывай названия, адреса, цены или ссылки. Отдавай предпочтение официальным сайтам и актуальным страницам. "
+        "Ответь кратко по-русски: название, что найдено, адрес/район если есть, и ссылка на источник."
+    )
+    body=json.dumps({
+        "model": GEMINI_MODEL,
+        "input": prompt,
+        "tools": [{"type": "google_search"}],
+    }).encode("utf-8")
+    try:
+        req=Request(
+            "https://generativelanguage.googleapis.com/v1beta/interactions",
+            data=body,
+            headers={"Content-Type":"application/json", "x-goog-api-key":key},
+            method="POST",
+        )
+        with urlopen(req, timeout=35) as response:
+            payload=json.loads(response.read().decode("utf-8", "ignore"))
+        text=""
+        items=[]
+        queries=[]
+        for step in payload.get("steps", []) or []:
+            st=step.get("type")
+            if st=="google_search_call":
+                queries.extend(step.get("arguments", {}).get("queries", []) or [])
+            if st=="model_output":
+                for block in step.get("content", []) or []:
+                    if block.get("type")!="text":
+                        continue
+                    text += (str(block.get("text") or "").strip()+"\n")
+                    for ann in block.get("annotations", []) or []:
+                        if ann.get("type")!="url_citation":
+                            continue
+                        url=str(ann.get("url") or "").strip()
+                        title=str(ann.get("title") or "").strip()
+                        if not url or not url.startswith(("http://", "https://")):
+                            continue
+                        items.append({
+                            "title": title[:180] or url.split("//",1)[-1].split("/",1)[0],
+                            "link": url[:700],
+                            "snippet": text.strip()[:500],
+                            "displayLink": url.split("//",1)[-1].split("/",1)[0][:160],
+                            "source": "gemini_google_search",
+                        })
+        items=_normalise_web_results(items)[:limit]
+        return {"ok": True, "text": text.strip(), "items": items, "queries": queries[:12], "error": ""}
+    except Exception as exc:
+        print("GEMINI GOOGLE SEARCH:", exc)
+        return {"ok": False, "text": "", "items": [], "queries": [], "error": str(exc)[:300]}
+
+
+def category_internet_results(category, limit=30):
+    queries=CATEGORY_SEARCHES.get(category, [f"{category} Ереван Armenia", f"{category} доставка Ереван"])
+    merged=[]
+    for query in queries:
+        merged.extend(internet_search(query, max(8, min(12, limit))))
+        if len(_normalise_web_results(merged)) >= limit:
+            break
+    return _normalise_web_results(merged)[:limit]
+
+
 @app.get("/api/customer/search")
 async def customer_search(q: str = "", authorization: str = Header(default="")):
+    """Generic query search. No marketplace/service catalog is used here.
+
+    Gemini gets Google's built-in Search grounding when GEMINI_API_KEY is set.
+    Without Gemini, a keyless web-search fallback is used.
+    """
     user = require_user(authorization)
     if user["role"] != "customer":
         raise HTTPException(403, "Нет доступа")
-    query = str(q or "").strip()[:180]
+    query = str(q or "").strip()[:500]
     if not query:
-        return {"configured": True, "items": [], "search_url": "https://duckduckgo.com/"}
-    items=internet_search(query,8)
-    return {"configured": bool(items), "items": items, "search_url": "https://duckduckgo.com/?q="+quote(query), "message": "Поиск выполнен автоматически в интернете." if items else "Интернет-поиск временно недоступен."}
+        return {"ok": True, "answer": "", "sources": [], "grounded": False, "search_url": "https://www.google.com/search"}
+
+    location = "Yerevan, Armenia"
+    gemini = gemini_google_search(query, 12, location)
+    if gemini["ok"]:
+        return {
+            "ok": True,
+            "answer": gemini["text"],
+            "sources": gemini["items"],
+            "grounded": True,
+            "provider": "Gemini + Google Search",
+            "queries": gemini["queries"],
+            "search_url": "https://www.google.com/search?q=" + quote(query),
+            "message": "Gemini выполнил поиск по запросу через Google Search.",
+        }
+
+    items = _normalise_web_results(internet_search(query, 12))
+    fallback_answer = "\n\n".join(
+        f"{i+1}. {item.get('title','')}\n{item.get('snippet','')}"
+        for i, item in enumerate(items[:8])
+    )
+    return {
+        "ok": True,
+        "answer": fallback_answer or "Поиск временно не вернул результатов.",
+        "sources": items,
+        "grounded": False,
+        "provider": "Keyless internet fallback",
+        "queries": [query],
+        "search_url": "https://www.google.com/search?q=" + quote(query),
+        "message": "Gemini не настроен или временно недоступен; показан резервный интернет-поиск.",
+    }
+
+
+@app.get("/api/customer/category-services")
+async def customer_category_services(category: str = "", address: str = "", authorization: str = Header(default="")):
+    user=require_user(authorization)
+    if user["role"] != "customer":
+        raise HTTPException(403, "Нет доступа")
+    category=str(category or "").strip().lower()
+    if category not in CATEGORY_SEARCHES:
+        raise HTTPException(400, "Неизвестная категория")
+    # First show SERTAL partners that can actually be ordered from inside the app.
+    conn=db()
+    restaurants=conn.execute("SELECT * FROM restaurants WHERE active=1 ORDER BY name").fetchall()
+    partners=[]
+    keywords={category, CATEGORY_LABELS.get(category, category)}
+    for r in restaurants:
+        items=conn.execute("SELECT id,name,description,price FROM menu_items WHERE restaurant_id=? AND active=1 ORDER BY id", (r["id"],)).fetchall()
+        hay=(str(r["name"])+" "+str(r["address"])+" "+" ".join(str(i["name"]) for i in items)).lower()
+        match=any(k.lower() in hay for k in keywords if k)
+        # If the partner has a menu but no explicit category metadata, keep it for food categories
+        # only when the category word is found. This avoids pretending every restaurant sells pizza/sushi.
+        if match:
+            partners.append({**dict(r), "items":[dict(i) for i in items], "source":"sertal"})
+    conn.close()
+
+    search_query=f"{CATEGORY_LABELS[category]} доставка рядом {address or 'Yerevan, Armenia'}"
+    gemini=gemini_google_search(search_query, 20, address or "Yerevan, Armenia")
+    web_items=gemini["items"] if gemini["ok"] else category_internet_results(category, 30)
+    label=CATEGORY_LABELS[category]
+    return {
+        "ok": True,
+        "category": category,
+        "label": label,
+        "city": "Yerevan",
+        "address": str(address or "").strip()[:300],
+        "partners": partners,
+        "services": web_items,
+        "total_found": len(partners)+len(web_items),
+        "automatic": True,
+        "ai_search": bool(gemini["ok"]),
+        "ai_provider": "Gemini + Google Search" if gemini["ok"] else "Keyless internet fallback",
+        "ai_summary": gemini["text"] if gemini["ok"] else "",
+        "search_queries": gemini["queries"] or CATEGORY_SEARCHES[category],
+        "notice": "Gemini автоматически ищет в Google Search и собирает актуальные внешние результаты. Наличие, цены и доставка внешних сервисов нужно проверять на их сайте." if gemini["ok"] else "Gemini не настроен, поэтому используется резервный интернет-поиск. Наличие и цены внешних сервисов нужно проверять на их сайте."
+    }
+
+@app.get("/api/version")
+async def api_version():
+    return {
+        "name": "SERTAL DELIVERY",
+        "release": "MEGA-2026.09",
+        "marketplace": "disabled",
+        "search": "generic-gemini-google-search",
+        "google_required": False,
+        "gemini_google_search": bool(GEMINI_API_KEY),
+        "gemini_model": GEMINI_MODEL if GEMINI_API_KEY else "",
+        "city": "Yerevan"
+    }
 
 @app.get("/api/public")
 async def public_info():
@@ -2668,34 +2916,73 @@ def make_random_receipt_image():
 
 
 def internet_search(query, limit=6):
-    """No-key internet search for AI using DuckDuckGo HTML results."""
+    """Keyless web discovery used by the marketplace and AI.
+
+    The app intentionally does not require GOOGLE_API_KEY/GOOGLE_CX for the basic
+    discovery flow. DuckDuckGo HTML is used server-side so the browser never
+    needs to bypass CORS or expose a search key. Results are always treated as
+    external leads, not as SERTAL partners.
+    """
     from html.parser import HTMLParser
-    class P(HTMLParser):
-        def __init__(self): super().__init__(); self.in_result=False; self.title=""; self.link=""; self.snippet=""; self.items=[]; self.mode=None
+
+    class ResultParser(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.results=[]
+            self.current=None
+            self.capture=None
+
         def handle_starttag(self, tag, attrs):
-            a=dict(attrs)
-            cls=a.get("class","")
-            if tag=="a" and "result__a" in cls:
-                self.in_result=True; self.mode="title"; self.link=a.get("href",""); self.title=""; self.snippet=""
-            elif self.in_result and tag in ("a","div") and "result__snippet" in cls:
-                self.mode="snippet"
-        def handle_data(self,data):
-            if not self.in_result: return
-            t=" ".join(data.split())
-            if self.mode=="title": self.title+=(" "+t)
-            elif self.mode=="snippet": self.snippet+=(" "+t)
-        def handle_endtag(self,tag):
-            if tag=="a" and self.in_result and self.mode=="title": self.mode=None
-            if tag=="div" and self.in_result and self.title:
-                self.items.append({"title":self.title.strip(),"link":self.link,"snippet":self.snippet.strip()}); self.in_result=False; self.mode=None
+            attrs=dict(attrs)
+            classes=set(str(attrs.get("class", "")).split())
+            if tag=="a" and "result__a" in classes:
+                self.current={"title":"", "link":attrs.get("href", ""), "snippet":""}
+                self.capture="title"
+                return
+            if self.current and tag in ("a","div") and "result__snippet" in classes:
+                self.capture="snippet"
+
+        def handle_data(self, data):
+            if not self.current or not self.capture:
+                return
+            value=" ".join(str(data).split())
+            if not value:
+                return
+            self.current[self.capture]=(self.current.get(self.capture, "")+" "+value).strip()
+
+        def handle_endtag(self, tag):
+            if not self.current:
+                return
+            if tag=="a" and self.capture=="title":
+                self.capture=None
+            # DDG wraps each result in a result container. Also flush defensively
+            # when enough information is present so small HTML changes do not
+            # make the whole search empty.
+            if self.current.get("title") and self.current.get("link") and len(self.results)<limit:
+                if tag in ("div", "article") and self.capture is None:
+                    self.results.append(self.current)
+                    self.current=None
+
+    query=str(query or "").strip()[:220]
+    if not query:
+        return []
     try:
-        url="https://html.duckduckgo.com/html/?q="+quote(str(query)[:200])
-        req=Request(url,headers={"User-Agent":"Mozilla/5.0 SERTAL DELIVERY AI"})
-        with urlopen(req,timeout=8) as r: html=r.read().decode("utf-8","ignore")
-        parser=P(); parser.feed(html)
-        return parser.items[:limit]
+        url="https://html.duckduckgo.com/html/?q="+quote(query)
+        req=Request(url,headers={"User-Agent":"Mozilla/5.0 SERTAL-DELIVERY/2026"})
+        with urlopen(req,timeout=10) as response:
+            html=response.read().decode("utf-8","ignore")
+        parser=ResultParser(); parser.feed(html)
+        # A second lightweight regex fallback handles DDG markup variants.
+        if not parser.results:
+            anchors=re.findall(r'<a[^>]+class=["\'][^"\']*result__a[^"\']*["\'][^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>', html, re.I|re.S)
+            for link,title_html in anchors[:limit]:
+                title=re.sub(r"<[^>]+>"," ",title_html)
+                title=" ".join(re.sub(r"&[^;]+;", " ", title).split())
+                parser.results.append({"title":title,"link":link,"snippet":""})
+        return parser.results[:limit]
     except Exception as exc:
-        print("WEB SEARCH:",exc); return []
+        print("WEB SEARCH:",exc)
+        return []
 
 
 async def ai_group_answer(question):
