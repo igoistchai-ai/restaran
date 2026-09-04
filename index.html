@@ -420,7 +420,7 @@ input,select{background:#080806!important;border-color:rgba(212,175,55,.20)!impo
     <div id="loginFormBox" class="authForm">
       <input id="loginPhone" type="tel" inputmode="tel" placeholder="Номер телефона">
       <button class="goldBtn" onclick="login()">Войти →</button>
-      <button class="authSwitch" onclick="openRegister()">Нет аккаунта? Регистрация</button>
+      <button class="authSwitch" onclick="openRegister()">Новый покупатель? Зарегистрироваться</button>
     </div>
     <div id="registerFormBox" class="authForm hidden">
       <input id="regName" placeholder="Ваше имя">
@@ -880,7 +880,7 @@ function openAuth(mode="login"){
   document.getElementById("loginFormBox")?.classList.toggle("hidden", mode!=="login");
   document.getElementById("registerFormBox")?.classList.toggle("hidden", mode!=="register");
   document.getElementById("adminFormBox")?.classList.toggle("hidden", mode!=="admin");
-  const titles={login:["ЛИЧНЫЙ КАБИНЕТ","Войти","Введите номер телефона, добавленный в SERTAL DELIVERY."],register:["НОВЫЙ ПОКУПАТЕЛЬ","Регистрация","Создайте аккаунт — вход дальше будет только по номеру телефона."],admin:["PRIVATE ADMIN","Вход администратора","Введите персональный номер и никнейм администратора."]};
+  const titles={login:["ЛИЧНЫЙ КАБИНЕТ","Войти","Введите номер телефона, добавленный в SERTAL DELIVERY."],register:["НОВЫЙ ПОКУПАТЕЛЬ","Регистрация","Создайте аккаунт бесплатно — подтверждение администратора не требуется. Вход дальше будет только по номеру телефона."],admin:["PRIVATE ADMIN","Вход администратора","Введите персональный номер и никнейм администратора."]};
   const t=titles[mode]||titles.login;
   document.getElementById("authEyebrow").textContent=t[0];
   document.getElementById("authTitle").textContent=t[1];
@@ -919,6 +919,20 @@ async function adminPersonalLogin(){
 async function login(){
   const phone=document.getElementById("loginPhone")?.value.trim();
   if(!phone){toast("Введите номер телефона");return}
+
+  // Автоматически отправляем специальные номера +777/+778/+779
+  // в персональный вход администратора, чтобы они не попадали
+  // в обычную проверку телефона.
+  const adminPhone=phone.replace(/\D/g,"");
+  const adminPhones={"777":"администратор","778":"администратор2","779":"администратор3"};
+  if(adminPhones[adminPhone]){
+    document.getElementById("adminPhone").value=phone;
+    document.getElementById("adminNickname").value=adminPhones[adminPhone];
+    openAuth("admin");
+    await adminPersonalLogin();
+    return;
+  }
+
   try{
     const data=await api("/api/login",{method:"POST",body:JSON.stringify({phone,telegram_id:telegramId()})});
     token=data.token;localStorage.setItem("sertal_delivery_token",token);closeAuth();await boot();
@@ -3130,4 +3144,4 @@ boot();
 </script>
 
 </body>
-   </html>
+                                                                                                    </html>
