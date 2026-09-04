@@ -22,6 +22,7 @@ from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.worksheet.page import PageMargins
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+from PIL import Image, ImageDraw, ImageFont
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import (
@@ -2398,6 +2399,184 @@ async def upload_chat_file(file: UploadFile = File(...), authorization: str = He
     return {"ok": True, "id": msg_id, "file_name": original_name}
 
 
+
+# =========================================================
+# TELEGRAM VISUAL REPORTS / AI
+# =========================================================
+
+def _font(size, bold=False):
+    candidates = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+    ]
+    for path in candidates:
+        if Path(path).exists():
+            return ImageFont.truetype(path, size)
+    return ImageFont.load_default()
+
+
+def _make_report_image(title, columns, rows, path, subtitle="SERTAL DELIVERY"):
+    """Render a compact, phone-friendly table as PNG. This is deterministic, not fake AI."""
+    columns = [str(x) for x in columns]
+    rows = [[str(x if x is not None else "") for x in row] for row in rows]
+    scale = 1
+    width = 1400
+    margin = 40
+    header_h = 105
+    row_h = 58
+    max_rows = 18
+    rows = rows[:max_rows]
+    col_widths = [max(130, min(360, 120 + max([len(r[i]) if i < len(r) else 0 for r in rows] + [len(columns[i])]) * 9)) for i in range(len(columns))]
+    total = sum(col_widths) + margin * 2
+    width = max(width, min(total, 2200))
+    # Scale columns to fit the canvas.
+    if total > width:
+        factor = (width - margin*2) / sum(col_widths)
+        col_widths = [max(100, int(x*factor)) for x in col_widths]
+        total = sum(col_widths) + margin*2
+        width = total
+    height = header_h + (len(rows)+1)*row_h + margin
+    img = Image.new("RGB", (width, height), (9, 9, 9))
+    draw = ImageDraw.Draw(img)
+    gold=(212,175,55); white=(245,241,230); muted=(150,142,125); panel=(20,19,16); line=(67,57,31)
+    draw.rounded_rectangle((18,18,width-18,height-18), radius=28, fill=panel, outline=gold, width=2)
+    draw.text((45,35), title, font=_font(32, True), fill=white)
+    draw.text((45,75), subtitle, font=_font(18), fill=muted)
+    y=header_h
+    x=margin
+    for i,col in enumerate(columns):
+        cw=col_widths[i]
+        draw.rectangle((x,y,x+cw,y+row_h), fill=(30,27,20), outline=line)
+        draw.text((x+12,y+17), col[:28], font=_font(18, True), fill=gold)
+        x += cw
+    y += row_h
+    for ri,row in enumerate(rows):
+        x=margin
+        for i in range(len(columns)):
+            cw=col_widths[i]
+            val=row[i] if i < len(row) else ""
+            draw.rectangle((x,y,x+cw,y+row_h), fill=(14,14,13) if ri%2==0 else (18,18,17), outline=line)
+            # one-line truncation for mobile readability
+            max_chars=max(8,int(cw/10))
+            draw.text((x+12,y+18), val[:max_chars], font=_font(17), fill=white)
+            x += cw
+        y += row_h
+    img.save(path, "PNG", optimize=True)
+    return path
+
+
+def make_customers_report_image():
+    conn=db()
+    rows=conn.execute("""
+        SELECT u.id,u.name,u.phone,u.role,u.active,
+               COALESCE(c.approved,0) AS approved,
+               COALESCE(c.online,0) AS online
+        FROM users u LEFT JOIN couriers c ON c.user_id=u.id
+        WHERE u.role IN ('customer','courier')
+        ORDER BY u.id DESC LIMIT 40
+    """).fetchall()
+    conn.close()
+    stamp=datetime.now().strftime("%Y%m%d_%H%M%S")
+    path=EXPORT_DIR/f"sertal_clients_{stamp}.png"
+    data=[]
+    for r in rows:
+        data.append([r['id'],r['name'],r['phone'],r['role'],"Да" if r['active'] else "Нет", "Да" if r['approved'] else "Нет", "Да" if r['online'] else "Нет"])
+    return _make_report_image("Клиентская база", ["ID","Имя","Телефон","Роль","Активен","Одобрен","Онлайн"], data, path, f"SERTAL DELIVERY · {datetime.now().strftime('%d.%m.%Y %H:%M')}")
+
+
+def make_orders_report_image():
+    conn=db()
+    rows=conn.execute("""
+        SELECT o.id,u.name AS customer_name,o.title,o.address,o.status,o.price
+        FROM orders o JOIN users u ON u.id=o.customer_id
+        ORDER BY o.id DESC LIMIT 25
+    """).fetchall()
+    conn.close()
+    stamp=datetime.now().strftime("%Y%m%d_%H%M%S")
+    path=EXPORT_DIR/f"sertal_orders_{stamp}.png"
+    data=[]
+    for r in rows:
+        data.append([r['id'],r['customer_name'],r['title'],r['address'],r['status'],f"{float(r['price'] or 0):.0f} ֏"])
+    return _make_report_image("Заказы", ["№","Клиент","Что доставить","Адрес","Статус","Сумма"], data, path, f"SERTAL DELIVERY · {datetime.now().strftime('%d.%m.%Y %H:%M')}")
+
+
+def make_random_receipt_image():
+    import random
+    names=["Кофе","Бургер","Пицца","Салат","Десерт","Напиток"]
+    items=[]
+    total=0
+    for _ in range(random.randint(2,5)):
+        name=random.choice(names); qty=random.randint(1,2); price=random.choice([900,1200,1500,1800,2200,2600]); amount=qty*price; total+=amount
+        items.append([name,qty,f"{amount:,}".replace(',',' ')+" ֏"])
+    stamp=datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    path=EXPORT_DIR/f"sertal_random_receipt_{stamp}.png"
+    img=Image.new("RGB",(900,1050),(8,8,8)); d=ImageDraw.Draw(img)
+    d.rounded_rectangle((35,35,865,1015),radius=35,fill=(20,18,14),outline=(212,175,55),width=3)
+    d.text((70,70),"SERTAL DELIVERY",font=_font(34,True),fill=(212,175,55))
+    d.text((70,120),"Демонстрационный чек",font=_font(20),fill=(170,160,140))
+    y=185
+    for name,qty,amount in items:
+        d.text((70,y),f"{name} × {qty}",font=_font(25),fill=(245,241,230))
+        d.text((650,y),amount,font=_font(25,True),fill=(245,241,230))
+        y+=62
+    d.line((70,y+10,830,y+10),fill=(67,57,31),width=2); y+=48
+    d.text((70,y),"ИТОГО",font=_font(28,True),fill=(212,175,55))
+    d.text((650,y),f"{total:,}".replace(',',' ')+" ֏",font=_font(28,True),fill=(245,241,230))
+    y+=85
+    d.text((70,y),f"Заказ №{random.randint(1000,9999)}",font=_font(20),fill=(150,142,125))
+    d.text((70,y+35),datetime.now().strftime("%d.%m.%Y %H:%M"),font=_font(20),fill=(150,142,125))
+    img.save(path,"PNG",optimize=True)
+    return path
+
+
+async def ai_group_answer(question):
+    """Shared AI answer for admin Web App and Telegram group."""
+    question=str(question or "").strip()
+    if not question:
+        return "Укажите вопрос после !ai. Например: !ai сколько активных заказов?"
+    conn=db()
+    stats=conn.execute("""
+        SELECT COUNT(*) total,
+        SUM(CASE WHEN status='new' THEN 1 ELSE 0 END) new_count,
+        SUM(CASE WHEN status IN ('assigned','accepted','delivering') THEN 1 ELSE 0 END) active_count,
+        SUM(CASE WHEN status='delivered' THEN 1 ELSE 0 END) delivered_count,
+        COALESCE(SUM(price),0) revenue
+        FROM orders WHERE status!='closed'
+    """).fetchone()
+    customers=conn.execute("SELECT COUNT(*) n FROM users WHERE role IN ('customer','courier') AND active=1").fetchone()["n"]
+    couriers=conn.execute("SELECT COUNT(*) n FROM couriers WHERE active=1 AND approved=1").fetchone()["n"]
+    conn.close()
+    context=(f"Активные данные SERTAL DELIVERY: заказов={stats['total'] or 0}, новых={stats['new_count'] or 0}, в работе={stats['active_count'] or 0}, доставлено={stats['delivered_count'] or 0}, сумма активных заказов={float(stats['revenue'] or 0):.0f} AMD, активных участников={customers}, одобренных курьеров={couriers}.")
+    key=os.getenv("OPENAI_API_KEY","").strip()
+    model=os.getenv("OPENAI_MODEL","gpt-5.6-luna")
+    if key:
+        try:
+            prompt=("Ты операционный ИИ-помощник SERTAL DELIVERY. Отвечай по-русски, коротко и конкретно. "
+                    "Не выдумывай факты. Если вопрос про данные компании, используй только переданный контекст. "
+                    "Не выполняй опасные или необратимые действия через текст. " + context + " Вопрос: " + question)
+            body=json.dumps({"model":model,"input":prompt}).encode("utf-8")
+            req=Request("https://api.openai.com/v1/responses",data=body,headers={"Content-Type":"application/json","Authorization":f"Bearer {key}"},method="POST")
+            with urlopen(req,timeout=25) as response:
+                result=json.loads(response.read().decode("utf-8"))
+            answer=result.get("output_text") or ""
+            if not answer:
+                parts=[]
+                for item in result.get("output",[]):
+                    for content in item.get("content",[]):
+                        if content.get("type")=="output_text": parts.append(content.get("text", ""))
+                answer="\n".join(parts).strip()
+            if answer: return answer
+        except Exception as exc:
+            print("GROUP AI:",exc)
+    q=question.lower()
+    if any(x in q for x in ("сколько","заказ","заказы","статист")):
+        return (f"Заказов: {stats['total'] or 0}\nНовых: {stats['new_count'] or 0}\nВ работе: {stats['active_count'] or 0}\nДоставлено: {stats['delivered_count'] or 0}\nСумма активных: {float(stats['revenue'] or 0):.0f} ֏")
+    if any(x in q for x in ("клиент","покупател")):
+        return f"Активных клиентов/курьеров в базе: {customers}."
+    if "курьер" in q:
+        return f"Одобренных активных курьеров: {couriers}."
+    return "ИИ подключён. Для расширенного ответа задайте вопрос после !ai."
+
 # =========================================================
 # TELEGRAM BOT
 # =========================================================
@@ -2468,45 +2647,63 @@ async def admin_reply_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
     admin_id = update.effective_user.id
     if admin_id not in ADMIN_IDS:
         return
-
     text = message.text.strip()
+    chat_type = message.chat.type if message.chat else "private"
+    low = text.lower()
 
-    # In groups the bot only handles the explicit export command.
-    # All other group messages are ignored so the working group is not spammed.
-    if message.chat and message.chat.type != "private":
-        if text.lower() == "!logsfile":
-            path = export_customers_xlsx()
-            try:
-                with open(path, "rb") as fh:
-                    await message.reply_document(document=fh, filename=path.name, caption="SERTAL DELIVERY — клиентская база")
-            except Exception as e:
-                await message.reply_text(f"Ошибка выгрузки: {e}")
-        return
-
-    # Private chat: an administrator replies to a forwarded Web App message.
-    if text.lower() == "!logsfile":
+    # Explicit admin tools are allowed in groups and private chats.
+    if low == "!logsfile":
         path = export_customers_xlsx()
+        image = make_customers_report_image()
         try:
+            with open(image, "rb") as fh:
+                await message.reply_photo(photo=fh, caption="SERTAL DELIVERY — клиентская база")
             with open(path, "rb") as fh:
-                await message.reply_document(document=fh, filename=path.name, caption="SERTAL DELIVERY — клиентская база")
+                await message.reply_document(document=fh, filename=path.name, caption="Полная база клиентов Excel")
         except Exception as e:
             await message.reply_text(f"Ошибка выгрузки: {e}")
         return
 
+    if low == "!excel":
+        path = export_orders_xlsx()
+        image = make_orders_report_image()
+        try:
+            with open(image, "rb") as fh:
+                await message.reply_photo(photo=fh, caption="SERTAL DELIVERY — таблица заказов")
+            with open(path, "rb") as fh:
+                await message.reply_document(document=fh, filename=path.name, caption="Полная таблица заказов Excel")
+        except Exception as e:
+            await message.reply_text(f"Ошибка Excel: {e}")
+        return
+
+    if low.startswith("!ai"):
+        question=text[3:].strip()
+        answer=await ai_group_answer(question)
+        await message.reply_text(f"SERTAL DELIVERY · AI\n\n{answer}")
+        return
+
+    if low in ("!receipt", "!check", "!чек"):
+        path=make_random_receipt_image()
+        try:
+            with open(path,"rb") as fh:
+                await message.reply_photo(photo=fh,caption="Демонстрационный случайный чек SERTAL DELIVERY")
+        except Exception as e:
+            await message.reply_text(f"Ошибка генерации чека: {e}")
+        return
+
+    # In groups, all ordinary admin messages are ignored.
+    if chat_type != "private":
+        return
+
+    # Private chat: admin replies to a forwarded Web App message.
     reply = message.reply_to_message
     if not reply:
         return
-
     conn = db()
-    bridge = conn.execute("""
-        SELECT user_id
-        FROM admin_message_bridge
-        WHERE admin_telegram_id=? AND telegram_message_id=?
-    """, (admin_id, reply.message_id)).fetchone()
+    bridge = conn.execute("SELECT user_id FROM admin_message_bridge WHERE admin_telegram_id=? AND telegram_message_id=?", (admin_id, reply.message_id)).fetchone()
     conn.close()
     if not bridge:
         return
-
     add_chat_message(bridge["user_id"], "admin", text)
     conn = db()
     target = conn.execute("SELECT telegram_id FROM users WHERE id=?", (bridge["user_id"],)).fetchone()
@@ -2596,10 +2793,6 @@ async def startup():
     )
 
     telegram_app.add_handler(
-        CommandHandler("random", random_command)
-    )
-
-    telegram_app.add_handler(
         CommandHandler("logsfile", lambda update, context: logsfile_direct(update, context))
     )
 
@@ -2659,4 +2852,4 @@ if __name__ == "__main__":
         app,
         host="0.0.0.0",
         port=int(os.getenv("PORT", "10000"))
-    )
+            )
