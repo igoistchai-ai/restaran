@@ -560,6 +560,103 @@ def validate_telegram_init_data(init_data):
 # RECEIPTS / RESTAURANT HELPERS
 # =========================================================
 
+
+def make_order_receipt_image(order_id):
+    """Create a premium SERTAL receipt image for a real order."""
+    conn = db()
+    row = conn.execute("""
+        SELECT o.*, u.name AS customer_name, u.phone AS customer_phone,
+               cu.name AS courier_name, cu.phone AS courier_phone
+        FROM orders o
+        JOIN users u ON u.id=o.customer_id
+        LEFT JOIN couriers c ON c.id=o.courier_id
+        LEFT JOIN users cu ON cu.id=c.user_id
+        WHERE o.id=?
+    """, (order_id,)).fetchone()
+    conn.close()
+    if not row:
+        return None
+
+    W, H = 1080, 1480
+    bg=(8,8,8); card=(18,18,18); gold=(212,175,55); cream=(245,241,230); muted=(160,152,135); line=(54,47,30)
+    img=Image.new("RGB", (W,H), bg)
+    d=ImageDraw.Draw(img)
+    d.rounded_rectangle((35,35,W-35,H-35), radius=42, fill=card, outline=gold, width=3)
+
+    # SERTAL emblem: a clean vector mark, no external image dependency.
+    d.rounded_rectangle((72,68,190,186), radius=28, outline=gold, width=5)
+    d.line((105,128,157,128), fill=gold, width=8)
+    d.line((131,101,131,155), fill=gold, width=8)
+    d.arc((91,91,171,171), 210, 330, fill=cream, width=4)
+    d.text((220,72), "SERTAL", font=_font(48,True), fill=gold)
+    d.text((222,130), "DELIVERY", font=_font(27,True), fill=cream)
+    d.text((W-315,78), "RECEIPT", font=_font(22,True), fill=muted)
+    d.text((W-315,112), f"#{order_id}", font=_font(34,True), fill=cream)
+
+    d.line((72,215,W-72,215), fill=line, width=3)
+    d.text((72,248), "ЧЕК ЗАКАЗА", font=_font(34,True), fill=cream)
+    d.text((72,292), datetime.fromtimestamp(row['created_at']).strftime('%d.%m.%Y  ·  %H:%M'), font=_font(23), fill=muted)
+
+    y=355
+    sections=[
+        ("КЛИЕНТ", str(row['customer_name'] or '—')),
+        ("ТЕЛЕФОН", "+"+str(row['customer_phone'] or '').lstrip('+') if row['customer_phone'] else '—'),
+        ("АДРЕС ДОСТАВКИ", str(row['address'] or '—')),
+        ("ПОЛУЧАТЕЛЬ", str(row['recipient_name'] or '—') if 'recipient_name' in row.keys() else '—'),
+    ]
+    for label,value in sections:
+        d.text((72,y), label, font=_font(17,True), fill=gold)
+        # wrap long values
+        words=value.split(); lines=[]; cur=''
+        for word in words:
+            test=(cur+' '+word).strip()
+            if len(test)>54:
+                lines.append(cur); cur=word
+            else: cur=test
+        if cur: lines.append(cur)
+        for ln in lines[:2]:
+            y+=29; d.text((72,y),ln,font=_font(24),fill=cream)
+        y+=43
+
+    d.line((72,y,W-72,y),fill=line,width=2); y+=32
+    d.text((72,y), "СОСТАВ ЗАКАЗА", font=_font(18,True), fill=gold); y+=42
+    items = str(row['items_text'] or row['title'] or 'Заказ').splitlines() if 'items_text' in row.keys() else [str(row['title'] or 'Заказ')]
+    for item in items[:8]:
+        item=item.strip()
+        if not item: continue
+        d.ellipse((74,y+7,84,y+17),fill=gold)
+        d.text((102,y),item[:70],font=_font(23),fill=cream); y+=37
+
+    y+=10; d.line((72,y,W-72,y),fill=line,width=2); y+=30
+    payment = row['payment_method'] if 'payment_method' in row.keys() else 'cash'
+    payment_text = 'НАЛИЧНЫЕ' if payment=='cash' else 'ОНЛАЙН'
+    d.text((72,y), "ОПЛАТА", font=_font(18,True), fill=gold)
+    d.text((260,y), payment_text, font=_font(23,True), fill=cream)
+    y+=42
+    if 'change_amount' in row.keys() and float(row['change_amount'] or 0)>0:
+        d.text((72,y), "СДАЧА", font=_font(18,True), fill=gold)
+        d.text((260,y), f"{float(row['change_amount']):,.0f}".replace(',',' ') + " AMD", font=_font(23,True), fill=cream)
+        y+=42
+
+    total=float(row['price'] or 0)
+    d.rounded_rectangle((650,y-20,1008,y+92),radius=22,outline=gold,width=2)
+    d.text((682,y),"ИТОГО",font=_font(20,True),fill=gold)
+    d.text((682,y+35),f"{total:,.0f}".replace(',',' ') + " AMD",font=_font(31,True),fill=cream)
+    y+=135
+
+    status_names={"new":"НОВЫЙ","assigned":"НАЗНАЧЕН","accepted":"ПРИНЯТ","delivering":"В ДОСТАВКЕ","delivered":"ДОСТАВЛЕН","closed":"ЗАКРЫТ"}
+    d.text((72,y),"СТАТУС",font=_font(18,True),fill=gold)
+    d.text((220,y),status_names.get(str(row['status']),str(row['status']).upper()),font=_font(23,True),fill=cream)
+    y+=58
+    d.line((72,y,W-72,y),fill=line,width=2); y+=35
+    d.text((72,y),"SERTAL DELIVERY",font=_font(22,True),fill=gold)
+    d.text((72,y+34),"Спасибо за заказ. Чек сформирован автоматически.",font=_font(19),fill=muted)
+    d.text((W-360,y+34),"AMD · ARMENIA",font=_font(17,True),fill=muted)
+
+    path=EXPORT_DIR/f"sertal_receipt_{order_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+    img.save(path,"PNG",optimize=True)
+    return path
+
 def generate_receipt(order_id):
     conn = db()
     row = conn.execute("""
@@ -3164,7 +3261,7 @@ async def admin_reply_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
     low = text.lower()
 
     if low in ("!help","!помощь"):
-        await message.reply_text("SERTAL DELIVERY — команды админа\n\n!logsfile — база клиентов\n!excel — заказы Excel\n!ai вопрос — ИИ + интернет-поиск\n!promo CODE 10% — процентная скидка\n!promo CODE 2000 — скидка 2000 ֏\n!promo CODE 10% 5000 100 — 10%, мин. 5000 ֏, до 100 использований\n!promos — список промокодов\n!delpromo CODE — выключить промокод\n!supportgroup — назначить эту группу поддержкой")
+        await message.reply_text("SERTAL DELIVERY — команды админа\n\n!logsfile — база клиентов\n!excel — заказы Excel\n!ai вопрос — ИИ + интернет-поиск\n!promo CODE 10% — процентная скидка\n!promo CODE 2000 — скидка 2000 ֏\n!promo CODE 10% 5000 100 — 10%, мин. 5000 ֏, до 100 использований\n!promos — список промокодов\n!delpromo CODE — выключить промокод\n!supportgroup — назначить эту группу поддержкой\n!чек #123 — красивый чек реального заказа")
         return
 
     if low.startswith("!promo") or low.startswith("!promos") or low.startswith("!delpromo") or low.startswith("!deletepromo") or low.startswith("!промо") or low.startswith("!промокоды"):
@@ -3210,13 +3307,28 @@ async def admin_reply_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
         await message.reply_text(f"SERTAL DELIVERY · AI\n\n{answer}")
         return
 
-    if low in ("!receipt", "!check", "!чек"):
-        path=make_random_receipt_image()
+    # Real order receipt: !чек #123 / !чек 123
+    if low.startswith("!чек") or low.startswith("!check") or low.startswith("!receipt"):
+        match = re.search(r"#?(\d+)", text)
+        if not match:
+            await message.reply_text("Формат: !чек #123")
+            return
+        order_id = int(match.group(1))
+        conn = db()
+        order = conn.execute("SELECT id,customer_id,status FROM orders WHERE id=?", (order_id,)).fetchone()
+        conn.close()
+        if not order:
+            await message.reply_text(f"❌ Заказ №{order_id} не найден.")
+            return
+        path = make_order_receipt_image(order_id)
+        if not path:
+            await message.reply_text("❌ Не удалось сформировать чек.")
+            return
         try:
-            with open(path,"rb") as fh:
-                await message.reply_photo(photo=fh,caption="Демонстрационный случайный чек SERTAL DELIVERY")
+            with open(path, "rb") as fh:
+                await message.reply_photo(photo=fh, caption=f"SERTAL DELIVERY · Чек заказа №{order_id}")
         except Exception as e:
-            await message.reply_text(f"Ошибка генерации чека: {e}")
+            await message.reply_text(f"Ошибка отправки чека: {e}")
         return
 
     # Support replies work both in the dedicated support group and in private admin chat.
@@ -3288,6 +3400,28 @@ async def location_handler(
 # CLEANUP
 # =========================================================
 
+async def notify_deploy_started():
+    """Notify the configured support group after Render starts the new release."""
+    if not telegram_app:
+        return
+    chat_id = get_support_group_chat_id()
+    if not chat_id:
+        return
+    commit = os.getenv("RENDER_GIT_COMMIT", "").strip()
+    commit_short = commit[:7] if commit else "новая версия"
+    service = os.getenv("RENDER_SERVICE_NAME", "SERTAL DELIVERY")
+    message = (
+        "🤖 Мой раб обновил меня.\n\n"
+        "🚀 Обнова запущена и Render поднял новую версию.\n"
+        f"📦 Сервис: {service}\n"
+        f"🔖 Версия: {commit_short}\n"
+        "✅ SERTAL DELIVERY снова в строю."
+    )
+    try:
+        await telegram_app.bot.send_message(chat_id=chat_id, text=message)
+    except Exception as exc:
+        print("Deploy notification:", exc)
+
 async def cleanup_loop():
 
     while True:
@@ -3348,6 +3482,8 @@ async def startup():
     await telegram_app.initialize()
     await telegram_app.start()
     await telegram_app.updater.start_polling()
+
+    await notify_deploy_started()
 
     asyncio.create_task(
         cleanup_loop()
