@@ -7,6 +7,8 @@ import hashlib
 import secrets
 import sqlite3
 import asyncio
+from datetime import datetime
+from pathlib import Path
 import math
 from urllib.parse import parse_qsl, unquote, quote
 from urllib.request import Request, urlopen
@@ -15,6 +17,9 @@ from fastapi import FastAPI, HTTPException, Header, WebSocket
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import uvicorn
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+from openpyxl.worksheet.page import PageMargins
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import (
@@ -38,6 +43,8 @@ ADMIN_IDS = {
 }
 
 DB_PATH = "restaran.db"
+EXPORT_DIR = Path("exports")
+EXPORT_DIR.mkdir(exist_ok=True)
 MAX_ORDER_WEIGHT_KG = 8.0
 HEAVY_WEIGHT_KG = 4.0
 HEAVY_ORDER_BONUS_AMD = 600
@@ -137,6 +144,19 @@ def init_db():
         ("orders", "restaurant_address", "TEXT"),
         ("orders", "restaurant_lat", "REAL"),
         ("orders", "restaurant_lon", "REAL"),
+        ("orders", "restaurant_name", "TEXT"),
+        ("orders", "delivery_deadline", "TEXT"),
+        ("orders", "delivered_at", "TEXT"),
+        ("orders", "floor", "TEXT"),
+        ("orders", "entrance", "TEXT"),
+        ("orders", "apartment", "TEXT"),
+        ("orders", "intercom", "TEXT"),
+        ("orders", "recipient_name", "TEXT"),
+        ("orders", "delivery_note", "TEXT"),
+        ("orders", "payment_note", "TEXT"),
+        ("orders", "items_text", "TEXT"),
+        ("orders", "change_amount", "REAL"),
+        ("orders", "route_no", "INTEGER"),
     ]
 
     for table, column, definition in migrations:
@@ -440,8 +460,19 @@ class OrderCreate(BaseModel):
     title: str
     address: str
     restaurant_address: str = ""
+    restaurant_name: str = ""
     price: float = 0
     weight_kg: float = 0
+    delivery_deadline: str = ""
+    floor: str = ""
+    entrance: str = ""
+    apartment: str = ""
+    intercom: str = ""
+    recipient_name: str = ""
+    delivery_note: str = ""
+    payment_note: str = ""
+    items_text: str = ""
+    change_amount: float = 0
 
 
 class AssignData(BaseModel):
@@ -1026,6 +1057,52 @@ async def admin_ai(
     if not question:
         raise HTTPException(status_code=400, detail="Введите вопрос")
 
+    # Natural-language admin actions: these are executed server-side only after
+    # require_admin(), so the AI cannot bypass the existing admin permission.
+    q = question.lower()
+    phone_match = re.search(r"(\+?\d[\d\s()\-]{5,})$", question)
+    if phone_match and any(x in q for x in ("добавь клиента", "создай клиента", "добавить клиента")):
+        phone = normalize_phone(phone_match.group(1))
+        name = question[:phone_match.start()].strip()
+        name = re.sub(r"^(добавь|создай|добавить)\s+(клиента)\s*", "", name, flags=re.I).strip(" :,-")
+        if not name or len(phone) < 5:
+            raise HTTPException(status_code=400, detail="Укажите имя и номер клиента")
+        pin = new_pin()
+        conn = db()
+        try:
+            cur = conn.execute("""
+                INSERT INTO users(name,phone,pin_hash,pin_plain,role,created_at,active)
+                VALUES(?,?,?,?,?,?,1)
+            """, (name, phone, hash_pin(pin), pin, "customer", int(time.time())))
+            conn.commit()
+            return {"answer": f"✅ Клиент «{name}» создан. ID: {cur.lastrowid}. PIN: {pin}", "mode": "action"}
+        except sqlite3.IntegrityError:
+            raise HTTPException(status_code=400, detail="Клиент с таким номером уже существует")
+        finally:
+            conn.close()
+
+    if phone_match and any(x in q for x in ("добавь курьера", "создай курьера", "добавить курьера")):
+        phone = normalize_phone(phone_match.group(1))
+        name = question[:phone_match.start()].strip()
+        name = re.sub(r"^(добавь|создай|добавить)\s+(курьера)\s*", "", name, flags=re.I).strip(" :,-")
+        if not name or len(phone) < 5:
+            raise HTTPException(status_code=400, detail="Укажите имя и номер курьера")
+        pin = new_pin()
+        conn = db()
+        try:
+            cur = conn.execute("""
+                INSERT INTO users(name,phone,pin_hash,pin_plain,role,created_at,active)
+                VALUES(?,?,?,?,?,?,1)
+            """, (name, phone, hash_pin(pin), pin, "courier", int(time.time())))
+            user_id = cur.lastrowid
+            conn.execute("INSERT INTO couriers(user_id,approved,online,active) VALUES(?,0,0,1)", (user_id,))
+            conn.commit()
+            return {"answer": f"✅ Курьер «{name}» создан. ID: {user_id}. PIN: {pin}. Теперь его можно одобрить в разделе «Курьеры».", "mode": "action"}
+        except sqlite3.IntegrityError:
+            raise HTTPException(status_code=400, detail="Курьер с таким номером уже существует")
+        finally:
+            conn.close()
+
     # Optional real AI integration. If OPENAI_API_KEY is not configured,
     # the assistant still works in local operational mode.
     api_key = os.getenv("OPENAI_API_KEY", "").strip()
@@ -1152,39 +1229,21 @@ async def admin_create_order(
     authorization: str = Header(default="")
 ):
     require_admin(authorization)
-
     phone = normalize_phone(data.phone)
-
     conn = db()
-
     customers = conn.execute("""
-        SELECT id,name,phone,telegram_id
-        FROM users
-        WHERE role='customer'
-        AND active=1
+        SELECT id,name,phone,telegram_id FROM users
+        WHERE role='customer' AND active=1
     """).fetchall()
-
-    customer = None
-
-    for row in customers:
-        if phones_equal(row["phone"], phone):
-            customer = row
-            break
-
+    customer = next((row for row in customers if phones_equal(row["phone"], phone)), None)
     if not customer:
         conn.close()
-        raise HTTPException(
-            status_code=404,
-            detail="Клиент с таким номером не найден"
-        )
+        raise HTTPException(status_code=404, detail="Клиент с таким номером не найден")
 
     weight = float(data.weight_kg or 0)
-    if weight < 0:
+    if weight < 0 or weight > MAX_ORDER_WEIGHT_KG:
         conn.close()
-        raise HTTPException(status_code=400, detail="Вес не может быть отрицательным")
-    if weight > MAX_ORDER_WEIGHT_KG:
-        conn.close()
-        raise HTTPException(status_code=400, detail=f"Максимальный вес заказа — {MAX_ORDER_WEIGHT_KG:g} кг")
+        raise HTTPException(status_code=400, detail=f"Вес должен быть от 0 до {MAX_ORDER_WEIGHT_KG:g} кг")
 
     lat, lon = geocode_yerevan(data.address)
     restaurant_address = str(data.restaurant_address or "").strip()
@@ -1193,37 +1252,189 @@ async def admin_create_order(
 
     cur = conn.execute("""
         INSERT INTO orders(
-            customer_id, title, address, price, status, created_at,
-            weight_kg, courier_bonus_amd, lat, lon,
-            restaurant_address, restaurant_lat, restaurant_lon
+            customer_id,title,address,price,status,created_at,weight_kg,courier_bonus_amd,
+            lat,lon,restaurant_address,restaurant_lat,restaurant_lon,restaurant_name,
+            delivery_deadline,floor,entrance,apartment,intercom,recipient_name,
+            delivery_note,payment_note,items_text,change_amount,route_no
         )
-        VALUES(?,?,?,?, 'new',?,?,?,?,?,?,?,?)
+        VALUES(?,?,?,?,'new',?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, (
-        customer["id"],
-        data.title.strip(),
-        data.address.strip(),
-        float(data.price),
-        int(time.time()),
-        weight,
-        bonus,
-        lat,
-        lon,
-        restaurant_address,
-        restaurant_lat,
-        restaurant_lon
+        customer["id"], data.title.strip(), data.address.strip(), float(data.price),
+        int(time.time()), weight, bonus, lat, lon, restaurant_address, restaurant_lat,
+        restaurant_lon, data.restaurant_name.strip(), data.delivery_deadline.strip(),
+        data.floor.strip(), data.entrance.strip(), data.apartment.strip(),
+        data.intercom.strip(), data.recipient_name.strip(), data.delivery_note.strip(),
+        data.payment_note.strip(), data.items_text.strip(), float(data.change_amount or 0),
+        None
     ))
-
     conn.commit()
-
     order_id = cur.lastrowid
+    conn.close()
+    return {"ok": True, "id": order_id}
 
+
+class RegisterData(BaseModel):
+    name: str
+    phone: str
+    pin: str
+
+@app.post("/api/register")
+async def register_customer(data: RegisterData):
+    name, phone, pin = data.name.strip(), normalize_phone(data.phone), str(data.pin).strip()
+    if len(name) < 2 or len(phone) < 5 or not pin.isdigit() or not 4 <= len(pin) <= 8:
+        raise HTTPException(status_code=400, detail="Введите имя, телефон и PIN (4–8 цифр)")
+    conn = db()
+    try:
+        cur = conn.execute("""
+            INSERT INTO users(name,phone,pin_hash,pin_plain,role,created_at,active)
+            VALUES(?,?,?,?, 'customer',?,1)
+        """, (name, phone, hash_pin(pin), pin, int(time.time())))
+        conn.commit()
+        token = create_session(cur.lastrowid, "customer")
+        return {"ok": True, "token": token, "role": "customer"}
+    except sqlite3.IntegrityError:
+        raise HTTPException(status_code=400, detail="Клиент с таким номером уже зарегистрирован")
+    finally:
+        conn.close()
+
+@app.get("/api/customer/history")
+async def customer_history(authorization: str = Header(default="")):
+    user = require_user(authorization)
+    if user["role"] != "customer":
+        raise HTTPException(status_code=403, detail="Нет доступа")
+    conn = db()
+    rows = conn.execute("""
+        SELECT o.*, c.id AS courier_record_id, cu.name AS courier_name
+        FROM orders o
+        LEFT JOIN couriers c ON c.id=o.courier_id
+        LEFT JOIN users cu ON cu.id=c.user_id
+        WHERE o.customer_id=?
+        ORDER BY o.created_at DESC
+    """, (user["user_id"],)).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+@app.get("/api/courier/history")
+async def courier_history(authorization: str = Header(default="")):
+    user = require_user(authorization)
+    if user["role"] != "courier":
+        raise HTTPException(status_code=403, detail="Нет доступа")
+    conn = db()
+    courier = conn.execute("SELECT id FROM couriers WHERE user_id=?", (user["user_id"],)).fetchone()
+    if not courier:
+        conn.close(); raise HTTPException(status_code=404, detail="Курьер не найден")
+    rows = conn.execute("""
+        SELECT o.*, u.name AS customer_name, u.phone AS customer_phone
+        FROM orders o JOIN users u ON u.id=o.customer_id
+        WHERE o.courier_id=? ORDER BY o.created_at DESC
+    """, (courier["id"],)).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+@app.get("/api/courier/schedule")
+async def courier_schedule(authorization: str = Header(default="")):
+    user = require_user(authorization)
+    if user["role"] != "courier":
+        raise HTTPException(status_code=403, detail="Нет доступа")
+    conn = db()
+    courier = conn.execute("SELECT id FROM couriers WHERE user_id=? AND active=1", (user["user_id"],)).fetchone()
+    if not courier:
+        conn.close(); raise HTTPException(status_code=403, detail="Курьер не активен")
+    rows = conn.execute("""
+        SELECT id,title,address,delivery_deadline,status,route_no,created_at
+        FROM orders WHERE courier_id=? AND status IN ('assigned','accepted','delivering')
+        ORDER BY COALESCE(delivery_deadline,''), id
+    """, (courier["id"],)).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+@app.get("/api/contact-admin")
+async def contact_admin():
+    return {"admins": [{"telegram_id": x} for x in ADMIN_IDS]}
+
+
+def export_orders_xlsx():
+    conn = db()
+    rows = conn.execute("""
+        SELECT o.*, cu.name AS courier_name, cu.phone AS courier_phone,
+               u.name AS customer_name, u.phone AS customer_phone
+        FROM orders o
+        JOIN users u ON u.id=o.customer_id
+        LEFT JOIN couriers c ON c.id=o.courier_id
+        LEFT JOIN users cu ON cu.id=c.user_id
+        ORDER BY o.created_at ASC, o.id ASC
+    """).fetchall()
     conn.close()
 
-    return {
-        "ok": True,
-        "id": order_id
-    }
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Доставки"
+    headers = [
+        "№","Заказ","Ресторан","Курьер","Телефон курьера","Клиент","Телефон клиента",
+        "Статус","Доставить до","Доставлен в","Адрес","Этаж","Подъезд","Кв/офис",
+        "Домофон","Получатель","Комментарий","Оплата","Сдача","Состав заказа",
+        "Сумма","Маршрут","Создан"
+    ]
+    ws.append(headers)
+    thin = Side(style="thin", color="D9D9D9")
+    for cell in ws[1]:
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill("solid", fgColor="222222")
+        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        cell.border = Border(bottom=thin)
 
+    status_names = {
+        "new":"Новый","assigned":"Назначен","accepted":"Принят",
+        "delivering":"В доставке","delivered":"Доставлен","closed":"Закрыт"
+    }
+    for n, r in enumerate(rows, 1):
+        created = datetime.fromtimestamp(r["created_at"]).strftime("%Y-%m-%d %H:%M")
+        ws.append([
+            n, r["id"], r["restaurant_name"] or r["restaurant_address"] or "",
+            r["courier_name"] or "", r["courier_phone"] or "",
+            r["customer_name"] or "", r["customer_phone"] or "",
+            status_names.get(r["status"], r["status"]), r["delivery_deadline"] or "",
+            r["delivered_at"] or "", r["address"] or "", r["floor"] or "",
+            r["entrance"] or "", r["apartment"] or "", r["intercom"] or "",
+            r["recipient_name"] or "", r["delivery_note"] or "", r["payment_note"] or "",
+            r["change_amount"] or 0, r["items_text"] or r["title"] or "",
+            r["price"] or 0, r["route_no"] or "", created
+        ])
+
+    widths = [6,9,20,20,17,20,17,14,16,17,34,9,10,12,14,18,30,18,10,36,12,10,18]
+    for idx, width in enumerate(widths, 1):
+        ws.column_dimensions[__import__("openpyxl").utils.get_column_letter(idx)].width = width
+    for row in ws.iter_rows():
+        for cell in row:
+            cell.alignment = Alignment(vertical="top", wrap_text=True)
+    ws.freeze_panes = "A2"
+    ws.auto_filter.ref = ws.dimensions
+    ws.sheet_properties.pageSetUpPr.fitToPage = True
+    ws.page_setup.orientation = "landscape"
+    ws.page_setup.paperSize = ws.PAPERSIZE_A4
+    ws.page_setup.fitToWidth = 1
+    ws.page_setup.fitToHeight = 0
+    ws.page_margins = PageMargins(left=0.25,right=0.25,top=0.4,bottom=0.4,header=0.2,footer=0.2)
+    ws.print_title_rows = "1:1"
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    path = EXPORT_DIR / f"orders_{stamp}.xlsx"
+    wb.save(path)
+    return path
+
+@app.get("/api/admin/export-xlsx")
+async def admin_export_xlsx(authorization: str = Header(default="")):
+    require_admin(authorization)
+    path = export_orders_xlsx()
+    return FileResponse(path, filename=path.name,
+                        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+async def export_loop():
+    while True:
+        try:
+            export_orders_xlsx()
+        except Exception as e:
+            print("XLSX export:", e)
+        await asyncio.sleep(12 * 60 * 60)
 
 @app.post("/api/admin/orders/{order_id}/assign")
 async def assign_order(
@@ -1733,11 +1944,12 @@ async def courier_complete(
 
     cur = conn.execute("""
         UPDATE orders
-        SET status='delivered'
+        SET status='delivered', delivered_at=?
         WHERE id=?
         AND courier_id=?
         AND status='delivering'
     """, (
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         order_id,
         courier["id"]
     ))
@@ -2019,4 +2231,4 @@ if __name__ == "__main__":
         app,
         host="0.0.0.0",
         port=int(os.getenv("PORT", "10000"))
-              )
+    )
